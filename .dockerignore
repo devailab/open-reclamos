@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.vscode
+.agents
+.agent
+.claude
+coverage
+*.md
