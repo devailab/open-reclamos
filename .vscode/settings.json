@@ -1,0 +1,46 @@
+{
+    "npm.packageManager": "bun",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports.biome": "always",
+        "source.addMissingImports": "always",
+        "source.removeUnusedImports": "always",
+        "source.fixAll.biome": "explicit"
+    },
+    "files.associations": {
+        "**/.vscode/*.json": "jsonc"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "tailwindCSS.classFunctions": ["clsx", "cn"],
+    "typescript.preferences.autoImportFileExcludePatterns": [
+        "**/node_modules/@base-ui",
+        "**/node_modules/react-day-picker"
+    ],
+    "javascript.preferences.autoImportFileExcludePatterns": [
+        "**/node_modules/@base-ui"
+    ],
+    "files.exclude": {
+        "**/.agent/skills": true,
+        "**/.claude/skills": true
+    }
+}

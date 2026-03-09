@@ -1,0 +1,227 @@
+CREATE TABLE "accounts" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"account_id" text NOT NULL,
+	"provider_id" text NOT NULL,
+	"user_id" uuid NOT NULL,
+	"access_token" text,
+	"refresh_token" text,
+	"id_token" text,
+	"access_token_expires_at" timestamp with time zone,
+	"refresh_token_expires_at" timestamp with time zone,
+	"scope" text,
+	"password" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "audit_logs" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" uuid,
+	"user_id" uuid,
+	"action" text NOT NULL,
+	"entity_type" text NOT NULL,
+	"entity_id" uuid,
+	"old_data" jsonb,
+	"new_data" jsonb,
+	"ip_address" text,
+	"user_agent" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "complaint_attachments" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"complaint_id" uuid NOT NULL,
+	"storage_key" text NOT NULL,
+	"file_name" text NOT NULL,
+	"content_type" text,
+	"description" text
+);
+--> statement-breakpoint
+CREATE TABLE "complaint_reasons" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" uuid,
+	"parent_id" uuid,
+	"reason" text NOT NULL,
+	"deleted_at" timestamp with time zone,
+	"deleted_by" uuid,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid NOT NULL,
+	"updated_at" timestamp with time zone,
+	"updated_by" uuid
+);
+--> statement-breakpoint
+CREATE TABLE "complaints" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" uuid NOT NULL,
+	"store_id" uuid NOT NULL,
+	"reason_id" uuid,
+	"ubigeo_id" uuid,
+	"status" text DEFAULT 'open' NOT NULL,
+	"tracking_code" text NOT NULL,
+	"correlative" text NOT NULL,
+	"first_name" text NOT NULL,
+	"last_name" text NOT NULL,
+	"document_type" text NOT NULL,
+	"document_number" text NOT NULL,
+	"person_type" text DEFAULT 'natural' NOT NULL,
+	"legal_name" text,
+	"is_minor" boolean DEFAULT false NOT NULL,
+	"guardian_first_name" text,
+	"guardian_last_name" text,
+	"guardian_document_type" text,
+	"guardian_document_number" text,
+	"email" text NOT NULL,
+	"dial_code" text,
+	"phone" text,
+	"address" text,
+	"type" text NOT NULL,
+	"item_type" text,
+	"item_description" text,
+	"currency" text,
+	"amount" numeric(10, 2),
+	"has_proof_of_payment" boolean DEFAULT false,
+	"proof_of_payment_type" text,
+	"proof_of_payment_number" text,
+	"incident_date" timestamp with time zone,
+	"response_deadline_days" integer DEFAULT 15,
+	"response_deadline" timestamp with time zone,
+	"description" text,
+	"request" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone,
+	"updated_by" uuid
+);
+--> statement-breakpoint
+CREATE TABLE "countries" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"iso2" text NOT NULL,
+	"iso3" text NOT NULL,
+	"phone_code" text NOT NULL,
+	"continent" text NOT NULL,
+	CONSTRAINT "countries_iso2_unique" UNIQUE("iso2"),
+	CONSTRAINT "countries_iso3_unique" UNIQUE("iso3")
+);
+--> statement-breakpoint
+CREATE TABLE "organization_members" (
+	"user_id" uuid NOT NULL,
+	"organization_id" uuid NOT NULL,
+	"role" text DEFAULT 'operator' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid NOT NULL,
+	"updated_at" timestamp with time zone,
+	"updated_by" uuid,
+	CONSTRAINT "organization_members_user_id_organization_id_pk" PRIMARY KEY("user_id","organization_id")
+);
+--> statement-breakpoint
+CREATE TABLE "organizations" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"ubigeo_id" uuid NOT NULL,
+	"slug" text NOT NULL,
+	"name" text NOT NULL,
+	"legal_name" text NOT NULL,
+	"tax_id" text NOT NULL,
+	"address_type" text NOT NULL,
+	"address" text NOT NULL,
+	"phone_code" text,
+	"phone" text,
+	"website" text,
+	"primary_color" text,
+	"logo_key" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid NOT NULL,
+	"updated_at" timestamp with time zone,
+	"updated_by" uuid,
+	CONSTRAINT "organizations_slug_unique" UNIQUE("slug"),
+	CONSTRAINT "organizations_tax_id_unique" UNIQUE("tax_id")
+);
+--> statement-breakpoint
+CREATE TABLE "sessions" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"token" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL,
+	"ip_address" text,
+	"user_agent" text,
+	"user_id" uuid NOT NULL,
+	CONSTRAINT "sessions_token_unique" UNIQUE("token")
+);
+--> statement-breakpoint
+CREATE TABLE "stores" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" uuid NOT NULL,
+	"ubigeo_id" uuid,
+	"slug" text NOT NULL,
+	"name" text NOT NULL,
+	"type" text NOT NULL,
+	"address_type" text,
+	"address" text,
+	"url" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid NOT NULL,
+	"updated_at" timestamp with time zone,
+	"updated_by" uuid,
+	CONSTRAINT "stores_slug_unique" UNIQUE("slug")
+);
+--> statement-breakpoint
+CREATE TABLE "ubigeos" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"ubigeo" text NOT NULL,
+	"department" text NOT NULL,
+	"province" text NOT NULL,
+	"district" text NOT NULL,
+	"name" text NOT NULL,
+	CONSTRAINT "ubigeos_ubigeo_unique" UNIQUE("ubigeo")
+);
+--> statement-breakpoint
+CREATE TABLE "users" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"email" text NOT NULL,
+	"email_verified" boolean DEFAULT false NOT NULL,
+	"image" text,
+	"setup_status" text DEFAULT 'complete' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
+CREATE TABLE "verifications" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"identifier" text NOT NULL,
+	"value" text NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_deleted_by_users_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaints" ADD CONSTRAINT "complaints_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaints" ADD CONSTRAINT "complaints_store_id_stores_id_fk" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaints" ADD CONSTRAINT "complaints_reason_id_complaint_reasons_id_fk" FOREIGN KEY ("reason_id") REFERENCES "public"."complaint_reasons"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaints" ADD CONSTRAINT "complaints_ubigeo_id_ubigeos_id_fk" FOREIGN KEY ("ubigeo_id") REFERENCES "public"."ubigeos"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaints" ADD CONSTRAINT "complaints_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "organizations" ADD CONSTRAINT "organizations_ubigeo_id_ubigeos_id_fk" FOREIGN KEY ("ubigeo_id") REFERENCES "public"."ubigeos"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "organizations" ADD CONSTRAINT "organizations_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "organizations" ADD CONSTRAINT "organizations_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stores" ADD CONSTRAINT "stores_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stores" ADD CONSTRAINT "stores_ubigeo_id_ubigeos_id_fk" FOREIGN KEY ("ubigeo_id") REFERENCES "public"."ubigeos"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stores" ADD CONSTRAINT "stores_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stores" ADD CONSTRAINT "stores_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "accounts_userId_idx" ON "accounts" USING btree ("user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "complaints_store_id_tracking_code_uidx" ON "complaints" USING btree ("store_id","tracking_code");--> statement-breakpoint
+CREATE UNIQUE INDEX "complaints_store_id_correlative_uidx" ON "complaints" USING btree ("store_id","correlative");--> statement-breakpoint
+CREATE INDEX "sessions_userId_idx" ON "sessions" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "verifications_identifier_idx" ON "verifications" USING btree ("identifier");
