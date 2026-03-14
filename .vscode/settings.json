@@ -40,7 +40,7 @@
         "**/node_modules/@base-ui"
     ],
     "files.exclude": {
-        "**/.agent/skills": true,
-        "**/.claude/skills": true
+        "**/.agent": true,
+        "**/.claude": true
     }
 }
