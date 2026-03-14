@@ -268,6 +268,11 @@ export const stores = pgTable('stores', {
 	address: text('address'),
 	// url de la tienda (virtual)
 	url: text('url'),
+	// soft delete en store
+	deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
+	deletedBy: uuid('deleted_by').references(() => users.id, {
+		onDelete: 'set null',
+	}),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),
