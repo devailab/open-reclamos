@@ -15,12 +15,12 @@ import { STORE_TYPE_FILTER_OPTIONS } from '@/lib/constants'
 import { feedback } from '@/lib/feedback'
 import { formatDateDisplay } from '@/lib/formatters'
 import {
-    $deactivateStoreAction,
-    $getStoresTableAction,
+	$deactivateStoreAction,
+	$getStoresTableAction,
 } from '@/modules/stores/actions'
 import {
-    DEFAULT_STORES_TABLE_FILTERS,
-    type StoresTableFilters,
+	DEFAULT_STORES_TABLE_FILTERS,
+	type StoresTableFilters,
 } from '@/modules/stores/validation'
 import { CreateStoreDialog } from './create-store-dialog'
 import { EditStoreDialog } from './edit-store-dialog'
@@ -111,6 +111,14 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 		}
 
 		void search()
+	}
+
+	const handleNameFilterKeyDown: React.KeyboardEventHandler<
+		HTMLInputElement
+	> = (event) => {
+		if (event.key !== 'Enter') return
+		event.preventDefault()
+		handleSearch()
 	}
 
 	const handleClear = () => {
@@ -266,6 +274,7 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 								label='Nombre'
 								placeholder='Buscar por nombre...'
 								value={filters.name}
+								onKeyDown={handleNameFilterKeyDown}
 								onValueChange={(value) => {
 									setFilters((previous) => ({
 										...previous,

@@ -1,18 +1,18 @@
 import {
-	type FC,
-	type ReactNode,
-	useId,
-	useImperativeHandle,
-	useState,
+    type FC,
+    type ReactNode,
+    useId,
+    useImperativeHandle,
+    useState,
 } from 'react'
 
 import { Label } from '@/components/ui/label'
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select'
 import type { FormFieldProps } from '@/hooks/use-form'
 import { cn } from '@/lib/utils'
@@ -111,7 +111,9 @@ const SelectField: FC<SelectFieldProps> = ({
 						<SelectValue
 							className='leading-normal'
 							placeholder={placeholder || 'Selecciona una opción'}
-						/>
+						>
+							{value?.label}
+						</SelectValue>
 					</SelectTrigger>
 					<SelectContent>
 						{options.map((option) => (

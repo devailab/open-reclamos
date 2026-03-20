@@ -52,13 +52,13 @@ export const ADDRESS_TYPE_OPTIONS: OptionItem[] = [
 ]
 
 export const STORE_TYPE_OPTIONS: OptionItem[] = [
-	{ value: 'physical', label: 'Tienda fisica' },
-	{ value: 'virtual', label: 'Tienda virtual' },
+	{ value: 'physical', label: 'Física' },
+	{ value: 'virtual', label: 'Virtual' },
 ]
 
 export const STORE_TYPE_FILTER_OPTIONS: OptionItem[] = [
 	{ value: 'all', label: 'Todos los tipos' },
-	{ value: 'physical', label: 'Fisica' },
+	{ value: 'physical', label: 'Física' },
 	{ value: 'virtual', label: 'Virtual' },
 ]
 

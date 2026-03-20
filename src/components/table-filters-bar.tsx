@@ -4,19 +4,19 @@ import { Filter, Search, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import {
-	Drawer,
-	DrawerClose,
-	DrawerContent,
-	DrawerDescription,
-	DrawerFooter,
-	DrawerHeader,
-	DrawerTitle,
-	DrawerTrigger,
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerTrigger,
 } from '@/components/ui/drawer'
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from '@/components/ui/tooltip'
 
 interface TableFiltersBarProps {
@@ -42,7 +42,7 @@ export default function TableFiltersBar({
 
 	return (
 		<div className='space-y-3'>
-			<div className='flex flex-wrap items-start gap-3'>
+			<div className='flex flex-wrap items-end gap-3'>
 				{primaryFilters.map((filter, index) => (
 					<div
 						key={`primary-filter-${index}`}
@@ -62,7 +62,7 @@ export default function TableFiltersBar({
 						</div>
 					))}
 
-				<div className='flex w-full items-center justify-end gap-2 sm:w-auto'>
+				<div className='flex w-full items-end justify-end gap-2 sm:w-auto sm:self-end'>
 					{hasAdvancedFilters && (
 						<Drawer>
 							<DrawerTrigger asChild>
@@ -124,7 +124,7 @@ export default function TableFiltersBar({
 						</TooltipContent>
 					</Tooltip>
 
-					<Button type='button' size='sm' onClick={onSearch}>
+					<Button type='button' size='default' onClick={onSearch}>
 						<Search className='h-4 w-4' />
 						{searchLabel}
 					</Button>
