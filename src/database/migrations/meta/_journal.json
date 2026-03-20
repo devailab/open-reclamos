@@ -15,6 +15,13 @@
       "when": 1773524641412,
       "tag": "0001_furry_steve_rogers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773975632875,
+      "tag": "0002_pale_alex_power",
+      "breakpoints": true
     }
   ]
 }

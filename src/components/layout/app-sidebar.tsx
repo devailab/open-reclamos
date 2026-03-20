@@ -4,6 +4,7 @@ import {
 	BookOpen,
 	Building2,
 	ClipboardList,
+	Clock3,
 	LayoutDashboard,
 	LogOut,
 	Settings,
@@ -37,6 +38,12 @@ const navItems = [
 		label: 'Reclamos',
 		href: '/dashboard/complaints',
 		icon: ClipboardList,
+		exact: false,
+	},
+	{
+		label: 'Auditoría',
+		href: '/dashboard/audit',
+		icon: Clock3,
 		exact: false,
 	},
 	{
