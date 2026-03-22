@@ -186,7 +186,7 @@ const DataTable = <T,>({ controller, columns, rows }: DataTableProps<T>) => {
 								</PaginationItem>
 								<PaginationItem
 									className={`rounded-xl border ${
-										hasNextPage
+										!hasNextPage
 											? 'cursor-not-allowed border-border/30 opacity-50'
 											: 'border-border/80'
 									}`}

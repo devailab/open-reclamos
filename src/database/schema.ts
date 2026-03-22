@@ -268,6 +268,11 @@ export const stores = pgTable('stores', {
 	address: text('address'),
 	// url de la tienda (virtual)
 	url: text('url'),
+	// soft delete en store
+	deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
+	deletedBy: uuid('deleted_by').references(() => users.id, {
+		onDelete: 'set null',
+	}),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),
@@ -416,24 +421,44 @@ export const complaintAttachments = pgTable('complaint_attachments', {
 	description: text('description'),
 })
 
-export const auditLogs = pgTable('audit_logs', {
-	id: uuid('id')
-		.primaryKey()
-		.$defaultFn(() => uuidv7()),
-	organizationId: uuid('organization_id').references(() => organizations.id, {
-		onDelete: 'cascade',
-	}),
-	userId: uuid('user_id').references(() => users.id, {
-		onDelete: 'set null',
-	}),
-	action: text('action').notNull(),
-	entityType: text('entity_type').notNull(),
-	entityId: uuid('entity_id'),
-	oldData: jsonb('old_data'),
-	newData: jsonb('new_data'),
-	ipAddress: text('ip_address'),
-	userAgent: text('user_agent'),
-	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
-		.defaultNow()
-		.notNull(),
-})
+export const auditLogs = pgTable(
+	'audit_logs',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		organizationId: uuid('organization_id').references(
+			() => organizations.id,
+			{
+				onDelete: 'cascade',
+			},
+		),
+		userId: uuid('user_id').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+		action: text('action').notNull(),
+		entityType: text('entity_type').notNull(),
+		entityId: uuid('entity_id'),
+		oldData: jsonb('old_data'),
+		newData: jsonb('new_data'),
+		ipAddress: text('ip_address'),
+		userAgent: text('user_agent'),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index('audit_logs_organization_id_idx').on(table.organizationId),
+		index('audit_logs_created_at_idx').on(table.createdAt),
+		index('audit_logs_action_idx').on(table.action),
+		index('audit_logs_entity_type_idx').on(table.entityType),
+		index('audit_logs_entity_id_idx').on(table.entityId),
+		index('audit_logs_organization_created_at_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+	],
+)
