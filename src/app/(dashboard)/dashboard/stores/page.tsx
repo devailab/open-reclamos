@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
 import {
-    getOrganizationForUser,
-    getStoresTableForOrganization,
+	getOrganizationForUser,
+	getStoresTableForOrganization,
 } from '@/modules/stores/queries'
 import { DEFAULT_STORES_TABLE_FILTERS } from '@/modules/stores/validation'
 import { StoresPage } from './_features/stores-page'

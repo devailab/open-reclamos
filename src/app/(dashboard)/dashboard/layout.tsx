@@ -29,7 +29,12 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 
 	return (
 		<SidebarProvider>
-			<AppSidebar />
+			<AppSidebar
+				user={{
+					name: session.user.name,
+					email: session.user.email,
+				}}
+			/>
 			<SidebarInset>
 				<header className='flex h-12 shrink-0 items-center gap-2 border-b px-4'>
 					<SidebarTrigger className='-ml-1' />

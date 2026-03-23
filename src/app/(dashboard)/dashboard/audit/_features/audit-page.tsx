@@ -14,8 +14,8 @@ import { useDataTable } from '@/hooks/use-data-table'
 import { formatDateTimeDisplay } from '@/lib/formatters'
 import { $getAuditLogsTableAction } from '@/modules/audit/actions'
 import {
-    type AuditTableFilters,
-    createDefaultAuditTableFilters,
+	type AuditTableFilters,
+	createDefaultAuditTableFilters,
 } from '@/modules/audit/validation'
 import { AuditLogDetailsDialog } from './audit-log-details-dialog'
 import type { AuditLogRow, AuditPageProps } from './types'
