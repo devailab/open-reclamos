@@ -151,8 +151,7 @@ export function TrackingPanel({ organizationId }: TrackingPanelProps) {
 }
 
 function TrackingCard({ complaint }: { complaint: TrackingResult }) {
-	const statusConfig =
-		STATUS_CONFIG[complaint.status] ?? STATUS_CONFIG.open
+	const statusConfig = STATUS_CONFIG[complaint.status] ?? STATUS_CONFIG.open
 	const StatusIcon = statusConfig.icon
 	const typeLabel = TYPE_LABEL[complaint.type] ?? complaint.type
 
@@ -208,9 +207,13 @@ function TrackingCard({ complaint }: { complaint: TrackingResult }) {
 						Fecha de presentación
 					</p>
 					<p className='font-medium'>
-						{format(new Date(complaint.createdAt), "d 'de' MMM yyyy", {
-							locale: es,
-						})}
+						{format(
+							new Date(complaint.createdAt),
+							"d 'de' MMM yyyy",
+							{
+								locale: es,
+							},
+						)}
 					</p>
 				</div>
 			</div>

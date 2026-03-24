@@ -72,8 +72,8 @@ export function ChangePasswordForm() {
 					Cambiar contraseña
 				</CardTitle>
 				<CardDescription>
-					Usa al menos 8 caracteres. Recomendamos combinar letras, números y
-					símbolos.
+					Usa al menos 8 caracteres. Recomendamos combinar letras,
+					números y símbolos.
 				</CardDescription>
 			</CardHeader>
 			<CardContent className='space-y-4'>

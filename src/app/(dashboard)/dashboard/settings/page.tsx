@@ -29,7 +29,10 @@ const SettingsPage: FC = async () => {
 				org={org}
 				currentUbigeoOption={
 					currentUbigeo
-						? { value: currentUbigeo.id, label: currentUbigeo.label }
+						? {
+								value: currentUbigeo.id,
+								label: currentUbigeo.label,
+							}
 						: null
 				}
 				isAdmin={org.role === 'admin'}

@@ -56,7 +56,8 @@ export function OrganizationSettingsForm({
 }: OrganizationSettingsFormProps) {
 	const getInitialAddressType = (): SelectOption | null => {
 		return (
-			ADDRESS_TYPE_OPTIONS.find((o) => o.value === org.addressType) ?? null
+			ADDRESS_TYPE_OPTIONS.find((o) => o.value === org.addressType) ??
+			null
 		)
 	}
 
