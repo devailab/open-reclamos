@@ -1,6 +1,7 @@
 import type { Metadata, NextPage } from 'next'
 import { notFound } from 'next/navigation'
 import { ComplaintForm } from '@/modules/complaints/components/complaint-form'
+import { TrackingPanel } from '@/modules/complaints/components/tracking-panel'
 import {
 	getComplaintReasonsForOrg,
 	getOrganizationById,
@@ -63,6 +64,8 @@ const StoreComplaintPage: NextPage<PageProps> = async ({ params }) => {
 					countries={countries}
 					reasons={reasons}
 				/>
+
+				<TrackingPanel organizationId={org.id} />
 
 				<p className='mt-6 text-center text-xs text-muted-foreground'>
 					De acuerdo al Código de Protección y Defensa del Consumidor,

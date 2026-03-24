@@ -88,3 +88,30 @@ export async function getNextCorrelative(storeId: string): Promise<string> {
 	const next = (result?.total ?? 0) + 1
 	return `${year}-${String(next).padStart(4, '0')}`
 }
+
+export async function getComplaintByTrackingCode(
+	trackingCode: string,
+	organizationId: string,
+) {
+	const [result] = await db
+		.select({
+			trackingCode: complaints.trackingCode,
+			correlative: complaints.correlative,
+			status: complaints.status,
+			type: complaints.type,
+			storeName: stores.name,
+			createdAt: complaints.createdAt,
+			responseDeadline: complaints.responseDeadline,
+			updatedAt: complaints.updatedAt,
+		})
+		.from(complaints)
+		.innerJoin(stores, eq(complaints.storeId, stores.id))
+		.where(
+			and(
+				eq(complaints.trackingCode, trackingCode),
+				eq(complaints.organizationId, organizationId),
+			),
+		)
+		.limit(1)
+	return result ?? null
+}
