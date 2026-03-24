@@ -1,0 +1,41 @@
+import { redirect } from 'next/navigation'
+import type { FC } from 'react'
+import { getSession } from '@/lib/auth-server'
+import {
+	getOrganizationSettingsForUser,
+	getUbigeoById,
+} from '@/modules/settings/queries'
+import { OrganizationSettingsForm } from './_features/organization-settings-form'
+
+const SettingsPage: FC = async () => {
+	const session = await getSession()
+	if (!session) redirect('/login')
+
+	const org = await getOrganizationSettingsForUser(session.user.id)
+	if (!org) redirect('/setup')
+
+	const currentUbigeo = await getUbigeoById(org.ubigeoId)
+
+	return (
+		<div className='space-y-6'>
+			<div>
+				<h1 className='text-2xl font-semibold'>Configuración</h1>
+				<p className='mt-1 text-sm text-muted-foreground'>
+					Administra la información general de tu empresa.
+				</p>
+			</div>
+
+			<OrganizationSettingsForm
+				org={org}
+				currentUbigeoOption={
+					currentUbigeo
+						? { value: currentUbigeo.id, label: currentUbigeo.label }
+						: null
+				}
+				isAdmin={org.role === 'admin'}
+			/>
+		</div>
+	)
+}
+
+export default SettingsPage

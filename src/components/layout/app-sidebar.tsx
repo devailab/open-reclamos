@@ -7,6 +7,7 @@ import {
 	Clock3,
 	LayoutDashboard,
 	LogOut,
+	Settings,
 	Store,
 	UserRound,
 } from 'lucide-react'
@@ -68,7 +69,12 @@ const navItems = [
 		icon: BookOpen,
 		exact: false,
 	},
-	// { label: 'Configuración', href: '/dashboard/settings', icon: Settings, exact: false },
+	{
+		label: 'Configuración',
+		href: '/dashboard/settings',
+		icon: Settings,
+		exact: false,
+	},
 ]
 
 function getInitials(name: string): string {
