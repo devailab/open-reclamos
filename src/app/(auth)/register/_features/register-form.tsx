@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { type FC, useState, useTransition } from 'react'
 import TextField from '@/components/forms/text-field'
 import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
 import {
 	Card,
 	CardContent,
@@ -13,6 +12,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
+import { Spinner } from '@/components/ui/spinner'
 import { useForm } from '@/hooks/use-form'
 import { feedback } from '@/lib/feedback'
 import { $registerAction } from '@/modules/auth/actions'

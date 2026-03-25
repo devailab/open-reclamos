@@ -25,12 +25,12 @@ import {
 	CardTitle,
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { ADDRESS_TYPE_OPTIONS } from '@/lib/constants'
 import { useForm } from '@/hooks/use-form'
+import { ADDRESS_TYPE_OPTIONS } from '@/lib/constants'
 import { required } from '@/lib/validators'
-import { $searchUbigeosAction } from '@/modules/setup/actions'
 import { $updateOrganizationSettingsAction } from '@/modules/settings/actions'
 import type { OrganizationSettings } from '@/modules/settings/queries'
+import { $searchUbigeosAction } from '@/modules/setup/actions'
 
 interface OrgFormValues {
 	name: string | null

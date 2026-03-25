@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { useIsMobile } from '@/hooks/use-mobile'
 import {
 	Dialog,
 	DialogContent,
@@ -16,6 +15,7 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from '@/components/ui/drawer'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface ResponsiveModalProps {
 	open: boolean
