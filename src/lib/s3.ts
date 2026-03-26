@@ -1,4 +1,9 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import {
+	GetObjectCommand,
+	PutObjectCommand,
+	S3Client,
+} from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 const S3_ENDPOINT = process.env.S3_ENDPOINT ?? ''
 const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY ?? ''
@@ -27,4 +32,15 @@ export async function uploadToS3(
 		ContentType: contentType,
 	})
 	await s3Client.send(command)
+}
+
+export async function getPresignedDownloadUrl(
+	key: string,
+	expiresInSeconds = 3600,
+): Promise<string> {
+	const command = new GetObjectCommand({
+		Bucket: S3_BUCKET,
+		Key: key,
+	})
+	return getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds })
 }

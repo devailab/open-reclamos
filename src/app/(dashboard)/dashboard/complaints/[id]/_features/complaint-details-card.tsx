@@ -1,17 +1,37 @@
-import { FileText } from 'lucide-react'
-import type { FC } from 'react'
+import { Download, FileText } from 'lucide-react'
+import { type FC, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { formatDateDisplay } from '@/lib/formatters'
-import type { ComplaintDetail } from '@/modules/complaints/detail-queries'
+import { $getAttachmentDownloadUrlAction } from '@/modules/complaints/detail-actions'
+import type {
+	ComplaintAttachment,
+	ComplaintDetail,
+} from '@/modules/complaints/detail-queries'
 import { InfoRow, ITEM_TYPE_LABEL, Section } from './shared'
 
 interface ComplaintDetailsCardProps {
 	complaint: ComplaintDetail
+	attachments: ComplaintAttachment[]
 }
 
 export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 	complaint,
+	attachments,
 }) => {
+	const [downloading, setDownloading] = useState<string | null>(null)
+
+	const handleDownload = async (attachment: ComplaintAttachment) => {
+		setDownloading(attachment.id)
+		const result = await $getAttachmentDownloadUrlAction(
+			attachment.storageKey,
+		)
+		setDownloading(null)
+		if ('url' in result) {
+			window.open(result.url, '_blank')
+		}
+	}
+
 	return (
 		<Section
 			icon={<FileText className='size-4' />}
@@ -84,6 +104,46 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 					</div>
 				)}
 			</div>
+
+			{attachments.length > 0 && (
+				<>
+					<Separator />
+					<div className='space-y-1.5'>
+						<p className='text-xs text-muted-foreground'>
+							Archivos adjuntos
+						</p>
+						<div className='flex flex-col gap-1.5'>
+							{attachments.map((attachment) => (
+								<div
+									key={attachment.id}
+									className='flex items-center justify-between gap-2 rounded-lg border px-3 py-2'
+								>
+									<div className='flex items-center gap-2 min-w-0'>
+										<FileText className='size-4 shrink-0 text-muted-foreground' />
+										<span className='text-sm truncate'>
+											{attachment.fileName}
+										</span>
+									</div>
+									<Button
+										variant='ghost'
+										size='sm'
+										className='shrink-0'
+										disabled={downloading === attachment.id}
+										onClick={() =>
+											handleDownload(attachment)
+										}
+									>
+										<Download className='size-4' />
+										<span className='sr-only'>
+											Descargar
+										</span>
+									</Button>
+								</div>
+							))}
+						</div>
+					</div>
+				</>
+			)}
 		</Section>
 	)
 }

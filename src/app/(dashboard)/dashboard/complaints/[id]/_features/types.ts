@@ -1,4 +1,5 @@
 import type {
+	ComplaintAttachment,
 	ComplaintAuditEntry,
 	ComplaintDetail,
 } from '@/modules/complaints/detail-queries'
@@ -6,4 +7,5 @@ import type {
 export interface ComplaintDetailPageProps {
 	complaint: ComplaintDetail
 	auditHistory: ComplaintAuditEntry[]
+	attachments: ComplaintAttachment[]
 }

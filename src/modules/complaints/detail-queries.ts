@@ -2,6 +2,7 @@ import { and, desc, eq } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
 	auditLogs,
+	complaintAttachments,
 	complaintReasons,
 	complaints,
 	stores,
@@ -122,6 +123,27 @@ export async function getComplaintDetailById(
 		.limit(1)
 
 	return row ?? null
+}
+
+export interface ComplaintAttachment {
+	id: string
+	storageKey: string
+	fileName: string
+	contentType: string | null
+}
+
+export async function getComplaintAttachments(
+	complaintId: string,
+): Promise<ComplaintAttachment[]> {
+	return db
+		.select({
+			id: complaintAttachments.id,
+			storageKey: complaintAttachments.storageKey,
+			fileName: complaintAttachments.fileName,
+			contentType: complaintAttachments.contentType,
+		})
+		.from(complaintAttachments)
+		.where(eq(complaintAttachments.complaintId, complaintId))
 }
 
 export interface ComplaintAuditEntry {

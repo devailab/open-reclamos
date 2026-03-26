@@ -7,6 +7,7 @@ import { db } from '@/database/database'
 import { complaints } from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
+import { getPresignedDownloadUrl } from '@/lib/s3'
 import { getOrganizationForUser } from '@/modules/stores/queries'
 import {
 	type ComplaintAuditEntry,
@@ -121,4 +122,14 @@ export async function $respondToComplaintAction(
 	})
 
 	return { success: true }
+}
+
+export async function $getAttachmentDownloadUrlAction(
+	storageKey: string,
+): Promise<{ url: string } | { error: string }> {
+	const session = await getSession()
+	if (!session) redirect('/login')
+
+	const url = await getPresignedDownloadUrl(storageKey)
+	return { url }
 }

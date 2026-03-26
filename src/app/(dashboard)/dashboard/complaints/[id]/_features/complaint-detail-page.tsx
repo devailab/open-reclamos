@@ -14,6 +14,7 @@ import type { ComplaintDetailPageProps } from './types'
 export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 	complaint,
 	auditHistory,
+	attachments,
 }) => {
 	const [resolvedResponse, setResolvedResponse] = useState<string | null>(
 		complaint.officialResponse,
@@ -56,7 +57,10 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 			<div className='grid grid-cols-1 lg:grid-cols-3 gap-4 items-start'>
 				<div className='lg:col-span-2 space-y-4'>
 					<ComplaintConsumerCard complaint={complaint} />
-					<ComplaintDetailsCard complaint={complaint} />
+					<ComplaintDetailsCard
+						complaint={complaint}
+						attachments={attachments}
+					/>
 				</div>
 
 				<div className='space-y-4 lg:sticky lg:top-4'>

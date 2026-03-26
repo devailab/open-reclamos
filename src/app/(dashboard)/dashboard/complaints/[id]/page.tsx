@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
 import {
+	getComplaintAttachments,
 	getComplaintAuditHistory,
 	getComplaintDetailById,
 } from '@/modules/complaints/detail-queries'
@@ -28,10 +29,13 @@ const ComplaintDetailRoute: FC<Props> = async ({ params }) => {
 
 	if (!complaint) redirect('/dashboard/complaints')
 
+	const attachments = await getComplaintAttachments(complaint.id)
+
 	return (
 		<ComplaintDetailPage
 			complaint={complaint}
 			auditHistory={auditHistory}
+			attachments={attachments}
 		/>
 	)
 }
