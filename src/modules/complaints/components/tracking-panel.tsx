@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useTransition } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
@@ -10,6 +9,7 @@ import {
 	SearchIcon,
 	XCircleIcon,
 } from 'lucide-react'
+import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ResponsiveModal } from '@/components/ui/responsive-modal'

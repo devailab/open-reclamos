@@ -4,13 +4,13 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth-server'
 import { getOrganizationForUser } from '@/modules/stores/queries'
 import {
-	getComplaintsTableForOrganization,
 	type ComplaintTableRow,
+	getComplaintsTableForOrganization,
 } from './dashboard-queries'
 import {
+	type ComplaintsTableFilters,
 	normalizeComplaintsPagination,
 	normalizeComplaintsTableFilters,
-	type ComplaintsTableFilters,
 } from './dashboard-validation'
 
 export interface GetComplaintsTableActionInput {
