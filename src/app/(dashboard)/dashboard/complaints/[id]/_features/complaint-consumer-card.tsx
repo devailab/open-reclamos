@@ -12,15 +12,22 @@ export const ComplaintConsumerCard: FC<ComplaintConsumerCardProps> = ({
 	complaint,
 }) => {
 	return (
-		<Section icon={<User className='size-4' />} title='Datos del consumidor'>
+		<Section
+			icon={<User className='size-4' />}
+			title='Datos del consumidor'
+		>
 			<div className='space-y-3'>
 				<InfoRow
 					label='Nombre completo'
 					value={`${complaint.firstName} ${complaint.lastName}`}
 				/>
-				{complaint.personType === 'juridical' && complaint.legalName && (
-					<InfoRow label='Razón social' value={complaint.legalName} />
-				)}
+				{complaint.personType === 'juridical' &&
+					complaint.legalName && (
+						<InfoRow
+							label='Razón social'
+							value={complaint.legalName}
+						/>
+					)}
 				<InfoRow
 					label='Documento'
 					value={`${DOCUMENT_TYPE_LABEL[complaint.documentType] ?? complaint.documentType} — ${complaint.documentNumber}`}
@@ -35,7 +42,8 @@ export const ComplaintConsumerCard: FC<ComplaintConsumerCardProps> = ({
 						<InfoRow
 							label='Tutor'
 							value={
-								complaint.guardianFirstName && complaint.guardianLastName
+								complaint.guardianFirstName &&
+								complaint.guardianLastName
 									? `${complaint.guardianFirstName} ${complaint.guardianLastName}`
 									: null
 							}

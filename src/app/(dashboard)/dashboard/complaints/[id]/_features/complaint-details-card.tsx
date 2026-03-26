@@ -13,16 +13,25 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 	complaint,
 }) => {
 	return (
-		<Section icon={<FileText className='size-4' />} title='Detalle del reclamo'>
+		<Section
+			icon={<FileText className='size-4' />}
+			title='Detalle del reclamo'
+		>
 			<div className='space-y-3'>
 				{complaint.itemType && (
 					<InfoRow
 						label='Tipo de bien'
-						value={ITEM_TYPE_LABEL[complaint.itemType] ?? complaint.itemType}
+						value={
+							ITEM_TYPE_LABEL[complaint.itemType] ??
+							complaint.itemType
+						}
 					/>
 				)}
 				{complaint.itemDescription && (
-					<InfoRow label='Bien contratado' value={complaint.itemDescription} />
+					<InfoRow
+						label='Bien contratado'
+						value={complaint.itemDescription}
+					/>
 				)}
 				{complaint.amount && (
 					<InfoRow
@@ -34,7 +43,8 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 					<InfoRow
 						label='Comprobante'
 						value={
-							complaint.proofOfPaymentType && complaint.proofOfPaymentNumber
+							complaint.proofOfPaymentType &&
+							complaint.proofOfPaymentNumber
 								? `${complaint.proofOfPaymentType} N° ${complaint.proofOfPaymentNumber}`
 								: 'Sí'
 						}

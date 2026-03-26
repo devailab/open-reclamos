@@ -3,13 +3,13 @@
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { type FC, useState } from 'react'
-import type { ComplaintDetailPageProps } from './types'
 import { ComplaintAuditCard } from './complaint-audit-card'
 import { ComplaintConsumerCard } from './complaint-consumer-card'
 import { ComplaintDetailsCard } from './complaint-details-card'
 import { ComplaintHeader } from './complaint-header'
 import { ComplaintSolutionCard } from './complaint-solution-card'
 import { getDeadlineStatus } from './shared'
+import type { ComplaintDetailPageProps } from './types'
 
 export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 	complaint,
@@ -52,7 +52,7 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 				resolvedAt={resolvedAt}
 				hasResponse={Boolean(resolvedResponse)}
 			/>
-			
+
 			<div className='grid grid-cols-1 lg:grid-cols-3 gap-4 items-start'>
 				<div className='lg:col-span-2 space-y-4'>
 					<ComplaintConsumerCard complaint={complaint} />

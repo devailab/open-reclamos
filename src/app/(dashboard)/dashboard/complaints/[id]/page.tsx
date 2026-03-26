@@ -29,7 +29,10 @@ const ComplaintDetailRoute: FC<Props> = async ({ params }) => {
 	if (!complaint) redirect('/dashboard/complaints')
 
 	return (
-		<ComplaintDetailPage complaint={complaint} auditHistory={auditHistory} />
+		<ComplaintDetailPage
+			complaint={complaint}
+			auditHistory={auditHistory}
+		/>
 	)
 }
 

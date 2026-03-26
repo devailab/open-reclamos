@@ -153,7 +153,8 @@ export async function $submitComplaintAction(
 				storeId: input.storeId,
 			},
 			ipAddress:
-				reqHeaders.get('x-forwarded-for') ?? reqHeaders.get('x-real-ip'),
+				reqHeaders.get('x-forwarded-for') ??
+				reqHeaders.get('x-real-ip'),
 			userAgent: reqHeaders.get('user-agent'),
 		})
 

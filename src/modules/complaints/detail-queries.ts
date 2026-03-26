@@ -2,8 +2,8 @@ import { and, desc, eq } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
 	auditLogs,
-	complaints,
 	complaintReasons,
+	complaints,
 	stores,
 	users,
 } from '@/database/schema'

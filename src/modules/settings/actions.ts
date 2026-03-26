@@ -15,6 +15,28 @@ import {
 
 export type SettingsActionResult = { error: string } | { success: true }
 
+type CompleteUpdateOrganizationInput = ReturnType<
+	typeof normalizeUpdateOrganizationInput
+> & {
+	name: string
+	legalName: string
+	ubigeoId: string
+	addressType: string
+	address: string
+}
+
+function hasRequiredOrganizationFields(
+	input: ReturnType<typeof normalizeUpdateOrganizationInput>,
+): input is CompleteUpdateOrganizationInput {
+	return Boolean(
+		input.name &&
+			input.legalName &&
+			input.ubigeoId &&
+			input.addressType &&
+			input.address,
+	)
+}
+
 export async function $updateOrganizationSettingsAction(
 	input: UpdateOrganizationInput,
 ): Promise<SettingsActionResult> {
@@ -43,16 +65,21 @@ export async function $updateOrganizationSettingsAction(
 	const normalizedInput = normalizeUpdateOrganizationInput(input)
 	const validationError = validateUpdateOrganizationInput(normalizedInput)
 	if (validationError) return { error: validationError }
+	if (!hasRequiredOrganizationFields(normalizedInput)) {
+		return {
+			error: 'No se pudo actualizar la organización. Inténtalo nuevamente.',
+		}
+	}
 
 	try {
 		await db
 			.update(organizations)
 			.set({
-				name: normalizedInput.name!,
-				legalName: normalizedInput.legalName!,
-				ubigeoId: normalizedInput.ubigeoId!,
-				addressType: normalizedInput.addressType!,
-				address: normalizedInput.address!,
+				name: normalizedInput.name,
+				legalName: normalizedInput.legalName,
+				ubigeoId: normalizedInput.ubigeoId,
+				addressType: normalizedInput.addressType,
+				address: normalizedInput.address,
 				phoneCode: normalizedInput.phoneCode,
 				phone: normalizedInput.phone,
 				website: normalizedInput.website,

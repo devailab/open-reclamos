@@ -1,18 +1,18 @@
 'use server'
 
+import { and, eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { complaints } from '@/database/schema'
-import { getSession } from '@/lib/auth-server'
 import { createAuditLog } from '@/lib/audit'
+import { getSession } from '@/lib/auth-server'
 import { getOrganizationForUser } from '@/modules/stores/queries'
-import { and, eq } from 'drizzle-orm'
 import {
+	type ComplaintAuditEntry,
+	type ComplaintDetail,
 	getComplaintAuditHistory,
 	getComplaintDetailById,
-	type ComplaintDetail,
-	type ComplaintAuditEntry,
 } from './detail-queries'
 
 export interface GetComplaintDetailResult {

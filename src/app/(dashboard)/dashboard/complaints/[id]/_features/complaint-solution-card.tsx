@@ -29,7 +29,10 @@ export const ComplaintSolutionCard: FC<ComplaintSolutionCardProps> = ({
 					</p>
 					<div className='flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground'>
 						{resolvedAt && (
-							<span>Respondido el {formatDateTimeDisplay(resolvedAt)}</span>
+							<span>
+								Respondido el{' '}
+								{formatDateTimeDisplay(resolvedAt)}
+							</span>
 						)}
 						{complaint.respondedByName && (
 							<span>por {complaint.respondedByName}</span>

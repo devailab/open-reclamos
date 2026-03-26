@@ -2,13 +2,13 @@
 
 import { CheckCircle, Send } from 'lucide-react'
 import { type FC, useState } from 'react'
+import { sileo } from 'sileo'
 import TextAreaField from '@/components/forms/textarea-field'
 import { Button } from '@/components/ui/button'
 import { useForm } from '@/hooks/use-form'
 import { feedback } from '@/lib/feedback'
 import { combine, minLength, required } from '@/lib/validators'
 import { $respondToComplaintAction } from '@/modules/complaints/detail-actions'
-import { sileo } from 'sileo'
 
 interface ResponseFormValues {
 	response: string | null
@@ -104,8 +104,8 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 
 			<p className='text-xs text-muted-foreground'>
 				<CheckCircle className='inline size-3 mr-1' />
-				Al enviar, el reclamo pasará al estado{' '}
-				<strong>Resuelto</strong> y ya no podrá editarse la respuesta.
+				Al enviar, el reclamo pasará al estado <strong>Resuelto</strong>{' '}
+				y ya no podrá editarse la respuesta.
 			</p>
 		</div>
 	)

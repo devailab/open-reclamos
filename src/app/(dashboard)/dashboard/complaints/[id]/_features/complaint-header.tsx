@@ -7,8 +7,8 @@ import type { ComplaintDetail } from '@/modules/complaints/detail-queries'
 import {
 	COMPLAINT_STATUS_LABEL,
 	COMPLAINT_TYPE_LABEL,
-	STATUS_BADGE_VARIANT,
 	type DeadlineStatus,
+	STATUS_BADGE_VARIANT,
 } from './shared'
 
 interface ComplaintHeaderProps {
@@ -35,7 +35,9 @@ export const ComplaintHeader: FC<ComplaintHeaderProps> = ({
 					</p>
 					<p className='text-xs text-muted-foreground mt-0.5'>
 						Cód. seguimiento:{' '}
-						<span className='font-mono'>{complaint.trackingCode}</span>
+						<span className='font-mono'>
+							{complaint.trackingCode}
+						</span>
 					</p>
 				</div>
 				<div className='flex flex-wrap gap-2'>
@@ -43,9 +45,12 @@ export const ComplaintHeader: FC<ComplaintHeaderProps> = ({
 						{COMPLAINT_TYPE_LABEL[complaint.type] ?? complaint.type}
 					</Badge>
 					<Badge
-						variant={STATUS_BADGE_VARIANT[complaint.status] ?? 'outline'}
+						variant={
+							STATUS_BADGE_VARIANT[complaint.status] ?? 'outline'
+						}
 					>
-						{COMPLAINT_STATUS_LABEL[complaint.status] ?? complaint.status}
+						{COMPLAINT_STATUS_LABEL[complaint.status] ??
+							complaint.status}
 					</Badge>
 				</div>
 			</div>
@@ -67,14 +72,17 @@ export const ComplaintHeader: FC<ComplaintHeaderProps> = ({
 				<div
 					className={cn(
 						'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium',
-						(deadline.level === 'overdue' || deadline.level === 'critical') &&
+						(deadline.level === 'overdue' ||
+							deadline.level === 'critical') &&
 							'bg-destructive/10 text-destructive border border-destructive/20',
 						deadline.level === 'warning' &&
 							'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800/30',
-						deadline.level === 'safe' && 'bg-muted text-muted-foreground border',
+						deadline.level === 'safe' &&
+							'bg-muted text-muted-foreground border',
 					)}
 				>
-					{deadline.level === 'overdue' || deadline.level === 'critical' ? (
+					{deadline.level === 'overdue' ||
+					deadline.level === 'critical' ? (
 						<AlertCircle className='size-4 shrink-0' />
 					) : (
 						<Clock className='size-4 shrink-0' />
