@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { type FC, useState, useTransition } from 'react'
+import { sileo } from 'sileo'
 import TextField from '@/components/forms/text-field'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { useForm } from '@/hooks/use-form'
-import { feedback } from '@/lib/feedback'
 import { $loginAction } from '@/modules/auth/actions'
 import { validateEmail, validatePassword } from '@/modules/auth/validation'
 
@@ -50,10 +50,11 @@ export const LoginForm: FC = () => {
 				values.password ?? '',
 			)
 			if (result?.error) {
-				feedback.alert.error({
+				sileo.error({
 					title: 'Error al iniciar sesión',
 					description: result.error,
 				})
+				return
 			}
 		})
 	}
