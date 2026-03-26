@@ -1,8 +1,10 @@
 'use server'
 
 import { addDays } from 'date-fns'
+import { headers } from 'next/headers'
 import { db } from '@/database/database'
 import { complaintAttachments, complaints } from '@/database/schema'
+import { createAuditLog } from '@/lib/audit'
 import { generateTrackingCode } from './lib'
 import { getNextCorrelative } from './queries'
 
@@ -136,6 +138,24 @@ export async function $submitComplaintAction(
 				})),
 			)
 		}
+
+		const reqHeaders = await headers()
+		void createAuditLog({
+			organizationId: input.organizationId,
+			action: 'complaint.created',
+			entityType: 'complaint',
+			entityId: complaint.id,
+			newData: {
+				correlative,
+				trackingCode,
+				type: input.type,
+				status: 'open',
+				storeId: input.storeId,
+			},
+			ipAddress:
+				reqHeaders.get('x-forwarded-for') ?? reqHeaders.get('x-real-ip'),
+			userAgent: reqHeaders.get('user-agent'),
+		})
 
 		return {
 			success: true,

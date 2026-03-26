@@ -1,7 +1,8 @@
 'use client'
 
 import { differenceInCalendarDays } from 'date-fns'
-import { AlertCircle, Clock } from 'lucide-react'
+import { AlertCircle, Clock, Eye, MessageSquare } from 'lucide-react'
+import Link from 'next/link'
 import type { FC } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import DataTable from '@/components/data-table'
@@ -9,6 +10,7 @@ import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import TextField from '@/components/forms/text-field'
 import TableFiltersBar from '@/components/table-filters-bar'
 import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
 import { useDataTable } from '@/hooks/use-data-table'
 import { formatDateDisplay } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -269,6 +271,40 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 					{formatDateDisplay(row.createdAt)}
 				</span>
 			),
+		},
+		{
+			header: { render: () => '' },
+			cell: ({ row }) => {
+				const isRespondable =
+					!row.hasResponse &&
+					(row.status === 'open' || row.status === 'in_progress')
+				return (
+					<div className='flex items-center justify-end gap-1'>
+						{isRespondable && (
+							<Link
+								href={`/dashboard/complaints/${row.id}`}
+								title='Responder reclamo'
+								className={buttonVariants({
+									variant: 'ghost',
+									size: 'icon',
+								})}
+							>
+								<MessageSquare className='size-4' />
+							</Link>
+						)}
+						<Link
+							href={`/dashboard/complaints/${row.id}`}
+							title='Ver detalles'
+							className={buttonVariants({
+								variant: 'ghost',
+								size: 'icon',
+							})}
+						>
+							<Eye className='size-4' />
+						</Link>
+					</div>
+				)
+			},
 		},
 	])
 

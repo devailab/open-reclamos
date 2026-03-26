@@ -386,6 +386,17 @@ export const complaints = pgTable(
 		description: text('description'),
 		// pedido realizado al proveedor o empresa
 		request: text('request'),
+		// respuesta oficial de la empresa al consumidor
+		officialResponse: text('official_response'),
+		// fecha en que se registró la respuesta oficial
+		respondedAt: timestamp('responded_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		// usuario que registró la respuesta
+		respondedBy: uuid('responded_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 			.defaultNow()
 			.notNull(),

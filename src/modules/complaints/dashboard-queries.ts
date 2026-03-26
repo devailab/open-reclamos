@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike, or, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/database/database'
 import { complaints, stores } from '@/database/schema'
 import type { ComplaintsTableFilters } from './dashboard-validation'
@@ -13,6 +13,7 @@ export interface ComplaintTableRow {
 	storeName: string
 	status: string
 	responseDeadline: Date | null
+	hasResponse: boolean
 	createdAt: Date
 }
 
@@ -92,6 +93,7 @@ export async function getComplaintsTableForOrganization({
 			storeName: stores.name,
 			status: complaints.status,
 			responseDeadline: complaints.responseDeadline,
+			hasResponse: sql<boolean>`${complaints.officialResponse} IS NOT NULL`,
 			createdAt: complaints.createdAt,
 		})
 		.from(complaints)
