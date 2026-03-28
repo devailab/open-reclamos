@@ -1,19 +1,25 @@
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
+import { $getComplaintsDashboardMetricsAction } from '@/modules/complaints/dashboard-actions'
+import { DashboardPage } from './_features/dashboard-page'
+import type { DashboardInitialState } from './_features/types'
 
-const DashboardPage: FC = async () => {
+const DashboardRoute: FC = async () => {
 	const session = await getSession()
+	const metrics = await $getComplaintsDashboardMetricsAction({ days: 7 })
+
+	const initialState: DashboardInitialState = {
+		days: metrics.days,
+		kpis: metrics.kpis,
+		trend: metrics.trend,
+	}
 
 	return (
-		<div className='space-y-4'>
-			<div>
-				<h1 className='text-2xl font-semibold'>Dashboard</h1>
-				<p className='text-muted-foreground text-sm'>
-					Bienvenido, {session?.user.name}
-				</p>
-			</div>
-		</div>
+		<DashboardPage
+			userName={session?.user.name ?? 'Usuario'}
+			initialState={initialState}
+		/>
 	)
 }
 
-export default DashboardPage
+export default DashboardRoute

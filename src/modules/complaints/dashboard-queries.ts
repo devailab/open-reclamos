@@ -1,7 +1,28 @@
-import { and, count, desc, eq, ilike, or, type SQL, sql } from 'drizzle-orm'
+import {
+	eachDayOfInterval,
+	endOfDay,
+	format,
+	startOfDay,
+	subDays,
+} from 'date-fns'
+import {
+	and,
+	asc,
+	count,
+	desc,
+	eq,
+	ilike,
+	or,
+	type SQL,
+	sql,
+} from 'drizzle-orm'
 import { db } from '@/database/database'
 import { complaints, stores } from '@/database/schema'
-import type { ComplaintsTableFilters } from './dashboard-validation'
+import type {
+	ComplaintsTableFilters,
+	DashboardTrendDays,
+	DashboardTrendPoint,
+} from './dashboard-validation'
 
 export interface ComplaintTableRow {
 	id: string
@@ -20,6 +41,14 @@ export interface ComplaintTableRow {
 export interface StoreOption {
 	id: string
 	name: string
+}
+
+export interface ComplaintsDashboardKpis {
+	total: number
+	open: number
+	inProgress: number
+	resolved: number
+	overdue: number
 }
 
 interface GetComplaintsTableForOrganizationParams {
@@ -122,4 +151,70 @@ export async function getStoreOptionsForOrganization(
 		.from(stores)
 		.where(eq(stores.organizationId, organizationId))
 		.orderBy(stores.name)
+}
+
+export async function getComplaintsDashboardKpisForOrganization(
+	organizationId: string,
+): Promise<ComplaintsDashboardKpis> {
+	const [summary] = await db
+		.select({
+			total: count(),
+			open: sql<number>`count(*) filter (where ${complaints.status} = 'open')`,
+			inProgress: sql<number>`count(*) filter (where ${complaints.status} = 'in_progress')`,
+			resolved: sql<number>`count(*) filter (where ${complaints.status} = 'resolved')`,
+			overdue: sql<number>`count(*) filter (
+				where ${complaints.status} in ('open', 'in_progress')
+				and ${complaints.responseDeadline} is not null
+				and ${complaints.responseDeadline} < now()
+			)`,
+		})
+		.from(complaints)
+		.where(eq(complaints.organizationId, organizationId))
+
+	return {
+		total: Number(summary?.total ?? 0),
+		open: Number(summary?.open ?? 0),
+		inProgress: Number(summary?.inProgress ?? 0),
+		resolved: Number(summary?.resolved ?? 0),
+		overdue: Number(summary?.overdue ?? 0),
+	}
+}
+
+export async function getComplaintsDailyTrendForOrganization(
+	organizationId: string,
+	days: DashboardTrendDays,
+): Promise<DashboardTrendPoint[]> {
+	const today = startOfDay(new Date())
+	const startDate = subDays(today, days - 1)
+	const endDate = endOfDay(today)
+	const dayExpression = sql<string>`date(${complaints.createdAt})::text`
+
+	const rows = await db
+		.select({
+			date: dayExpression,
+			count: count(),
+		})
+		.from(complaints)
+		.where(
+			and(
+				eq(complaints.organizationId, organizationId),
+				sql`${complaints.createdAt} >= ${startDate}`,
+				sql`${complaints.createdAt} <= ${endDate}`,
+			),
+		)
+		.groupBy(dayExpression)
+		.orderBy(asc(dayExpression))
+
+	const countsByDay = new Map(
+		rows.map((row) => [row.date, Number(row.count)]),
+	)
+
+	return eachDayOfInterval({ start: startDate, end: today }).map((date) => {
+		const key = format(date, 'yyyy-MM-dd')
+
+		return {
+			date: key,
+			count: countsByDay.get(key) ?? 0,
+		}
+	})
 }

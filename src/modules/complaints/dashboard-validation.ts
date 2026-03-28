@@ -2,6 +2,15 @@ const DEFAULT_PAGE = 1
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const MAX_SEARCH_LENGTH = 120
+const DEFAULT_DASHBOARD_TREND_DAYS = 7
+
+export const DASHBOARD_TREND_DAY_OPTIONS = [7, 15, 30] as const
+export type DashboardTrendDays = (typeof DASHBOARD_TREND_DAY_OPTIONS)[number]
+
+export interface DashboardTrendPoint {
+	date: string
+	count: number
+}
 
 export const COMPLAINT_STATUSES = [
 	'open',
@@ -75,4 +84,17 @@ export const normalizeComplaintsPagination = (
 			: DEFAULT_PAGE_SIZE
 
 	return { page: normalizedPage, pageSize: normalizedPageSize }
+}
+
+export const normalizeDashboardTrendDays = (
+	value?: number,
+): DashboardTrendDays => {
+	if (
+		value &&
+		DASHBOARD_TREND_DAY_OPTIONS.includes(value as DashboardTrendDays)
+	) {
+		return value as DashboardTrendDays
+	}
+
+	return DEFAULT_DASHBOARD_TREND_DAYS
 }
