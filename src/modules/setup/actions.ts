@@ -12,7 +12,11 @@ import {
 	users,
 } from '@/database/schema'
 import { auth } from '@/lib/auth'
-import { JSON_PE_TOKEN, JSON_PE_URL } from '@/lib/config'
+import {
+	DOCUMENT_LOOKUP_PROVIDER,
+	DOCUMENT_LOOKUP_TOKEN,
+	DOCUMENT_LOOKUP_URL,
+} from '@/lib/config'
 import {
 	checkSlugExists,
 	checkStoreSlugExists,
@@ -37,6 +41,13 @@ export type LookupRucResult =
 	| { success: false; error: string }
 
 export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
+	if (!DOCUMENT_LOOKUP_TOKEN) {
+		return {
+			success: false,
+			error: `No se configuró el proveedor ${DOCUMENT_LOOKUP_PROVIDER} para consultar documentos.`,
+		}
+	}
+
 	const existing = await db
 		.select({ id: organizations.id })
 		.from(organizations)
@@ -52,10 +63,10 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 
 	let response: Response
 	try {
-		response = await fetch(`${JSON_PE_URL}/api/ruc`, {
+		response = await fetch(`${DOCUMENT_LOOKUP_URL}/api/ruc`, {
 			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${JSON_PE_TOKEN}`,
+				Authorization: `Bearer ${DOCUMENT_LOOKUP_TOKEN}`,
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({ ruc }),
