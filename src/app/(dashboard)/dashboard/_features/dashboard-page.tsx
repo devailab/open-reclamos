@@ -16,6 +16,7 @@ import {
 import { formatDateDisplay } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { $getComplaintsDashboardMetricsAction } from '@/modules/complaints/dashboard-actions'
+import type { ComplaintsDashboardKpis } from '@/modules/complaints/dashboard-queries'
 import type { DashboardTrendDays } from '@/modules/complaints/dashboard-validation'
 import type { DashboardPageProps } from './types'
 
@@ -28,7 +29,14 @@ const CHART_CONFIG = {
 	},
 } satisfies ChartConfig
 
-const KPI_DEFINITIONS = [
+type KpiDefinition = {
+	key: keyof ComplaintsDashboardKpis
+	title: string
+	description: string
+	highlight?: boolean
+}
+
+const KPI_DEFINITIONS: readonly KpiDefinition[] = [
 	{
 		key: 'total',
 		title: 'Total reclamos',
@@ -55,7 +63,7 @@ const KPI_DEFINITIONS = [
 		description: 'Fuera del plazo legal',
 		highlight: true,
 	},
-] as const
+]
 
 export const DashboardPage: FC<DashboardPageProps> = ({
 	userName,
