@@ -5,6 +5,7 @@ import {
 	FileText,
 	Globe,
 	Hash,
+	Link,
 	MapPin,
 	Phone,
 	Tag,
@@ -16,6 +17,7 @@ import AutocompleteField, {
 } from '@/components/forms/autocomplete-field'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import TextField from '@/components/forms/text-field'
+import { PublicFormLink } from '@/components/public-form-link'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -218,6 +220,22 @@ export function OrganizationSettingsForm({
 							/>
 						</div>
 					</div>
+				</CardContent>
+			</Card>
+
+			{/* Formulario de reclamos */}
+			<Card>
+				<CardHeader>
+					<CardTitle className='flex items-center gap-2 text-base'>
+						<Link className='size-4' />
+						Formulario de reclamos
+					</CardTitle>
+					<CardDescription>
+						Enlace público del libro de reclamaciones de tu empresa.
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<PublicFormLink path={`/c/${org.slug}`} />
 				</CardContent>
 			</Card>
 

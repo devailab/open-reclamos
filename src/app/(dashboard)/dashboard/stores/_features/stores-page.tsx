@@ -1,9 +1,10 @@
 'use client'
 
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { ExternalLink, Pencil, Plus, Trash2 } from 'lucide-react'
 import type { FC } from 'react'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
+import { CopyButton } from '@/components/copy-button'
 import DataTable from '@/components/data-table'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import TextField from '@/components/forms/text-field'
@@ -205,6 +206,38 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 			header: { render: () => 'Actualización' },
 			cell: ({ row }) =>
 				formatDateDisplay(row.updatedAt ?? row.createdAt),
+		},
+		{
+			header: { render: () => 'Formulario' },
+			cell: ({ row }) => {
+				const path = `/s/${row.slug}`
+				const fullUrl =
+					typeof window !== 'undefined'
+						? `${window.location.origin}${path}`
+						: path
+				return (
+					<div className='flex items-center gap-1'>
+						<CopyButton value={fullUrl} size='icon-sm' />
+						<Button
+							type='button'
+							variant='ghost'
+							size='icon-sm'
+							title='Abrir formulario de reclamos'
+							onClick={(event) => {
+								event.stopPropagation()
+								window.open(
+									fullUrl,
+									'_blank',
+									'noopener,noreferrer',
+								)
+							}}
+						>
+							<ExternalLink />
+							<span className='sr-only'>Abrir formulario</span>
+						</Button>
+					</div>
+				)
+			},
 		},
 		{
 			header: { render: () => 'Acciones' },
