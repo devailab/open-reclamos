@@ -25,8 +25,6 @@ import {
 	searchUbigeos,
 } from './queries'
 
-export type { RucData }
-
 export type LookupRucResult =
 	| { success: true; data: RucData; ubigeoId: string }
 	| { success: false; error: string }

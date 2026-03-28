@@ -25,8 +25,8 @@ import {
 	$getSlugSuggestionAction,
 	$lookupRucAction,
 	$setupOrganizationAction,
-	type RucData,
 } from '@/modules/setup/actions'
+import type { RucData } from '@/modules/setup/document-lookup'
 import {
 	validateAddress,
 	validateAddressType,
