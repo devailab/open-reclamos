@@ -1,0 +1,1730 @@
+[
+    {
+        "id": "019cd010-a3a5-7c97-9048-699e7c6855be",
+        "name": "Afghanistan",
+        "iso2": "AF",
+        "iso3": "AFG",
+        "phone_code": "93",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-77fa-be7e-7c4d8836d968",
+        "name": "Albania",
+        "iso2": "AL",
+        "iso3": "ALB",
+        "phone_code": "355",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7854-b15d-99a778ea2599",
+        "name": "Algeria",
+        "iso2": "DZ",
+        "iso3": "DZA",
+        "phone_code": "213",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7874-aed9-3845297a4f16",
+        "name": "Andorra",
+        "iso2": "AD",
+        "iso3": "AND",
+        "phone_code": "376",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7891-b2d7-e89050d69f38",
+        "name": "Angola",
+        "iso2": "AO",
+        "iso3": "AGO",
+        "phone_code": "244",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-78aa-9103-9da4e1eb8765",
+        "name": "Antarctica",
+        "iso2": "AQ",
+        "iso3": "ATA",
+        "phone_code": "672",
+        "continent": "Antarctica"
+    },
+    {
+        "id": "019cd010-a3a6-78c4-b034-a9e389b0d33c",
+        "name": "Argentina",
+        "iso2": "AR",
+        "iso3": "ARG",
+        "phone_code": "54",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a6-78dd-a544-aea5f769aac5",
+        "name": "Armenia",
+        "iso2": "AM",
+        "iso3": "ARM",
+        "phone_code": "374",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-78f7-b6f0-5d458566431f",
+        "name": "Aruba",
+        "iso2": "AW",
+        "iso3": "ABW",
+        "phone_code": "297",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a6-7911-b011-79e8e1ce1774",
+        "name": "Australia",
+        "iso2": "AU",
+        "iso3": "AUS",
+        "phone_code": "61",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a6-7934-9f6e-4031154a6299",
+        "name": "Austria",
+        "iso2": "AT",
+        "iso3": "AUT",
+        "phone_code": "43",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7950-a580-00533ab20be5",
+        "name": "Azerbaijan",
+        "iso2": "AZ",
+        "iso3": "AZE",
+        "phone_code": "994",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-796b-90df-6b4495463453",
+        "name": "Bahrain",
+        "iso2": "BH",
+        "iso3": "BHR",
+        "phone_code": "973",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-7988-9d5f-da0ae1ebe70e",
+        "name": "Bangladesh",
+        "iso2": "BD",
+        "iso3": "BGD",
+        "phone_code": "880",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-79a3-989b-bc0a52511407",
+        "name": "Belarus",
+        "iso2": "BY",
+        "iso3": "BLR",
+        "phone_code": "375",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-79be-86e6-74a09fe3f799",
+        "name": "Belgium",
+        "iso2": "BE",
+        "iso3": "BEL",
+        "phone_code": "32",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-79d8-b6b0-d560da18ecc2",
+        "name": "Belize",
+        "iso2": "BZ",
+        "iso3": "BLZ",
+        "phone_code": "501",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a6-79f1-923a-bd6a6d498752",
+        "name": "Benin",
+        "iso2": "BJ",
+        "iso3": "BEN",
+        "phone_code": "229",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7a0b-bf12-cf8ca53184a3",
+        "name": "Bhutan",
+        "iso2": "BT",
+        "iso3": "BTN",
+        "phone_code": "975",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-7a25-aa2a-26198e3ef90e",
+        "name": "Bolivia",
+        "iso2": "BO",
+        "iso3": "BOL",
+        "phone_code": "591",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a6-7a3f-9204-06d521ca6c1f",
+        "name": "Bosnia and Herzegovina",
+        "iso2": "BA",
+        "iso3": "BIH",
+        "phone_code": "387",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7a59-acff-6d64f62db8dc",
+        "name": "Botswana",
+        "iso2": "BW",
+        "iso3": "BWA",
+        "phone_code": "267",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7a75-8cdf-9bf6f110c531",
+        "name": "Brazil",
+        "iso2": "BR",
+        "iso3": "BRA",
+        "phone_code": "55",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a6-7a8e-aa0c-68899fc97c86",
+        "name": "British Indian Ocean Territory",
+        "iso2": "IO",
+        "iso3": "IOT",
+        "phone_code": "246",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-7aae-ab3a-333e1120312d",
+        "name": "Brunei",
+        "iso2": "BN",
+        "iso3": "BRN",
+        "phone_code": "673",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-7ac8-8eb4-ebaed89c6f62",
+        "name": "Bulgaria",
+        "iso2": "BG",
+        "iso3": "BGR",
+        "phone_code": "359",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7ae3-92d9-febe04f55889",
+        "name": "Burkina Faso",
+        "iso2": "BF",
+        "iso3": "BFA",
+        "phone_code": "226",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7afc-9c4e-c71c2c32fbbc",
+        "name": "Burundi",
+        "iso2": "BI",
+        "iso3": "BDI",
+        "phone_code": "257",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7b16-86da-c35c5d7b7427",
+        "name": "Cambodia",
+        "iso2": "KH",
+        "iso3": "KHM",
+        "phone_code": "855",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-7b30-8626-2e221d3b117f",
+        "name": "Cameroon",
+        "iso2": "CM",
+        "iso3": "CMR",
+        "phone_code": "237",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7b4a-9c69-1883d9796f94",
+        "name": "Canada",
+        "iso2": "CA",
+        "iso3": "CAN",
+        "phone_code": "1",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a6-7b64-9738-6c61cb0af308",
+        "name": "Cape Verde",
+        "iso2": "CV",
+        "iso3": "CPV",
+        "phone_code": "238",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7b7f-810e-a799e48d6c3e",
+        "name": "Central African Republic",
+        "iso2": "CF",
+        "iso3": "CAF",
+        "phone_code": "236",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7b99-85bc-65aad2cf26a1",
+        "name": "Chad",
+        "iso2": "TD",
+        "iso3": "TCD",
+        "phone_code": "235",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7bb2-8b2b-21933487a321",
+        "name": "Chile",
+        "iso2": "CL",
+        "iso3": "CHL",
+        "phone_code": "56",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a6-7bcc-9396-571a85dad8f5",
+        "name": "China",
+        "iso2": "CN",
+        "iso3": "CHN",
+        "phone_code": "86",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-7be6-ae5b-18afa071e5e8",
+        "name": "Christmas Island",
+        "iso2": "CX",
+        "iso3": "CXR",
+        "phone_code": "61",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-7c03-8fda-3d1f40ad6d42",
+        "name": "Cocos Islands",
+        "iso2": "CC",
+        "iso3": "CCK",
+        "phone_code": "61",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-7c1f-8418-e088a351c08c",
+        "name": "Colombia",
+        "iso2": "CO",
+        "iso3": "COL",
+        "phone_code": "57",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a6-7c39-afb0-a3e125ae9e7a",
+        "name": "Comoros",
+        "iso2": "KM",
+        "iso3": "COM",
+        "phone_code": "269",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7c52-8a73-ca395442f1c4",
+        "name": "Cook Islands",
+        "iso2": "CK",
+        "iso3": "COK",
+        "phone_code": "682",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a6-7c6d-9059-95b27366e7cd",
+        "name": "Costa Rica",
+        "iso2": "CR",
+        "iso3": "CRI",
+        "phone_code": "506",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a6-7c87-829f-a0da99e80d70",
+        "name": "Croatia",
+        "iso2": "HR",
+        "iso3": "HRV",
+        "phone_code": "385",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7ca1-907a-ef6838a63106",
+        "name": "Cuba",
+        "iso2": "CU",
+        "iso3": "CUB",
+        "phone_code": "53",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a6-7cbb-bdaf-35be7deb6021",
+        "name": "Curacao",
+        "iso2": "CW",
+        "iso3": "CUW",
+        "phone_code": "599",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a6-7cd6-9a5b-c5f97b94e6b6",
+        "name": "Cyprus",
+        "iso2": "CY",
+        "iso3": "CYP",
+        "phone_code": "357",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7cf0-986b-e2889b7a54b1",
+        "name": "Czech Republic",
+        "iso2": "CZ",
+        "iso3": "CZE",
+        "phone_code": "420",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7d0b-987a-516568c2430e",
+        "name": "Democratic Republic of the Congo",
+        "iso2": "CD",
+        "iso3": "COD",
+        "phone_code": "243",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7d26-9c34-783e9f5b1196",
+        "name": "Denmark",
+        "iso2": "DK",
+        "iso3": "DNK",
+        "phone_code": "45",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7d40-bf21-5b13a201acf7",
+        "name": "Djibouti",
+        "iso2": "DJ",
+        "iso3": "DJI",
+        "phone_code": "253",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7d5b-a8ef-3fd99da1aa43",
+        "name": "East Timor",
+        "iso2": "TL",
+        "iso3": "TLS",
+        "phone_code": "670",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a6-7d7b-a8a7-5430decddfec",
+        "name": "Ecuador",
+        "iso2": "EC",
+        "iso3": "ECU",
+        "phone_code": "593",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a6-7d95-a694-385fd848d875",
+        "name": "Egypt",
+        "iso2": "EG",
+        "iso3": "EGY",
+        "phone_code": "20",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7daf-95e1-70b2f7982c4d",
+        "name": "El Salvador",
+        "iso2": "SV",
+        "iso3": "SLV",
+        "phone_code": "503",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a6-7dca-bb59-2339f802d5a9",
+        "name": "Equatorial Guinea",
+        "iso2": "GQ",
+        "iso3": "GNQ",
+        "phone_code": "240",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7de4-99f3-6c1a6ca27757",
+        "name": "Eritrea",
+        "iso2": "ER",
+        "iso3": "ERI",
+        "phone_code": "291",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7dff-ab21-fc73b8b16ebf",
+        "name": "Estonia",
+        "iso2": "EE",
+        "iso3": "EST",
+        "phone_code": "372",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7e19-b430-7c00a1f76cc9",
+        "name": "Ethiopia",
+        "iso2": "ET",
+        "iso3": "ETH",
+        "phone_code": "251",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7e33-a3b4-7f3ff7348954",
+        "name": "Falkland Islands",
+        "iso2": "FK",
+        "iso3": "FLK",
+        "phone_code": "500",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a6-7e4e-802c-4c86f3c09008",
+        "name": "Faroe Islands",
+        "iso2": "FO",
+        "iso3": "FRO",
+        "phone_code": "298",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7e69-872a-62ffd04e8a38",
+        "name": "Fiji",
+        "iso2": "FJ",
+        "iso3": "FJI",
+        "phone_code": "679",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a6-7e86-b6f2-68ee7df68e93",
+        "name": "Finland",
+        "iso2": "FI",
+        "iso3": "FIN",
+        "phone_code": "358",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7ea0-bfb7-71963e943b07",
+        "name": "France",
+        "iso2": "FR",
+        "iso3": "FRA",
+        "phone_code": "33",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7eba-bc51-f8ba1c29831f",
+        "name": "French Polynesia",
+        "iso2": "PF",
+        "iso3": "PYF",
+        "phone_code": "689",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a6-7ed8-b8f1-3f3f31d51277",
+        "name": "Gabon",
+        "iso2": "GA",
+        "iso3": "GAB",
+        "phone_code": "241",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7ef3-91e2-3d0e618b0be1",
+        "name": "Gambia",
+        "iso2": "GM",
+        "iso3": "GMB",
+        "phone_code": "220",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7f0d-954f-d73babbd1365",
+        "name": "Georgia",
+        "iso2": "GE",
+        "iso3": "GEO",
+        "phone_code": "995",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a6-7f28-b878-39b24c595f7c",
+        "name": "Germany",
+        "iso2": "DE",
+        "iso3": "DEU",
+        "phone_code": "49",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7f42-8f65-987e5a7e007c",
+        "name": "Ghana",
+        "iso2": "GH",
+        "iso3": "GHA",
+        "phone_code": "233",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7f5c-82e3-86e952285a13",
+        "name": "Gibraltar",
+        "iso2": "GI",
+        "iso3": "GIB",
+        "phone_code": "350",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7f77-99e8-53e392ea226f",
+        "name": "Greece",
+        "iso2": "GR",
+        "iso3": "GRC",
+        "phone_code": "30",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a6-7f91-b23c-d043718fbe45",
+        "name": "Greenland",
+        "iso2": "GL",
+        "iso3": "GRL",
+        "phone_code": "299",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a6-7fac-a8f9-542fe810e095",
+        "name": "Guatemala",
+        "iso2": "GT",
+        "iso3": "GTM",
+        "phone_code": "502",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a6-7fc7-8e3f-5970a2001b9d",
+        "name": "Guinea",
+        "iso2": "GN",
+        "iso3": "GIN",
+        "phone_code": "224",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7fe1-844a-91672d06b7f7",
+        "name": "Guinea-Bissau",
+        "iso2": "GW",
+        "iso3": "GNB",
+        "phone_code": "245",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a6-7ffc-887b-36614f60b00d",
+        "name": "Guyana",
+        "iso2": "GY",
+        "iso3": "GUY",
+        "phone_code": "592",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a7-7017-a208-50a81e260bcd",
+        "name": "Haiti",
+        "iso2": "HT",
+        "iso3": "HTI",
+        "phone_code": "509",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a7-7034-a27b-15b8bb92d226",
+        "name": "Honduras",
+        "iso2": "HN",
+        "iso3": "HND",
+        "phone_code": "504",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a7-7053-89a5-933f4698a86a",
+        "name": "Hong Kong",
+        "iso2": "HK",
+        "iso3": "HKG",
+        "phone_code": "852",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-706f-827b-5d837c217a43",
+        "name": "Hungary",
+        "iso2": "HU",
+        "iso3": "HUN",
+        "phone_code": "36",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-708a-b54a-eb1d199bd913",
+        "name": "Iceland",
+        "iso2": "IS",
+        "iso3": "ISL",
+        "phone_code": "354",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-70a5-8957-c7d520e163f2",
+        "name": "India",
+        "iso2": "IN",
+        "iso3": "IND",
+        "phone_code": "91",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-70bf-bed1-fbc5c5691713",
+        "name": "Indonesia",
+        "iso2": "ID",
+        "iso3": "IDN",
+        "phone_code": "62",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-70da-9345-e6b25c4cf526",
+        "name": "Iran",
+        "iso2": "IR",
+        "iso3": "IRN",
+        "phone_code": "98",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-70f4-a8eb-42a0e7124491",
+        "name": "Iraq",
+        "iso2": "IQ",
+        "iso3": "IRQ",
+        "phone_code": "964",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-710f-ab62-ead5a8620965",
+        "name": "Ireland",
+        "iso2": "IE",
+        "iso3": "IRL",
+        "phone_code": "353",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-712a-98e6-2a7f835df04d",
+        "name": "Israel",
+        "iso2": "IL",
+        "iso3": "ISR",
+        "phone_code": "972",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7144-a8f4-68e9d537b41b",
+        "name": "Italy",
+        "iso2": "IT",
+        "iso3": "ITA",
+        "phone_code": "39",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-715f-831c-1c3bd5cecaa6",
+        "name": "Ivory Coast",
+        "iso2": "CI",
+        "iso3": "CIV",
+        "phone_code": "225",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-717b-a802-f602c2fe392f",
+        "name": "Japan",
+        "iso2": "JP",
+        "iso3": "JPN",
+        "phone_code": "81",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7195-88e9-88ef9f095288",
+        "name": "Jordan",
+        "iso2": "JO",
+        "iso3": "JOR",
+        "phone_code": "962",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-71b4-9702-90bd890f5ced",
+        "name": "Kazakhstan",
+        "iso2": "KZ",
+        "iso3": "KAZ",
+        "phone_code": "7",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-71cf-9bef-74f93c32668b",
+        "name": "Kenya",
+        "iso2": "KE",
+        "iso3": "KEN",
+        "phone_code": "254",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-71ea-bc94-86162cc69a64",
+        "name": "Kiribati",
+        "iso2": "KI",
+        "iso3": "KIR",
+        "phone_code": "686",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7204-9d0f-4e570a1b74d9",
+        "name": "Kosovo",
+        "iso2": "XK",
+        "iso3": "XKX",
+        "phone_code": "383",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-721e-9b4b-02c066e44fc1",
+        "name": "Kuwait",
+        "iso2": "KW",
+        "iso3": "KWT",
+        "phone_code": "965",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7239-9172-2e7a3cff707e",
+        "name": "Kyrgyzstan",
+        "iso2": "KG",
+        "iso3": "KGZ",
+        "phone_code": "996",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7253-ade2-781d53d781d8",
+        "name": "Laos",
+        "iso2": "LA",
+        "iso3": "LAO",
+        "phone_code": "856",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-726f-94a4-6b31d75c6f18",
+        "name": "Latvia",
+        "iso2": "LV",
+        "iso3": "LVA",
+        "phone_code": "371",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-728a-b47e-21351294c714",
+        "name": "Lebanon",
+        "iso2": "LB",
+        "iso3": "LBN",
+        "phone_code": "961",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-72a4-8a55-db9ba6405623",
+        "name": "Lesotho",
+        "iso2": "LS",
+        "iso3": "LSO",
+        "phone_code": "266",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-72c0-b18e-4bde62fe52b7",
+        "name": "Liberia",
+        "iso2": "LR",
+        "iso3": "LBR",
+        "phone_code": "231",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-72db-aec4-a6070b9698e8",
+        "name": "Libya",
+        "iso2": "LY",
+        "iso3": "LBY",
+        "phone_code": "218",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-72f6-a167-8abe4a10b5aa",
+        "name": "Liechtenstein",
+        "iso2": "LI",
+        "iso3": "LIE",
+        "phone_code": "423",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7311-bbd4-4e68fbe96162",
+        "name": "Lithuania",
+        "iso2": "LT",
+        "iso3": "LTU",
+        "phone_code": "370",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-732f-9829-de3293825726",
+        "name": "Luxembourg",
+        "iso2": "LU",
+        "iso3": "LUX",
+        "phone_code": "352",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-734a-8e1a-45a78a0b4205",
+        "name": "Macau",
+        "iso2": "MO",
+        "iso3": "MAC",
+        "phone_code": "853",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7364-9466-d0cf67940c63",
+        "name": "Macedonia",
+        "iso2": "MK",
+        "iso3": "MKD",
+        "phone_code": "389",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-759e-b515-95cb758be846",
+        "name": "Madagascar",
+        "iso2": "MG",
+        "iso3": "MDG",
+        "phone_code": "261",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-75ce-bc14-71ced0c821a7",
+        "name": "Malawi",
+        "iso2": "MW",
+        "iso3": "MWI",
+        "phone_code": "265",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-75ec-bc8f-da9760010bdc",
+        "name": "Malaysia",
+        "iso2": "MY",
+        "iso3": "MYS",
+        "phone_code": "60",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-760a-b49b-9d4244bc3b7e",
+        "name": "Maldives",
+        "iso2": "MV",
+        "iso3": "MDV",
+        "phone_code": "960",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-76d4-8d15-2ecec2a51c66",
+        "name": "Mali",
+        "iso2": "ML",
+        "iso3": "MLI",
+        "phone_code": "223",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-76fa-88a2-dca256099450",
+        "name": "Malta",
+        "iso2": "MT",
+        "iso3": "MLT",
+        "phone_code": "356",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7718-9a0a-a064ab58d17d",
+        "name": "Marshall Islands",
+        "iso2": "MH",
+        "iso3": "MHL",
+        "phone_code": "692",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7734-8567-f351ebe35bb1",
+        "name": "Mauritania",
+        "iso2": "MR",
+        "iso3": "MRT",
+        "phone_code": "222",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-774f-9840-cbbb1bec1e65",
+        "name": "Mauritius",
+        "iso2": "MU",
+        "iso3": "MUS",
+        "phone_code": "230",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-77b7-a9b7-af72e22d6d9d",
+        "name": "Mayotte",
+        "iso2": "YT",
+        "iso3": "MYT",
+        "phone_code": "262",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-77ea-b062-f5e81a42dd58",
+        "name": "Mexico",
+        "iso2": "MX",
+        "iso3": "MEX",
+        "phone_code": "52",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a7-7808-9b69-c38d8b2e2a2a",
+        "name": "Micronesia",
+        "iso2": "FM",
+        "iso3": "FSM",
+        "phone_code": "691",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7824-b8e6-8319c20e9d6b",
+        "name": "Moldova",
+        "iso2": "MD",
+        "iso3": "MDA",
+        "phone_code": "373",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7840-aeea-982bac41f03e",
+        "name": "Monaco",
+        "iso2": "MC",
+        "iso3": "MCO",
+        "phone_code": "377",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-785d-bdfb-c146e8b50f06",
+        "name": "Mongolia",
+        "iso2": "MN",
+        "iso3": "MNG",
+        "phone_code": "976",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7878-8fa2-5f04485d0061",
+        "name": "Montenegro",
+        "iso2": "ME",
+        "iso3": "MNE",
+        "phone_code": "382",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7893-9688-69ad42ac266e",
+        "name": "Morocco",
+        "iso2": "MA",
+        "iso3": "MAR",
+        "phone_code": "212",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-78ae-8ec4-1288e76c99f7",
+        "name": "Mozambique",
+        "iso2": "MZ",
+        "iso3": "MOZ",
+        "phone_code": "258",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-78cb-9895-a1658aba0280",
+        "name": "Myanmar",
+        "iso2": "MM",
+        "iso3": "MMR",
+        "phone_code": "95",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-78e6-8680-f444b693356f",
+        "name": "Namibia",
+        "iso2": "NA",
+        "iso3": "NAM",
+        "phone_code": "264",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7900-a812-e87b353582d4",
+        "name": "Nauru",
+        "iso2": "NR",
+        "iso3": "NRU",
+        "phone_code": "674",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-791b-a7fe-17976f23229b",
+        "name": "Nepal",
+        "iso2": "NP",
+        "iso3": "NPL",
+        "phone_code": "977",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7936-a8e4-914b103a2b3c",
+        "name": "Netherlands",
+        "iso2": "NL",
+        "iso3": "NLD",
+        "phone_code": "31",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7951-9cbe-b7dff2adb956",
+        "name": "Netherlands Antilles",
+        "iso2": "AN",
+        "iso3": "ANT",
+        "phone_code": "599",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a7-7974-9579-37b5ae98974c",
+        "name": "New Caledonia",
+        "iso2": "NC",
+        "iso3": "NCL",
+        "phone_code": "687",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7990-b288-7ef6f9e270a7",
+        "name": "New Zealand",
+        "iso2": "NZ",
+        "iso3": "NZL",
+        "phone_code": "64",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-79ab-a8f5-0fec3d7391c8",
+        "name": "Nicaragua",
+        "iso2": "NI",
+        "iso3": "NIC",
+        "phone_code": "505",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a7-79c6-9be2-46bd2e20f274",
+        "name": "Niger",
+        "iso2": "NE",
+        "iso3": "NER",
+        "phone_code": "227",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-79e1-af97-346799a84abd",
+        "name": "Nigeria",
+        "iso2": "NG",
+        "iso3": "NGA",
+        "phone_code": "234",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-79fc-b9a9-44b4680cb7a8",
+        "name": "Niue",
+        "iso2": "NU",
+        "iso3": "NIU",
+        "phone_code": "683",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7a17-816e-fa3656a6445d",
+        "name": "North Korea",
+        "iso2": "KP",
+        "iso3": "PRK",
+        "phone_code": "850",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7a33-bb95-7e0277efa7a4",
+        "name": "Northern Mariana Islands",
+        "iso2": "MP",
+        "iso3": "MNP",
+        "phone_code": "1",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7a50-b152-bd8145d06a76",
+        "name": "Norway",
+        "iso2": "NO",
+        "iso3": "NOR",
+        "phone_code": "47",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7a6b-9774-fc4720a9ee9c",
+        "name": "Oman",
+        "iso2": "OM",
+        "iso3": "OMN",
+        "phone_code": "968",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7a86-af43-4d0e6a1be6d1",
+        "name": "Pakistan",
+        "iso2": "PK",
+        "iso3": "PAK",
+        "phone_code": "92",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7aa1-8855-f561765bead0",
+        "name": "Palau",
+        "iso2": "PW",
+        "iso3": "PLW",
+        "phone_code": "680",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7abc-b9b9-66f1fe3e7eb4",
+        "name": "Palestine",
+        "iso2": "PS",
+        "iso3": "PSE",
+        "phone_code": "970",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7adb-af38-8b1351422780",
+        "name": "Panama",
+        "iso2": "PA",
+        "iso3": "PAN",
+        "phone_code": "507",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a7-7afc-926f-8f7430578b25",
+        "name": "Papua New Guinea",
+        "iso2": "PG",
+        "iso3": "PNG",
+        "phone_code": "675",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7b18-a2d4-5e6b557a30e2",
+        "name": "Paraguay",
+        "iso2": "PY",
+        "iso3": "PRY",
+        "phone_code": "595",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a7-7b33-8a1b-322378a3c949",
+        "name": "Peru",
+        "iso2": "PE",
+        "iso3": "PER",
+        "phone_code": "51",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a7-7b4e-bebf-416cce7e18d7",
+        "name": "Philippines",
+        "iso2": "PH",
+        "iso3": "PHL",
+        "phone_code": "63",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7b6a-ae2f-19452a0b9347",
+        "name": "Pitcairn",
+        "iso2": "PN",
+        "iso3": "PCN",
+        "phone_code": "64",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7b85-a8a9-7458d80979f2",
+        "name": "Poland",
+        "iso2": "PL",
+        "iso3": "POL",
+        "phone_code": "48",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7ba1-825e-b5b897f59230",
+        "name": "Portugal",
+        "iso2": "PT",
+        "iso3": "PRT",
+        "phone_code": "351",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7bbc-b4fa-3737a9dfa3ff",
+        "name": "Qatar",
+        "iso2": "QA",
+        "iso3": "QAT",
+        "phone_code": "974",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7bd7-aa93-3e9273d341cb",
+        "name": "Republic of the Congo",
+        "iso2": "CG",
+        "iso3": "COG",
+        "phone_code": "242",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7bf4-9af2-9ecaf1acba11",
+        "name": "Reunion",
+        "iso2": "RE",
+        "iso3": "REU",
+        "phone_code": "262",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7c0f-96bf-67151fdb22e9",
+        "name": "Romania",
+        "iso2": "RO",
+        "iso3": "ROU",
+        "phone_code": "40",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7c2a-9bb0-92d53094285a",
+        "name": "Russia",
+        "iso2": "RU",
+        "iso3": "RUS",
+        "phone_code": "7",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7c45-a381-430c3c0a240d",
+        "name": "Rwanda",
+        "iso2": "RW",
+        "iso3": "RWA",
+        "phone_code": "250",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7c64-824b-be9342a40f85",
+        "name": "Saint Barthelemy",
+        "iso2": "BL",
+        "iso3": "BLM",
+        "phone_code": "590",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a7-7c83-a1ac-0cead6c13135",
+        "name": "Saint Helena",
+        "iso2": "SH",
+        "iso3": "SHN",
+        "phone_code": "290",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7c9f-81d3-b098272a2f14",
+        "name": "Saint Martin",
+        "iso2": "MF",
+        "iso3": "MAF",
+        "phone_code": "590",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a7-7cbb-adbc-6be0cdc28c7e",
+        "name": "Saint Pierre and Miquelon",
+        "iso2": "PM",
+        "iso3": "SPM",
+        "phone_code": "508",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a7-7cd7-a8c8-ba399472e7b8",
+        "name": "Samoa",
+        "iso2": "WS",
+        "iso3": "WSM",
+        "phone_code": "685",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7cf2-ae04-b31120447f4a",
+        "name": "San Marino",
+        "iso2": "SM",
+        "iso3": "SMR",
+        "phone_code": "378",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7d0d-9a06-7286bbab90bb",
+        "name": "Sao Tome and Principe",
+        "iso2": "ST",
+        "iso3": "STP",
+        "phone_code": "239",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7d29-b92c-b39e3a24f31b",
+        "name": "Saudi Arabia",
+        "iso2": "SA",
+        "iso3": "SAU",
+        "phone_code": "966",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7d44-ad1d-6032bcc743ab",
+        "name": "Senegal",
+        "iso2": "SN",
+        "iso3": "SEN",
+        "phone_code": "221",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7d5f-97eb-0a73cc616b73",
+        "name": "Serbia",
+        "iso2": "RS",
+        "iso3": "SRB",
+        "phone_code": "381",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7d7a-becd-562225d4b807",
+        "name": "Seychelles",
+        "iso2": "SC",
+        "iso3": "SYC",
+        "phone_code": "248",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7d96-acc0-d602893471f9",
+        "name": "Sierra Leone",
+        "iso2": "SL",
+        "iso3": "SLE",
+        "phone_code": "232",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7db1-bb35-f0d26f1996a9",
+        "name": "Singapore",
+        "iso2": "SG",
+        "iso3": "SGP",
+        "phone_code": "65",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7dd0-80c0-4e6cab8cdb83",
+        "name": "Slovakia",
+        "iso2": "SK",
+        "iso3": "SVK",
+        "phone_code": "421",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7deb-8954-ffdd71bd560b",
+        "name": "Slovenia",
+        "iso2": "SI",
+        "iso3": "SVN",
+        "phone_code": "386",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7e06-95bb-db238653dcd8",
+        "name": "Solomon Islands",
+        "iso2": "SB",
+        "iso3": "SLB",
+        "phone_code": "677",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a7-7e21-815c-d3dcd4f18697",
+        "name": "Somalia",
+        "iso2": "SO",
+        "iso3": "SOM",
+        "phone_code": "252",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7e3d-88b1-132e8b27c4ae",
+        "name": "South Africa",
+        "iso2": "ZA",
+        "iso3": "ZAF",
+        "phone_code": "27",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7e59-b525-da15168a8494",
+        "name": "South Korea",
+        "iso2": "KR",
+        "iso3": "KOR",
+        "phone_code": "82",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7e75-95ba-47d3d7b48d47",
+        "name": "South Sudan",
+        "iso2": "SS",
+        "iso3": "SSD",
+        "phone_code": "211",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7e90-9476-92a4babe1111",
+        "name": "Spain",
+        "iso2": "ES",
+        "iso3": "ESP",
+        "phone_code": "34",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7ead-946a-2a4a8b988ca9",
+        "name": "Sri Lanka",
+        "iso2": "LK",
+        "iso3": "LKA",
+        "phone_code": "94",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7ec9-a974-09382f7a6e1d",
+        "name": "Sudan",
+        "iso2": "SD",
+        "iso3": "SDN",
+        "phone_code": "249",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7ee4-a623-61946263409c",
+        "name": "Suriname",
+        "iso2": "SR",
+        "iso3": "SUR",
+        "phone_code": "597",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a7-7eff-bac5-f29241f6cc57",
+        "name": "Svalbard and Jan Mayen",
+        "iso2": "SJ",
+        "iso3": "SJM",
+        "phone_code": "47",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7f1b-a620-a7013bd5fc8d",
+        "name": "Swaziland",
+        "iso2": "SZ",
+        "iso3": "SWZ",
+        "phone_code": "268",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7f3b-8b57-103268f74737",
+        "name": "Sweden",
+        "iso2": "SE",
+        "iso3": "SWE",
+        "phone_code": "46",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7f57-a2a2-a31f3a087163",
+        "name": "Switzerland",
+        "iso2": "CH",
+        "iso3": "CHE",
+        "phone_code": "41",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a7-7f73-b2c7-270974f72159",
+        "name": "Syria",
+        "iso2": "SY",
+        "iso3": "SYR",
+        "phone_code": "963",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7f8e-ad6c-2f773d1c5bc1",
+        "name": "Taiwan",
+        "iso2": "TW",
+        "iso3": "TWN",
+        "phone_code": "886",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7fa9-8094-706736b2e3dc",
+        "name": "Tajikistan",
+        "iso2": "TJ",
+        "iso3": "TJK",
+        "phone_code": "992",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7fc6-840c-0cc93a7cb0df",
+        "name": "Tanzania",
+        "iso2": "TZ",
+        "iso3": "TZA",
+        "phone_code": "255",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a7-7fe2-b160-0e00ba0b70ad",
+        "name": "Thailand",
+        "iso2": "TH",
+        "iso3": "THA",
+        "phone_code": "66",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a7-7ffe-b744-a1a0130ae01e",
+        "name": "Togo",
+        "iso2": "TG",
+        "iso3": "TGO",
+        "phone_code": "228",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a8-7019-9af8-12e14c279ed4",
+        "name": "Tokelau",
+        "iso2": "TK",
+        "iso3": "TKL",
+        "phone_code": "690",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a8-7036-83c4-dc9e6295fd4d",
+        "name": "Tonga",
+        "iso2": "TO",
+        "iso3": "TON",
+        "phone_code": "676",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a8-7051-b17a-d41b4fd8f5ab",
+        "name": "Tunisia",
+        "iso2": "TN",
+        "iso3": "TUN",
+        "phone_code": "216",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a8-706d-aef9-58e9b2e79b28",
+        "name": "Turkey",
+        "iso2": "TR",
+        "iso3": "TUR",
+        "phone_code": "90",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a8-7087-b39a-110d79d64e9e",
+        "name": "Turkmenistan",
+        "iso2": "TM",
+        "iso3": "TKM",
+        "phone_code": "993",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a8-70a3-961a-58095c012242",
+        "name": "Tuvalu",
+        "iso2": "TV",
+        "iso3": "TUV",
+        "phone_code": "688",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a8-70c2-a808-f00fadd23533",
+        "name": "U.S. Virgin Islands",
+        "iso2": "VI",
+        "iso3": "VIR",
+        "phone_code": "1",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a8-70de-85f7-a1d95be55dcd",
+        "name": "Uganda",
+        "iso2": "UG",
+        "iso3": "UGA",
+        "phone_code": "256",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a8-70f9-a4df-7139df720c62",
+        "name": "Ukraine",
+        "iso2": "UA",
+        "iso3": "UKR",
+        "phone_code": "380",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a8-7114-af66-6b958f6352e7",
+        "name": "United Arab Emirates",
+        "iso2": "AE",
+        "iso3": "ARE",
+        "phone_code": "971",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a8-7132-a62e-823f15c2dc58",
+        "name": "United Kingdom",
+        "iso2": "GB",
+        "iso3": "GBR",
+        "phone_code": "44",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a8-714f-b868-c918595547db",
+        "name": "United States",
+        "iso2": "US",
+        "iso3": "USA",
+        "phone_code": "1",
+        "continent": "North America"
+    },
+    {
+        "id": "019cd010-a3a8-716a-b004-4f3873478e66",
+        "name": "Uruguay",
+        "iso2": "UY",
+        "iso3": "URY",
+        "phone_code": "598",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a8-7186-a689-c1d961e02f33",
+        "name": "Uzbekistan",
+        "iso2": "UZ",
+        "iso3": "UZB",
+        "phone_code": "998",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a8-71a2-8da1-5bdab0762d91",
+        "name": "Vanuatu",
+        "iso2": "VU",
+        "iso3": "VUT",
+        "phone_code": "678",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a8-71be-b43e-7a2af64f472c",
+        "name": "Vatican",
+        "iso2": "VA",
+        "iso3": "VAT",
+        "phone_code": "379",
+        "continent": "Europe"
+    },
+    {
+        "id": "019cd010-a3a8-71d9-8414-26844aa44e68",
+        "name": "Venezuela",
+        "iso2": "VE",
+        "iso3": "VEN",
+        "phone_code": "58",
+        "continent": "South America"
+    },
+    {
+        "id": "019cd010-a3a8-71f4-8326-a5f25872553e",
+        "name": "Vietnam",
+        "iso2": "VN",
+        "iso3": "VNM",
+        "phone_code": "84",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a8-720f-96a9-818d8bc76999",
+        "name": "Wallis and Futuna",
+        "iso2": "WF",
+        "iso3": "WLF",
+        "phone_code": "681",
+        "continent": "Oceania"
+    },
+    {
+        "id": "019cd010-a3a8-722f-b336-8b7412424ed8",
+        "name": "Western Sahara",
+        "iso2": "EH",
+        "iso3": "ESH",
+        "phone_code": "212",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a8-724f-bc80-15cc7005fb34",
+        "name": "Yemen",
+        "iso2": "YE",
+        "iso3": "YEM",
+        "phone_code": "967",
+        "continent": "Asia"
+    },
+    {
+        "id": "019cd010-a3a8-72d1-9ff3-f113a0e7323a",
+        "name": "Zambia",
+        "iso2": "ZM",
+        "iso3": "ZMB",
+        "phone_code": "260",
+        "continent": "Africa"
+    },
+    {
+        "id": "019cd010-a3a8-72f3-8719-6c5a40356778",
+        "name": "Zimbabwe",
+        "iso2": "ZW",
+        "iso3": "ZWE",
+        "phone_code": "263",
+        "continent": "Africa"
+    }
+]

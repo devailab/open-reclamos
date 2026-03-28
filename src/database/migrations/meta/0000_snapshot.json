@@ -1,5 +1,5 @@
 {
-    "id": "b7bf7b00-4242-4073-b6b2-7d8b839d33ca",
+    "id": "3993d26e-616e-42f6-b76f-b59011d0ca7e",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -194,7 +194,104 @@
                     "default": "now()"
                 }
             },
-            "indexes": {},
+            "indexes": {
+                "audit_logs_organization_id_idx": {
+                    "name": "audit_logs_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "audit_logs_created_at_idx": {
+                    "name": "audit_logs_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "audit_logs_action_idx": {
+                    "name": "audit_logs_action_idx",
+                    "columns": [
+                        {
+                            "expression": "action",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "audit_logs_entity_type_idx": {
+                    "name": "audit_logs_entity_type_idx",
+                    "columns": [
+                        {
+                            "expression": "entity_type",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "audit_logs_entity_id_idx": {
+                    "name": "audit_logs_entity_id_idx",
+                    "columns": [
+                        {
+                            "expression": "entity_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "audit_logs_organization_created_at_idx": {
+                    "name": "audit_logs_organization_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
             "foreignKeys": {
                 "audit_logs_organization_id_organizations_id_fk": {
                     "name": "audit_logs_organization_id_organizations_id_fk",
@@ -606,6 +703,24 @@
                     "primaryKey": false,
                     "notNull": false
                 },
+                "official_response": {
+                    "name": "official_response",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "responded_at": {
+                    "name": "responded_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "responded_by": {
+                    "name": "responded_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
                 "created_at": {
                     "name": "created_at",
                     "type": "timestamp with time zone",
@@ -703,6 +818,15 @@
                     "tableFrom": "complaints",
                     "tableTo": "ubigeos",
                     "columnsFrom": ["ubigeo_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "complaints_responded_by_users_id_fk": {
+                    "name": "complaints_responded_by_users_id_fk",
+                    "tableFrom": "complaints",
+                    "tableTo": "users",
+                    "columnsFrom": ["responded_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
                     "onUpdate": "no action"
@@ -878,6 +1002,104 @@
                 }
             },
             "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.organization_settings": {
+            "name": "organization_settings",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "response_deadline_days": {
+                    "name": "response_deadline_days",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 15
+                },
+                "form_enabled": {
+                    "name": "form_enabled",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_by": {
+                    "name": "updated_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "organization_settings_organization_id_organizations_id_fk": {
+                    "name": "organization_settings_organization_id_organizations_id_fk",
+                    "tableFrom": "organization_settings",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "organization_settings_created_by_users_id_fk": {
+                    "name": "organization_settings_created_by_users_id_fk",
+                    "tableFrom": "organization_settings",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "organization_settings_updated_by_users_id_fk": {
+                    "name": "organization_settings_updated_by_users_id_fk",
+                    "tableFrom": "organization_settings",
+                    "tableTo": "users",
+                    "columnsFrom": ["updated_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "organization_settings_organization_id_unique": {
+                    "name": "organization_settings_organization_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["organization_id"]
+                }
+            },
             "policies": {},
             "checkConstraints": {},
             "isRLSEnabled": false
@@ -1189,6 +1411,25 @@
                     "primaryKey": false,
                     "notNull": false
                 },
+                "form_enabled": {
+                    "name": "form_enabled",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": true
+                },
+                "deleted_at": {
+                    "name": "deleted_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "deleted_by": {
+                    "name": "deleted_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
                 "created_at": {
                     "name": "created_at",
                     "type": "timestamp with time zone",
@@ -1231,6 +1472,15 @@
                     "tableFrom": "stores",
                     "tableTo": "ubigeos",
                     "columnsFrom": ["ubigeo_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "stores_deleted_by_users_id_fk": {
+                    "name": "stores_deleted_by_users_id_fk",
+                    "tableFrom": "stores",
+                    "tableTo": "users",
+                    "columnsFrom": ["deleted_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
                     "onUpdate": "no action"
@@ -1282,6 +1532,12 @@
                     "primaryKey": false,
                     "notNull": true
                 },
+                "ubigeo_reniec": {
+                    "name": "ubigeo_reniec",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
                 "department": {
                     "name": "department",
                     "type": "text",
@@ -1315,6 +1571,11 @@
                     "name": "ubigeos_ubigeo_unique",
                     "nullsNotDistinct": false,
                     "columns": ["ubigeo"]
+                },
+                "ubigeos_ubigeo_reniec_unique": {
+                    "name": "ubigeos_ubigeo_reniec_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["ubigeo_reniec"]
                 }
             },
             "policies": {},

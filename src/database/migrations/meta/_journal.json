@@ -5,29 +5,8 @@
         {
             "idx": 0,
             "version": "7",
-            "when": 1773014306641,
-            "tag": "0000_curious_morg",
-            "breakpoints": true
-        },
-        {
-            "idx": 1,
-            "version": "7",
-            "when": 1773524641412,
-            "tag": "0001_furry_steve_rogers",
-            "breakpoints": true
-        },
-        {
-            "idx": 2,
-            "version": "7",
-            "when": 1773975632875,
-            "tag": "0002_pale_alex_power",
-            "breakpoints": true
-        },
-        {
-            "idx": 3,
-            "version": "7",
-            "when": 1774535323301,
-            "tag": "0003_bizarre_stature",
+            "when": 1774742093192,
+            "tag": "0000_spotty_earthquake",
             "breakpoints": true
         }
     ]

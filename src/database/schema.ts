@@ -19,6 +19,7 @@ export const ubigeos = pgTable('ubigeos', {
 		.primaryKey()
 		.$defaultFn(() => uuidv7()),
 	ubigeo: text('ubigeo').notNull().unique(),
+	ubigeoReniec: text('ubigeo_reniec').unique(),
 	department: text('department').notNull(),
 	province: text('province').notNull(),
 	district: text('district').notNull(),
@@ -268,6 +269,7 @@ export const stores = pgTable('stores', {
 	address: text('address'),
 	// url de la tienda (virtual)
 	url: text('url'),
+	formEnabled: boolean('form_enabled').notNull().default(true),
 	// soft delete en store
 	deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
 	deletedBy: uuid('deleted_by').references(() => users.id, {
@@ -284,6 +286,40 @@ export const stores = pgTable('stores', {
 		onDelete: 'set null',
 	}),
 })
+
+export const organizationSettings = pgTable('organization_settings', {
+	id: uuid('id')
+		.primaryKey()
+		.$defaultFn(() => uuidv7()),
+	organizationId: uuid('organization_id')
+		.notNull()
+		.unique()
+		.references(() => organizations.id, { onDelete: 'cascade' }),
+	responseDeadlineDays: integer('response_deadline_days')
+		.notNull()
+		.default(15),
+	formEnabled: boolean('form_enabled').notNull().default(true),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+		.defaultNow()
+		.notNull(),
+	createdBy: uuid('created_by')
+		.notNull()
+		.references(() => users.id, { onDelete: 'set null' }),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }),
+	updatedBy: uuid('updated_by').references(() => users.id, {
+		onDelete: 'set null',
+	}),
+})
+
+export const organizationSettingsRelations = relations(
+	organizationSettings,
+	({ one }) => ({
+		organization: one(organizations, {
+			fields: [organizationSettings.organizationId],
+			references: [organizations.id],
+		}),
+	}),
+)
 
 export const complaintReasons = pgTable('complaint_reasons', {
 	id: uuid('id')
