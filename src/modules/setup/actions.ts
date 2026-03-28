@@ -12,11 +12,12 @@ import {
 	users,
 } from '@/database/schema'
 import { auth } from '@/lib/auth'
+import { DOCUMENT_LOOKUP_PROVIDER } from '@/lib/config'
 import {
-	DOCUMENT_LOOKUP_PROVIDER,
-	DOCUMENT_LOOKUP_TOKEN,
-	DOCUMENT_LOOKUP_URL,
-} from '@/lib/config'
+	getDocumentLookupProvider,
+	type RucData,
+	RucNotFoundError,
+} from './document-lookup'
 import {
 	checkSlugExists,
 	checkStoreSlugExists,
@@ -24,30 +25,13 @@ import {
 	searchUbigeos,
 } from './queries'
 
-export type RucData = {
-	ruc: string
-	legalName: string
-	estado: string
-	condicion: string
-	department: string
-	province: string
-	district: string
-	address: string
-	ubigeoSunat: string
-}
+export type { RucData }
 
 export type LookupRucResult =
 	| { success: true; data: RucData; ubigeoId: string }
 	| { success: false; error: string }
 
 export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
-	if (!DOCUMENT_LOOKUP_TOKEN) {
-		return {
-			success: false,
-			error: `No se configuró el proveedor ${DOCUMENT_LOOKUP_PROVIDER} para consultar documentos.`,
-		}
-	}
-
 	const existing = await db
 		.select({ id: organizations.id })
 		.from(organizations)
@@ -61,17 +45,23 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 		}
 	}
 
-	let response: Response
+	let provider: ReturnType<typeof getDocumentLookupProvider>
 	try {
-		response = await fetch(`${DOCUMENT_LOOKUP_URL}/api/ruc`, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${DOCUMENT_LOOKUP_TOKEN}`,
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ ruc }),
-		})
+		provider = getDocumentLookupProvider()
+	} catch {
+		return {
+			success: false,
+			error: `No se configuró el proveedor ${DOCUMENT_LOOKUP_PROVIDER} para consultar documentos.`,
+		}
+	}
+
+	let data: RucData
+	try {
+		data = await provider.lookupRuc(ruc)
 	} catch (e) {
+		if (e instanceof RucNotFoundError) {
+			return { success: false, error: 'RUC no encontrado en SUNAT' }
+		}
 		console.error('Error fetching RUC data:', e)
 		return {
 			success: false,
@@ -79,25 +69,7 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 		}
 	}
 
-	if (response.status === 404) {
-		return { success: false, error: 'RUC no encontrado en SUNAT' }
-	}
-
-	if (!response.ok) {
-		return {
-			success: false,
-			error: 'Error al consultar el RUC. Inténtalo de nuevo.',
-		}
-	}
-
-	const json = await response.json()
-
-	if (!json.success) {
-		return { success: false, error: 'RUC no encontrado en SUNAT' }
-	}
-
-	const apiData = json.data
-	const ubigeo = await getUbigeoByCode(apiData.ubigeo_sunat)
+	const ubigeo = await getUbigeoByCode(data.ubigeoSunat)
 
 	if (!ubigeo) {
 		return {
@@ -106,21 +78,7 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 		}
 	}
 
-	return {
-		success: true,
-		data: {
-			ruc: apiData.ruc,
-			legalName: apiData.nombre_o_razon_social,
-			estado: apiData.estado,
-			condicion: apiData.condicion,
-			department: apiData.departamento,
-			province: apiData.provincia,
-			district: apiData.distrito,
-			address: apiData.direccion,
-			ubigeoSunat: apiData.ubigeo_sunat,
-		},
-		ubigeoId: ubigeo.id,
-	}
+	return { success: true, data, ubigeoId: ubigeo.id }
 }
 
 export async function $getSlugSuggestionAction(name: string): Promise<string> {
