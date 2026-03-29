@@ -694,6 +694,15 @@ export const complaints = pgTable(
 		description: text('description'),
 		// pedido realizado al proveedor o empresa
 		request: text('request'),
+		// borrador de respuesta (autoguardado mientras el operador escribe)
+		draftResponse: text('draft_response'),
+		draftUpdatedAt: timestamp('draft_updated_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		draftSavedBy: uuid('draft_saved_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
 		// respuesta oficial de la empresa al consumidor
 		officialResponse: text('official_response'),
 		// fecha en que se registró la respuesta oficial

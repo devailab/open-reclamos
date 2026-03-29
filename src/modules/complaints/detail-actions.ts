@@ -87,6 +87,60 @@ export interface RespondToComplaintInput {
 	response: string
 }
 
+export async function $saveDraftResponseAction(
+	id: string,
+	draft: string,
+): Promise<{ success: boolean; error?: string }> {
+	const access = await requireAccess('complaints.respond')
+	if ('error' in access) {
+		return {
+			success: false,
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
+	}
+
+	const existing = await getComplaintDetailById(
+		id,
+		access.membership.organizationId,
+	)
+	if (!existing) return { success: false, error: 'Reclamo no encontrado.' }
+
+	if (
+		!canAccessStore(
+			existing.storeId,
+			access.membership.storeAccessMode,
+			access.membership.storeIds,
+		)
+	) {
+		return { success: false, error: 'No tienes acceso a este reclamo.' }
+	}
+
+	if (existing.officialResponse) {
+		return {
+			success: false,
+			error: 'El reclamo ya tiene respuesta oficial.',
+		}
+	}
+
+	const now = new Date()
+	await db
+		.update(complaints)
+		.set({
+			draftResponse: draft || null,
+			draftUpdatedAt: now,
+			draftSavedBy: access.session.user.id,
+		})
+		.where(
+			and(
+				eq(complaints.id, id),
+				eq(complaints.organizationId, access.membership.organizationId),
+			),
+		)
+
+	return { success: true }
+}
+
 export interface RespondToComplaintResult {
 	success: boolean
 	error?: string
@@ -152,6 +206,10 @@ export async function $respondToComplaintAction(
 					status: 'resolved',
 					updatedAt: now,
 					updatedBy: access.session.user.id,
+					// limpiar borrador al registrar respuesta oficial
+					draftResponse: null,
+					draftUpdatedAt: null,
+					draftSavedBy: null,
 				})
 				.where(
 					and(

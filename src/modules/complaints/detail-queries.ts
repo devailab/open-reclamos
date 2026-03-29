@@ -48,6 +48,8 @@ export interface ComplaintDetail {
 	description: string | null
 	request: string | null
 	reasonLabel: string | null
+	// borrador de respuesta
+	draftResponse: string | null
 	// respuesta oficial
 	officialResponse: string | null
 	respondedAt: Date | null
@@ -100,6 +102,7 @@ export async function getComplaintDetailById(
 			description: complaints.description,
 			request: complaints.request,
 			reasonLabel: complaintReasons.reason,
+			draftResponse: complaints.draftResponse,
 			officialResponse: complaints.officialResponse,
 			respondedAt: complaints.respondedAt,
 			respondedByName: users.name,

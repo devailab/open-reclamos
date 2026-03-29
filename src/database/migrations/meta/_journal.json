@@ -8,6 +8,13 @@
             "when": 1774802378315,
             "tag": "0000_noisy_carmella_unuscione",
             "breakpoints": true
+        },
+        {
+            "idx": 1,
+            "version": "7",
+            "when": 1774803520847,
+            "tag": "0001_chief_butterfly",
+            "breakpoints": true
         }
     ]
 }

@@ -42,6 +42,7 @@ export const ComplaintSolutionCard: FC<ComplaintSolutionCardProps> = ({
 			) : isRespondable ? (
 				<ResponseForm
 					complaintId={complaint.id}
+					initialDraft={complaint.draftResponse}
 					onSuccess={onResponseSuccess}
 				/>
 			) : (
