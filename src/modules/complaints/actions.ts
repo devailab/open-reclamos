@@ -5,8 +5,24 @@ import { headers } from 'next/headers'
 import { db } from '@/database/database'
 import { complaintAttachments, complaints } from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
+import { moveS3Object } from '@/lib/s3'
 import { generateTrackingCode } from './lib'
 import { getNextCorrelative, getStoreForOrganization } from './queries'
+
+const TMP_PREFIX = 'tmp/'
+
+async function confirmUploadedFiles(
+	files: UploadedFileInput[],
+): Promise<UploadedFileInput[]> {
+	return Promise.all(
+		files.map(async (file) => {
+			if (!file.key.startsWith(TMP_PREFIX)) return file
+			const permanentKey = file.key.slice(TMP_PREFIX.length)
+			await moveS3Object(file.key, permanentKey)
+			return { ...file, key: permanentKey }
+		}),
+	)
+}
 
 const RESPONSE_DEADLINE_DAYS = 15
 
@@ -87,6 +103,11 @@ export async function $submitComplaintAction(
 	}
 
 	try {
+		const confirmedFiles =
+			input.files.length > 0
+				? await confirmUploadedFiles(input.files)
+				: input.files
+
 		const trackingCode = generateTrackingCode()
 		const correlative = await getNextCorrelative(input.storeId)
 		const now = new Date()
@@ -138,9 +159,9 @@ export async function $submitComplaintAction(
 
 			if (!inserted?.id) throw new Error('insert failed')
 
-			if (input.files.length > 0) {
+			if (confirmedFiles.length > 0) {
 				await tx.insert(complaintAttachments).values(
-					input.files.map((f) => ({
+					confirmedFiles.map((f) => ({
 						complaintId: inserted.id,
 						storageKey: f.key,
 						fileName: f.fileName,

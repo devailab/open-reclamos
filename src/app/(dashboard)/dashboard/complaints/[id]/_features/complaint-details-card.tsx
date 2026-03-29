@@ -1,9 +1,8 @@
 import { Download, FileText } from 'lucide-react'
-import { type FC, useState } from 'react'
+import type { FC } from 'react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { formatDateDisplay } from '@/lib/formatters'
-import { $getAttachmentDownloadUrlAction } from '@/modules/complaints/detail-actions'
 import type {
 	ComplaintAttachment,
 	ComplaintDetail,
@@ -19,17 +18,8 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 	complaint,
 	attachments,
 }) => {
-	const [downloading, setDownloading] = useState<string | null>(null)
-
-	const handleDownload = async (attachment: ComplaintAttachment) => {
-		setDownloading(attachment.id)
-		const result = await $getAttachmentDownloadUrlAction(
-			attachment.storageKey,
-		)
-		setDownloading(null)
-		if ('url' in result) {
-			window.open(result.url, '_blank')
-		}
+	const handleDownload = (attachment: ComplaintAttachment) => {
+		window.open(`/api/files/${attachment.storageKey}`, '_blank')
 	}
 
 	return (
@@ -128,7 +118,6 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 										variant='ghost'
 										size='sm'
 										className='shrink-0'
-										disabled={downloading === attachment.id}
 										onClick={() =>
 											handleDownload(attachment)
 										}

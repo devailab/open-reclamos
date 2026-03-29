@@ -91,7 +91,7 @@ export async function POST(request: Request) {
 
 	const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
 	const safeExt = /^[a-z0-9]{1,10}$/.test(ext) ? ext : 'bin'
-	const key = `complaints/${storeId}/${nanoid()}.${safeExt}`
+	const key = `tmp/complaints/${storeId}/${nanoid()}.${safeExt}`
 
 	try {
 		const buffer = Buffer.from(await file.arrayBuffer())

@@ -1,4 +1,6 @@
 import {
+	CopyObjectCommand,
+	DeleteObjectCommand,
 	GetObjectCommand,
 	PutObjectCommand,
 	S3Client,
@@ -43,4 +45,27 @@ export async function getPresignedDownloadUrl(
 		Key: key,
 	})
 	return getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds })
+}
+
+/**
+ * Mueve un objeto de srcKey a destKey dentro del mismo bucket.
+ * S3 no tiene operación de rename nativa, por lo que se hace copy + delete.
+ */
+export async function moveS3Object(
+	srcKey: string,
+	destKey: string,
+): Promise<void> {
+	await s3Client.send(
+		new CopyObjectCommand({
+			Bucket: S3_BUCKET,
+			CopySource: `${S3_BUCKET}/${srcKey}`,
+			Key: destKey,
+		}),
+	)
+	await s3Client.send(
+		new DeleteObjectCommand({
+			Bucket: S3_BUCKET,
+			Key: srcKey,
+		}),
+	)
 }
