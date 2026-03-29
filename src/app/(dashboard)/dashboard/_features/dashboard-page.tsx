@@ -173,7 +173,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 				<CardContent>
 					<ChartContainer
 						config={CHART_CONFIG}
-						className='h-[280px] w-full'
+						className='h-70 w-full'
 					>
 						<LineChart data={chartData}>
 							<CartesianGrid vertical={false} />

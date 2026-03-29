@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
 	getOrganizationSettingsForUser,
 	getUbigeoById,
@@ -10,6 +11,10 @@ import { OrganizationSettingsForm } from './_features/organization-settings-form
 const SettingsPage: FC = async () => {
 	const session = await getSession()
 	if (!session) redirect('/login')
+
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+	if (!hasPermission(membership, 'settings.view')) redirect('/dashboard')
 
 	const org = await getOrganizationSettingsForUser(session.user.id)
 	if (!org) redirect('/setup')
@@ -35,7 +40,7 @@ const SettingsPage: FC = async () => {
 							}
 						: null
 				}
-				isAdmin={org.role === 'admin'}
+				canManage={hasPermission(membership, 'settings.manage')}
 			/>
 		</div>
 	)

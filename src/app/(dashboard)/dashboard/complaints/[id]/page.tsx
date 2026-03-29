@@ -6,7 +6,7 @@ import {
 	getComplaintAuditHistory,
 	getComplaintDetailById,
 } from '@/modules/complaints/detail-queries'
-import { getOrganizationForUser } from '@/modules/stores/queries'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { ComplaintDetailPage } from './_features/complaint-detail-page'
 
 interface Props {
@@ -19,15 +19,24 @@ const ComplaintDetailRoute: FC<Props> = async ({ params }) => {
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+	if (!hasPermission(membership, 'complaints.view')) redirect('/dashboard')
 
 	const [complaint, auditHistory] = await Promise.all([
-		getComplaintDetailById(id, organizationId),
-		getComplaintAuditHistory(id, organizationId),
+		getComplaintDetailById(id, membership.organizationId),
+		getComplaintAuditHistory(id, membership.organizationId),
 	])
 
 	if (!complaint) redirect('/dashboard/complaints')
+
+	// Verificar acceso a la tienda del reclamo
+	if (
+		membership.storeAccessMode === 'selected' &&
+		!membership.storeIds.includes(complaint.storeId)
+	) {
+		redirect('/dashboard/complaints')
+	}
 
 	const attachments = await getComplaintAttachments(complaint.id)
 

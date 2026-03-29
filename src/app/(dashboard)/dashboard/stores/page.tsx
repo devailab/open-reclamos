@@ -1,10 +1,8 @@
 import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
-import {
-	getOrganizationForUser,
-	getStoresTableForOrganization,
-} from '@/modules/stores/queries'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { getStoresTableForOrganization } from '@/modules/stores/queries'
 import { DEFAULT_STORES_TABLE_FILTERS } from '@/modules/stores/validation'
 import { StoresPage } from './_features/stores-page'
 import type { StoresInitialState } from './_features/types'
@@ -16,12 +14,12 @@ const StoresRoute: FC = async () => {
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+	if (!hasPermission(membership, 'stores.view')) redirect('/dashboard')
 
-	// Carga inicial base para la vista de tiendas.
 	const { rows, totalItems } = await getStoresTableForOrganization({
-		organizationId,
+		organizationId: membership.organizationId,
 		page: INITIAL_PAGE,
 		pageSize: INITIAL_PAGE_SIZE,
 		filters: DEFAULT_STORES_TABLE_FILTERS,

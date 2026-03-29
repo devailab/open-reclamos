@@ -6,7 +6,7 @@ import {
 	getStoreOptionsForOrganization,
 } from '@/modules/complaints/dashboard-queries'
 import { DEFAULT_COMPLAINTS_TABLE_FILTERS } from '@/modules/complaints/dashboard-validation'
-import { getOrganizationForUser } from '@/modules/stores/queries'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { ComplaintsPage } from './_features/complaints-page'
 import type { ComplaintsInitialState } from './_features/types'
 
@@ -17,17 +17,27 @@ const ComplaintsRoute: FC = async () => {
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+	if (!hasPermission(membership, 'complaints.view')) redirect('/dashboard')
+
+	const allowedStoreIds =
+		membership.storeAccessMode === 'selected'
+			? membership.storeIds
+			: undefined
 
 	const [{ rows, totalItems }, storeOptions] = await Promise.all([
 		getComplaintsTableForOrganization({
-			organizationId,
+			organizationId: membership.organizationId,
 			page: INITIAL_PAGE,
 			pageSize: INITIAL_PAGE_SIZE,
 			filters: DEFAULT_COMPLAINTS_TABLE_FILTERS,
+			allowedStoreIds,
 		}),
-		getStoreOptionsForOrganization(organizationId),
+		getStoreOptionsForOrganization(
+			membership.organizationId,
+			allowedStoreIds,
+		),
 	])
 
 	const initialState: ComplaintsInitialState = {

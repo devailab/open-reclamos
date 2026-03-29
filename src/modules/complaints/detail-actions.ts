@@ -8,7 +8,7 @@ import { complaints } from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import { getPresignedDownloadUrl } from '@/lib/s3'
-import { getOrganizationForUser } from '@/modules/stores/queries'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
 	type ComplaintAuditEntry,
 	type ComplaintDetail,
@@ -21,21 +21,57 @@ export interface GetComplaintDetailResult {
 	auditHistory: ComplaintAuditEntry[]
 }
 
-export async function $getComplaintDetailAction(
-	id: string,
-): Promise<GetComplaintDetailResult> {
+async function requireAccess(permissionKey: string) {
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+
+	if (!hasPermission(membership, permissionKey)) {
+		return {
+			error: 'No tienes permisos para realizar esta acción.',
+		} as const
+	}
+
+	return { session, membership } as const
+}
+
+/**
+ * Verifica que el usuario tenga acceso a la tienda del reclamo.
+ * Si storeAccessMode es 'selected', la tienda debe estar en la lista permitida.
+ */
+function canAccessStore(
+	storeId: string,
+	storeAccessMode: 'all' | 'selected',
+	allowedStoreIds: string[],
+): boolean {
+	if (storeAccessMode === 'all') return true
+	return allowedStoreIds.includes(storeId)
+}
+
+export async function $getComplaintDetailAction(
+	id: string,
+): Promise<GetComplaintDetailResult> {
+	const access = await requireAccess('complaints.view')
+	if ('error' in access) redirect('/dashboard/complaints')
 
 	const [complaint, auditHistory] = await Promise.all([
-		getComplaintDetailById(id, organizationId),
-		getComplaintAuditHistory(id, organizationId),
+		getComplaintDetailById(id, access.membership.organizationId),
+		getComplaintAuditHistory(id, access.membership.organizationId),
 	])
 
 	if (!complaint) redirect('/dashboard/complaints')
+
+	if (
+		!canAccessStore(
+			complaint.storeId,
+			access.membership.storeAccessMode,
+			access.membership.storeIds,
+		)
+	) {
+		redirect('/dashboard/complaints')
+	}
 
 	return { complaint, auditHistory }
 }
@@ -53,21 +89,37 @@ export interface RespondToComplaintResult {
 export async function $respondToComplaintAction(
 	input: RespondToComplaintInput,
 ): Promise<RespondToComplaintResult> {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const access = await requireAccess('complaints.respond')
+	if ('error' in access) {
+		return {
+			success: false,
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
+	}
 
 	const response = input.response?.trim()
 	if (!response) {
 		return { success: false, error: 'La respuesta no puede estar vacía' }
 	}
 
-	// Verificar que el reclamo pertenece a la organización y aún no fue respondido
-	const existing = await getComplaintDetailById(input.id, organizationId)
+	const existing = await getComplaintDetailById(
+		input.id,
+		access.membership.organizationId,
+	)
 	if (!existing) {
 		return { success: false, error: 'Reclamo no encontrado' }
+	}
+
+	// Verificar acceso a la tienda del reclamo
+	if (
+		!canAccessStore(
+			existing.storeId,
+			access.membership.storeAccessMode,
+			access.membership.storeIds,
+		)
+	) {
+		return { success: false, error: 'No tienes acceso a este reclamo.' }
 	}
 
 	if (existing.officialResponse) {
@@ -90,22 +142,25 @@ export async function $respondToComplaintAction(
 				.set({
 					officialResponse: response,
 					respondedAt: now,
-					respondedBy: session.user.id,
+					respondedBy: access.session.user.id,
 					status: 'resolved',
 					updatedAt: now,
-					updatedBy: session.user.id,
+					updatedBy: access.session.user.id,
 				})
 				.where(
 					and(
 						eq(complaints.id, input.id),
-						eq(complaints.organizationId, organizationId),
+						eq(
+							complaints.organizationId,
+							access.membership.organizationId,
+						),
 					),
 				)
 
 			await createAuditLog(
 				{
-					organizationId,
-					userId: session.user.id,
+					organizationId: access.membership.organizationId,
+					userId: access.session.user.id,
 					action: 'complaint.responded',
 					entityType: 'complaint',
 					entityId: input.id,
@@ -137,8 +192,12 @@ export async function $respondToComplaintAction(
 export async function $getAttachmentDownloadUrlAction(
 	storageKey: string,
 ): Promise<{ url: string } | { error: string }> {
-	const session = await getSession()
-	if (!session) redirect('/login')
+	const access = await requireAccess('complaints.view')
+	if ('error' in access)
+		return {
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
 
 	const url = await getPresignedDownloadUrl(storageKey)
 	return { url }

@@ -2,10 +2,10 @@
 
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth-server'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
 	type AuditLogTableRow,
 	getAuditLogsTableForOrganization,
-	getOrganizationForUser,
 } from './queries'
 import {
 	type AuditTableFilters,
@@ -30,21 +30,44 @@ export interface GetAuditLogsTableActionResult {
 	error?: string
 }
 
-export async function $getAuditLogsTableAction(
-	input: GetAuditLogsTableActionInput,
-): Promise<GetAuditLogsTableActionResult> {
+async function requireAccess(permissionKey: string) {
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+
+	if (!hasPermission(membership, permissionKey)) {
+		return {
+			error: 'No tienes permisos para realizar esta acción.',
+		} as const
+	}
+
+	return { session, membership } as const
+}
+
+export async function $getAuditLogsTableAction(
+	input: GetAuditLogsTableActionInput,
+): Promise<GetAuditLogsTableActionResult> {
+	const access = await requireAccess('audit.view')
 
 	const { page, pageSize } = normalizeAuditTablePagination(
 		input.page,
 		input.pageSize,
 	)
-
 	const filters = normalizeAuditTableFilters(input.filters)
+
+	if ('error' in access) {
+		return {
+			rows: [],
+			totalItems: 0,
+			page,
+			pageSize,
+			filters,
+			error: access.error,
+		}
+	}
+
 	const validationError = validateAuditTableFilters(filters)
 	if (validationError) {
 		return {
@@ -58,17 +81,11 @@ export async function $getAuditLogsTableAction(
 	}
 
 	const { rows, totalItems } = await getAuditLogsTableForOrganization({
-		organizationId,
+		organizationId: access.membership.organizationId,
 		page,
 		pageSize,
 		filters,
 	})
 
-	return {
-		rows,
-		totalItems,
-		page,
-		pageSize,
-		filters,
-	}
+	return { rows, totalItems, page, pageSize, filters }
 }

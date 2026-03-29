@@ -48,13 +48,13 @@ interface OrgFormValues {
 interface OrganizationSettingsFormProps {
 	org: OrganizationSettings
 	currentUbigeoOption: AutocompleteOption | null
-	isAdmin: boolean
+	canManage: boolean
 }
 
 export function OrganizationSettingsForm({
 	org,
 	currentUbigeoOption,
-	isAdmin,
+	canManage,
 }: OrganizationSettingsFormProps) {
 	const getInitialAddressType = (): SelectOption | null => {
 		return (
@@ -110,11 +110,11 @@ export function OrganizationSettingsForm({
 		})
 	}
 
-	const disabled = isPending || !isAdmin
+	const disabled = isPending || !canManage
 
 	return (
 		<div className='space-y-6 max-w-3xl'>
-			{!isAdmin && (
+			{!canManage && (
 				<div className='rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800'>
 					Solo los administradores pueden editar la información de la
 					organización.
@@ -284,7 +284,7 @@ export function OrganizationSettingsForm({
 				</CardContent>
 			</Card>
 
-			{isAdmin && (
+			{canManage && (
 				<div className='flex justify-end'>
 					<Button onClick={handleSubmit} disabled={isPending}>
 						{isPending ? 'Guardando...' : 'Guardar cambios'}

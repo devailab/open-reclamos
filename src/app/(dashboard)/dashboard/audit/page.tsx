@@ -1,11 +1,9 @@
 import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
-import {
-	getAuditLogsTableForOrganization,
-	getOrganizationForUser,
-} from '@/modules/audit/queries'
+import { getAuditLogsTableForOrganization } from '@/modules/audit/queries'
 import { createDefaultAuditTableFilters } from '@/modules/audit/validation'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { AuditPage } from './_features/audit-page'
 import type { AuditInitialState } from './_features/types'
 
@@ -16,12 +14,13 @@ const AuditRoute: FC = async () => {
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+	if (!hasPermission(membership, 'audit.view')) redirect('/dashboard')
 
 	const defaultFilters = createDefaultAuditTableFilters()
 	const { rows, totalItems } = await getAuditLogsTableForOrganization({
-		organizationId,
+		organizationId: membership.organizationId,
 		page: INITIAL_PAGE,
 		pageSize: INITIAL_PAGE_SIZE,
 		filters: defaultFilters,

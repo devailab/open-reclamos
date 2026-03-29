@@ -12,6 +12,7 @@ import {
 	desc,
 	eq,
 	ilike,
+	inArray,
 	or,
 	type SQL,
 	sql,
@@ -56,15 +57,27 @@ interface GetComplaintsTableForOrganizationParams {
 	page: number
 	pageSize: number
 	filters: ComplaintsTableFilters
+	/** Cuando está definido, solo se devuelven reclamos de estas tiendas. */
+	allowedStoreIds?: string[]
 }
 
 const buildComplaintsTableConditions = (
 	organizationId: string,
 	filters: ComplaintsTableFilters,
+	allowedStoreIds?: string[],
 ): SQL<unknown>[] => {
 	const conditions: SQL<unknown>[] = [
 		eq(complaints.organizationId, organizationId),
 	]
+
+	if (allowedStoreIds !== undefined) {
+		if (allowedStoreIds.length === 0) {
+			// El usuario no tiene acceso a ninguna tienda — no debe ver nada.
+			conditions.push(sql`false`)
+		} else {
+			conditions.push(inArray(complaints.storeId, allowedStoreIds))
+		}
+	}
 
 	if (filters.search.trim()) {
 		const term = `%${filters.search.trim()}%`
@@ -97,12 +110,17 @@ export async function getComplaintsTableForOrganization({
 	page,
 	pageSize,
 	filters,
+	allowedStoreIds,
 }: GetComplaintsTableForOrganizationParams): Promise<{
 	rows: ComplaintTableRow[]
 	totalItems: number
 }> {
 	const whereClause = and(
-		...buildComplaintsTableConditions(organizationId, filters),
+		...buildComplaintsTableConditions(
+			organizationId,
+			filters,
+			allowedStoreIds,
+		),
 	)
 
 	if (!whereClause) {
@@ -145,17 +163,36 @@ export async function getComplaintsTableForOrganization({
 
 export async function getStoreOptionsForOrganization(
 	organizationId: string,
+	allowedStoreIds?: string[],
 ): Promise<StoreOption[]> {
+	const condition =
+		allowedStoreIds !== undefined && allowedStoreIds.length > 0
+			? and(
+					eq(stores.organizationId, organizationId),
+					inArray(stores.id, allowedStoreIds),
+				)
+			: allowedStoreIds !== undefined && allowedStoreIds.length === 0
+				? sql`false`
+				: eq(stores.organizationId, organizationId)
+
 	return db
 		.select({ id: stores.id, name: stores.name })
 		.from(stores)
-		.where(eq(stores.organizationId, organizationId))
+		.where(condition)
 		.orderBy(stores.name)
 }
 
 export async function getComplaintsDashboardKpisForOrganization(
 	organizationId: string,
+	allowedStoreIds?: string[],
 ): Promise<ComplaintsDashboardKpis> {
+	const storeCondition =
+		allowedStoreIds !== undefined
+			? allowedStoreIds.length === 0
+				? sql`false`
+				: inArray(complaints.storeId, allowedStoreIds)
+			: undefined
+
 	const [summary] = await db
 		.select({
 			total: count(),
@@ -169,7 +206,9 @@ export async function getComplaintsDashboardKpisForOrganization(
 			)`,
 		})
 		.from(complaints)
-		.where(eq(complaints.organizationId, organizationId))
+		.where(
+			and(eq(complaints.organizationId, organizationId), storeCondition),
+		)
 
 	return {
 		total: Number(summary?.total ?? 0),
@@ -183,11 +222,19 @@ export async function getComplaintsDashboardKpisForOrganization(
 export async function getComplaintsDailyTrendForOrganization(
 	organizationId: string,
 	days: DashboardTrendDays,
+	allowedStoreIds?: string[],
 ): Promise<DashboardTrendPoint[]> {
 	const today = startOfDay(new Date())
 	const startDate = subDays(today, days - 1)
 	const endDate = endOfDay(today)
 	const dayExpression = sql<string>`date(${complaints.createdAt})::text`
+
+	const storeCondition =
+		allowedStoreIds !== undefined
+			? allowedStoreIds.length === 0
+				? sql`false`
+				: inArray(complaints.storeId, allowedStoreIds)
+			: undefined
 
 	const rows = await db
 		.select({
@@ -200,6 +247,7 @@ export async function getComplaintsDailyTrendForOrganization(
 				eq(complaints.organizationId, organizationId),
 				sql`${complaints.createdAt} >= ${startDate}`,
 				sql`${complaints.createdAt} <= ${endDate}`,
+				storeCondition,
 			),
 		)
 		.groupBy(dayExpression)

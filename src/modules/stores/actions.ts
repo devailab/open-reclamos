@@ -7,9 +7,9 @@ import { db } from '@/database/database'
 import { stores } from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
 	checkStoreSlugExists,
-	getOrganizationForUser,
 	getStoreByIdForOrganization,
 	getStoresTableForOrganization,
 	type StoreTableRow,
@@ -40,16 +40,36 @@ export interface GetStoresTableActionResult {
 	filters: StoresTableFilters
 }
 
-export async function $getStoresTableAction(
-	input: GetStoresTableActionInput,
-): Promise<GetStoresTableActionResult> {
+async function requireAccess(permissionKey: string) {
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
 
-	// Normaliza paginación/filtros antes de consultar.
+	if (!hasPermission(membership, permissionKey)) {
+		return {
+			error: 'No tienes permisos para realizar esta acción.',
+		} as const
+	}
+
+	return { session, membership } as const
+}
+
+export async function $getStoresTableAction(
+	input: GetStoresTableActionInput,
+): Promise<GetStoresTableActionResult> {
+	const access = await requireAccess('stores.view')
+	if ('error' in access) {
+		return {
+			rows: [],
+			totalItems: 0,
+			page: 1,
+			pageSize: 10,
+			filters: normalizeStoresTableFilters(),
+		}
+	}
+
 	const { page, pageSize } = normalizeStoresPagination(
 		input.page,
 		input.pageSize,
@@ -57,19 +77,13 @@ export async function $getStoresTableAction(
 	const filters = normalizeStoresTableFilters(input.filters)
 
 	const { rows, totalItems } = await getStoresTableForOrganization({
-		organizationId,
+		organizationId: access.membership.organizationId,
 		page,
 		pageSize,
 		filters,
 	})
 
-	return {
-		rows,
-		totalItems,
-		page,
-		pageSize,
-		filters,
-	}
+	return { rows, totalItems, page, pageSize, filters }
 }
 
 const buildStoreSlugBase = (name: string): string => {
@@ -117,12 +131,12 @@ const buildStorePersistenceInput = (
 export async function $createStoreAction(
 	input: StoreMutationInput,
 ): Promise<StoreActionResult> {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId)
-		return { error: 'No se encontró una organización asociada.' }
+	const access = await requireAccess('stores.manage')
+	if ('error' in access)
+		return {
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
 
 	const normalizedInput = normalizeStoreMutationInput(input)
 	const validationError = validateStoreMutationInput(normalizedInput)
@@ -136,17 +150,17 @@ export async function $createStoreAction(
 			const [store] = await tx
 				.insert(stores)
 				.values({
-					organizationId,
+					organizationId: access.membership.organizationId,
 					slug,
 					...persistenceInput,
-					createdBy: session.user.id,
+					createdBy: access.session.user.id,
 				})
 				.returning({ id: stores.id })
 
 			await createAuditLog(
 				{
-					organizationId,
-					userId: session.user.id,
+					organizationId: access.membership.organizationId,
+					userId: access.session.user.id,
 					action: 'store.created',
 					entityType: 'store',
 					entityId: store.id,
@@ -159,7 +173,6 @@ export async function $createStoreAction(
 		return { error: 'No se pudo crear la tienda. Inténtalo nuevamente.' }
 	}
 
-	// Refresca el listado del dashboard.
 	revalidatePath('/dashboard/stores')
 	return { success: true }
 }
@@ -171,19 +184,15 @@ export type UpdateStoreActionInput = StoreMutationInput & {
 export async function $updateStoreAction(
 	input: UpdateStoreActionInput,
 ): Promise<StoreActionResult> {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId)
-		return { error: 'No se encontró una organización asociada.' }
+	const access = await requireAccess('stores.manage')
+	if ('error' in access) return { error: 'No tienes permisos para realizar esta acción.' }
 
 	const idError = validateStoreId(input.id)
 	if (idError) return { error: idError }
 
 	const currentStore = await getStoreByIdForOrganization(
 		input.id,
-		organizationId,
+		access.membership.organizationId,
 	)
 	if (!currentStore) return { error: 'La tienda no fue encontrada.' }
 	if (currentStore.deletedAt) {
@@ -203,19 +212,22 @@ export async function $updateStoreAction(
 				.set({
 					...newData,
 					updatedAt: new Date(),
-					updatedBy: session.user.id,
+					updatedBy: access.session.user.id,
 				})
 				.where(
 					and(
 						eq(stores.id, input.id),
-						eq(stores.organizationId, organizationId),
+						eq(
+							stores.organizationId,
+							access.membership.organizationId,
+						),
 					),
 				)
 
 			await createAuditLog(
 				{
-					organizationId,
-					userId: session.user.id,
+					organizationId: access.membership.organizationId,
+					userId: access.session.user.id,
 					action: 'store.updated',
 					entityType: 'store',
 					entityId: input.id,
@@ -238,7 +250,6 @@ export async function $updateStoreAction(
 		}
 	}
 
-	// Refresca el listado del dashboard.
 	revalidatePath('/dashboard/stores')
 	return { success: true }
 }
@@ -246,17 +257,16 @@ export async function $updateStoreAction(
 export async function $deactivateStoreAction(
 	id: string,
 ): Promise<StoreActionResult> {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId)
-		return { error: 'No se encontró una organización asociada.' }
+	const access = await requireAccess('stores.manage')
+	if ('error' in access) return { error: 'No tienes permisos para realizar esta acción.' }
 
 	const idError = validateStoreId(id)
 	if (idError) return { error: idError }
 
-	const currentStore = await getStoreByIdForOrganization(id, organizationId)
+	const currentStore = await getStoreByIdForOrganization(
+		id,
+		access.membership.organizationId,
+	)
 	if (!currentStore) return { error: 'La tienda no fue encontrada.' }
 	if (currentStore.deletedAt) {
 		return { error: 'La tienda ya está inactiva.' }
@@ -271,14 +281,17 @@ export async function $deactivateStoreAction(
 				.update(stores)
 				.set({
 					deletedAt: now,
-					deletedBy: session.user.id,
+					deletedBy: access.session.user.id,
 					updatedAt: now,
-					updatedBy: session.user.id,
+					updatedBy: access.session.user.id,
 				})
 				.where(
 					and(
 						eq(stores.id, id),
-						eq(stores.organizationId, organizationId),
+						eq(
+							stores.organizationId,
+							access.membership.organizationId,
+						),
 						isNull(stores.deletedAt),
 					),
 				)
@@ -290,8 +303,8 @@ export async function $deactivateStoreAction(
 
 			await createAuditLog(
 				{
-					organizationId,
-					userId: session.user.id,
+					organizationId: access.membership.organizationId,
+					userId: access.session.user.id,
 					action: 'store.deactivated',
 					entityType: 'store',
 					entityId: id,
@@ -310,7 +323,6 @@ export async function $deactivateStoreAction(
 		}
 	}
 
-	// Refresca el listado del dashboard.
 	revalidatePath('/dashboard/stores')
 	return { success: true }
 }

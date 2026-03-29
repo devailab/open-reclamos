@@ -55,37 +55,42 @@ const navItems = [
 		href: '/dashboard',
 		icon: LayoutDashboard,
 		exact: true,
+		permission: null, // visible para todos
 	},
 	{
 		label: 'Reclamos',
 		href: '/dashboard/complaints',
 		icon: ClipboardList,
 		exact: false,
+		permission: 'complaints.view',
 	},
 	{
 		label: 'Auditoría',
 		href: '/dashboard/audit',
 		icon: Clock3,
 		exact: false,
+		permission: 'audit.view',
 	},
 	{
 		label: 'Tiendas',
 		href: '/dashboard/stores',
 		icon: Store,
 		exact: false,
+		permission: 'stores.view',
 	},
-	// { label: 'Organizaciones', href: '/dashboard/organizations', icon: Building2, exact: false },
 	{
 		label: 'Motivos',
 		href: '/dashboard/reasons',
 		icon: BookOpen,
 		exact: false,
+		permission: 'reasons.view',
 	},
 	{
 		label: 'Configuración',
 		href: '/dashboard/settings',
 		icon: Settings,
 		exact: false,
+		permission: 'settings.view',
 	},
 ]
 
@@ -130,6 +135,11 @@ export interface AppSidebarProps {
 export function AppSidebar({ user, permissionKeys = [] }: AppSidebarProps) {
 	const pathname = usePathname()
 	const [isPending, startTransition] = useTransition()
+	const visibleNavItems = navItems.filter(
+		(item) =>
+			item.permission === null ||
+			permissionKeys.includes(item.permission),
+	)
 	const visibleAdministrationItems = administrationItems.filter((item) =>
 		permissionKeys.includes(item.permission),
 	)
@@ -169,7 +179,7 @@ export function AppSidebar({ user, permissionKeys = [] }: AppSidebarProps) {
 					<SidebarGroupLabel>Menú principal</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{navItems.map((item) => {
+							{visibleNavItems.map((item) => {
 								const isActive = item.exact
 									? pathname === item.href
 									: pathname === item.href ||

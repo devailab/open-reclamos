@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth-server'
-import { getOrganizationForUser } from '@/modules/stores/queries'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
 	type ComplaintsDashboardKpis,
 	type ComplaintTableRow,
@@ -43,14 +43,37 @@ export interface GetComplaintsDashboardMetricsActionResult {
 	trend: DashboardTrendPoint[]
 }
 
-export async function $getComplaintsTableAction(
-	input: GetComplaintsTableActionInput,
-): Promise<GetComplaintsTableActionResult> {
+async function requireAccess(permissionKey: string) {
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+
+	if (!hasPermission(membership, permissionKey)) {
+		return {
+			error: 'No tienes permisos para realizar esta acción.',
+		} as const
+	}
+
+	return { session, membership } as const
+}
+
+/**
+ * Devuelve los IDs de tiendas permitidas para el usuario.
+ * undefined = acceso a todas las tiendas; string[] = solo esas tiendas.
+ */
+function resolveAllowedStoreIds(
+	storeAccessMode: 'all' | 'selected',
+	storeIds: string[],
+): string[] | undefined {
+	return storeAccessMode === 'selected' ? storeIds : undefined
+}
+
+export async function $getComplaintsTableAction(
+	input: GetComplaintsTableActionInput,
+): Promise<GetComplaintsTableActionResult> {
+	const access = await requireAccess('complaints.view')
 
 	const { page, pageSize } = normalizeComplaintsPagination(
 		input.page,
@@ -58,11 +81,21 @@ export async function $getComplaintsTableAction(
 	)
 	const filters = normalizeComplaintsTableFilters(input.filters)
 
+	if ('error' in access) {
+		return { rows: [], totalItems: 0, page, pageSize, filters }
+	}
+
+	const allowedStoreIds = resolveAllowedStoreIds(
+		access.membership.storeAccessMode,
+		access.membership.storeIds,
+	)
+
 	const { rows, totalItems } = await getComplaintsTableForOrganization({
-		organizationId,
+		organizationId: access.membership.organizationId,
 		page,
 		pageSize,
 		filters,
+		allowedStoreIds,
 	})
 
 	return { rows, totalItems, page, pageSize, filters }
@@ -71,17 +104,39 @@ export async function $getComplaintsTableAction(
 export async function $getComplaintsDashboardMetricsAction(
 	input: GetComplaintsDashboardMetricsActionInput = {},
 ): Promise<GetComplaintsDashboardMetricsActionResult> {
+	const days = normalizeDashboardTrendDays(input.days)
+
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId) redirect('/setup')
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
 
-	const days = normalizeDashboardTrendDays(input.days)
+	// El dashboard principal es accesible a todos, pero solo muestra métricas
+	// si el usuario tiene complaints.view. Si no, devuelve ceros.
+	if (!hasPermission(membership, 'complaints.view')) {
+		return {
+			days,
+			kpis: { total: 0, open: 0, inProgress: 0, resolved: 0, overdue: 0 },
+			trend: [],
+		}
+	}
+
+	const allowedStoreIds = resolveAllowedStoreIds(
+		membership.storeAccessMode,
+		membership.storeIds,
+	)
 
 	const [kpis, trend] = await Promise.all([
-		getComplaintsDashboardKpisForOrganization(organizationId),
-		getComplaintsDailyTrendForOrganization(organizationId, days),
+		getComplaintsDashboardKpisForOrganization(
+			membership.organizationId,
+			allowedStoreIds,
+		),
+		getComplaintsDailyTrendForOrganization(
+			membership.organizationId,
+			days,
+			allowedStoreIds,
+		),
 	])
 
 	return { days, kpis, trend }

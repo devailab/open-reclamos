@@ -6,21 +6,37 @@ import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { complaintReasons } from '@/database/schema'
 import { getSession } from '@/lib/auth-server'
-import { getOrganizationForUser } from './queries'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { validateReason } from './validation'
 
 export type ActionResult = { error: string } | { success: true }
+
+async function requireAccess(permissionKey: string) {
+	const session = await getSession()
+	if (!session) redirect('/login')
+
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+
+	if (!hasPermission(membership, permissionKey)) {
+		return {
+			error: 'No tienes permisos para realizar esta acción.',
+		} as const
+	}
+
+	return { session, membership } as const
+}
 
 export async function $createReasonAction(input: {
 	reason: string
 	parentId: string | null
 }): Promise<ActionResult> {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId)
-		return { error: 'No se encontró una organización asociada.' }
+	const access = await requireAccess('reasons.manage')
+	if ('error' in access)
+		return {
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
 
 	const reasonError = validateReason(input.reason)
 	if (reasonError) return { error: reasonError }
@@ -33,7 +49,10 @@ export async function $createReasonAction(input: {
 			.where(
 				and(
 					eq(complaintReasons.id, input.parentId),
-					eq(complaintReasons.organizationId, organizationId),
+					eq(
+						complaintReasons.organizationId,
+						access.membership.organizationId,
+					),
 					isNull(complaintReasons.deletedAt),
 				),
 			)
@@ -44,8 +63,8 @@ export async function $createReasonAction(input: {
 	await db.insert(complaintReasons).values({
 		reason: input.reason.trim(),
 		parentId: input.parentId,
-		organizationId,
-		createdBy: session.user.id,
+		organizationId: access.membership.organizationId,
+		createdBy: access.session.user.id,
 	})
 
 	revalidatePath('/dashboard/reasons')
@@ -56,12 +75,12 @@ export async function $updateReasonAction(input: {
 	id: string
 	reason: string
 }): Promise<ActionResult> {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId)
-		return { error: 'No se encontró una organización asociada.' }
+	const access = await requireAccess('reasons.manage')
+	if ('error' in access)
+		return {
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
 
 	const reasonError = validateReason(input.reason)
 	if (reasonError) return { error: reasonError }
@@ -73,7 +92,10 @@ export async function $updateReasonAction(input: {
 		.where(
 			and(
 				eq(complaintReasons.id, input.id),
-				eq(complaintReasons.organizationId, organizationId),
+				eq(
+					complaintReasons.organizationId,
+					access.membership.organizationId,
+				),
 				isNull(complaintReasons.deletedAt),
 			),
 		)
@@ -85,12 +107,15 @@ export async function $updateReasonAction(input: {
 		.set({
 			reason: input.reason.trim(),
 			updatedAt: new Date(),
-			updatedBy: session.user.id,
+			updatedBy: access.session.user.id,
 		})
 		.where(
 			and(
 				eq(complaintReasons.id, input.id),
-				eq(complaintReasons.organizationId, organizationId),
+				eq(
+					complaintReasons.organizationId,
+					access.membership.organizationId,
+				),
 			),
 		)
 
@@ -99,12 +124,12 @@ export async function $updateReasonAction(input: {
 }
 
 export async function $deleteReasonAction(id: string): Promise<ActionResult> {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const organizationId = await getOrganizationForUser(session.user.id)
-	if (!organizationId)
-		return { error: 'No se encontró una organización asociada.' }
+	const access = await requireAccess('reasons.manage')
+	if ('error' in access)
+		return {
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
 
 	// Verificar que el motivo pertenece a esta organización y no está eliminado
 	const [existing] = await db
@@ -113,7 +138,10 @@ export async function $deleteReasonAction(id: string): Promise<ActionResult> {
 		.where(
 			and(
 				eq(complaintReasons.id, id),
-				eq(complaintReasons.organizationId, organizationId),
+				eq(
+					complaintReasons.organizationId,
+					access.membership.organizationId,
+				),
 				isNull(complaintReasons.deletedAt),
 			),
 		)
@@ -121,26 +149,31 @@ export async function $deleteReasonAction(id: string): Promise<ActionResult> {
 	if (!existing) return { error: 'El motivo no fue encontrado.' }
 
 	const now = new Date()
-	const userId = session.user.id
 
 	// Soft delete del motivo y sus hijos directos
 	await db
 		.update(complaintReasons)
-		.set({ deletedAt: now, deletedBy: userId })
+		.set({ deletedAt: now, deletedBy: access.session.user.id })
 		.where(
 			and(
 				eq(complaintReasons.id, id),
-				eq(complaintReasons.organizationId, organizationId),
+				eq(
+					complaintReasons.organizationId,
+					access.membership.organizationId,
+				),
 			),
 		)
 
 	await db
 		.update(complaintReasons)
-		.set({ deletedAt: now, deletedBy: userId })
+		.set({ deletedAt: now, deletedBy: access.session.user.id })
 		.where(
 			and(
 				eq(complaintReasons.parentId, id),
-				eq(complaintReasons.organizationId, organizationId),
+				eq(
+					complaintReasons.organizationId,
+					access.membership.organizationId,
+				),
 				isNull(complaintReasons.deletedAt),
 			),
 		)
