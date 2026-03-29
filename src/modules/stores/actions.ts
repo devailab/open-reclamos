@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { stores } from '@/database/schema'
+import { createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import {
 	checkStoreSlugExists,
@@ -128,13 +129,31 @@ export async function $createStoreAction(
 	if (validationError) return { error: validationError }
 
 	const slug = await getUniqueStoreSlug(normalizedInput.name)
+	const persistenceInput = buildStorePersistenceInput(normalizedInput)
 
 	try {
-		await db.insert(stores).values({
-			organizationId,
-			slug,
-			...buildStorePersistenceInput(normalizedInput),
-			createdBy: session.user.id,
+		await db.transaction(async (tx) => {
+			const [store] = await tx
+				.insert(stores)
+				.values({
+					organizationId,
+					slug,
+					...persistenceInput,
+					createdBy: session.user.id,
+				})
+				.returning({ id: stores.id })
+
+			await createAuditLog(
+				{
+					organizationId,
+					userId: session.user.id,
+					action: 'store.created',
+					entityType: 'store',
+					entityId: store.id,
+					newData: persistenceInput,
+				},
+				tx,
+			)
 		})
 	} catch {
 		return { error: 'No se pudo crear la tienda. Inténtalo nuevamente.' }
@@ -175,20 +194,44 @@ export async function $updateStoreAction(
 	const validationError = validateStoreMutationInput(normalizedInput)
 	if (validationError) return { error: validationError }
 
+	const newData = buildStorePersistenceInput(normalizedInput)
+
 	try {
-		await db
-			.update(stores)
-			.set({
-				...buildStorePersistenceInput(normalizedInput),
-				updatedAt: new Date(),
-				updatedBy: session.user.id,
-			})
-			.where(
-				and(
-					eq(stores.id, input.id),
-					eq(stores.organizationId, organizationId),
-				),
+		await db.transaction(async (tx) => {
+			await tx
+				.update(stores)
+				.set({
+					...newData,
+					updatedAt: new Date(),
+					updatedBy: session.user.id,
+				})
+				.where(
+					and(
+						eq(stores.id, input.id),
+						eq(stores.organizationId, organizationId),
+					),
+				)
+
+			await createAuditLog(
+				{
+					organizationId,
+					userId: session.user.id,
+					action: 'store.updated',
+					entityType: 'store',
+					entityId: input.id,
+					oldData: {
+						name: currentStore.name,
+						type: currentStore.type,
+						ubigeoId: currentStore.ubigeoId,
+						addressType: currentStore.addressType,
+						address: currentStore.address,
+						url: currentStore.url,
+					},
+					newData,
+				},
+				tx,
 			)
+		})
 	} catch {
 		return {
 			error: 'No se pudo actualizar la tienda. Inténtalo nuevamente.',
@@ -219,28 +262,49 @@ export async function $deactivateStoreAction(
 		return { error: 'La tienda ya está inactiva.' }
 	}
 
-	try {
-		const [deactivatedStore] = await db
-			.update(stores)
-			.set({
-				deletedAt: new Date(),
-				deletedBy: session.user.id,
-				updatedAt: new Date(),
-				updatedBy: session.user.id,
-			})
-			.where(
-				and(
-					eq(stores.id, id),
-					eq(stores.organizationId, organizationId),
-					isNull(stores.deletedAt),
-				),
-			)
-			.returning({ id: stores.id })
+	class AlreadyInactiveError extends Error {}
 
-		if (!deactivatedStore) {
+	try {
+		await db.transaction(async (tx) => {
+			const now = new Date()
+			const [deactivatedStore] = await tx
+				.update(stores)
+				.set({
+					deletedAt: now,
+					deletedBy: session.user.id,
+					updatedAt: now,
+					updatedBy: session.user.id,
+				})
+				.where(
+					and(
+						eq(stores.id, id),
+						eq(stores.organizationId, organizationId),
+						isNull(stores.deletedAt),
+					),
+				)
+				.returning({ id: stores.id })
+
+			if (!deactivatedStore) {
+				throw new AlreadyInactiveError()
+			}
+
+			await createAuditLog(
+				{
+					organizationId,
+					userId: session.user.id,
+					action: 'store.deactivated',
+					entityType: 'store',
+					entityId: id,
+					oldData: { deletedAt: null },
+					newData: { deletedAt: now.toISOString() },
+				},
+				tx,
+			)
+		})
+	} catch (e) {
+		if (e instanceof AlreadyInactiveError) {
 			return { error: 'La tienda ya está inactiva.' }
 		}
-	} catch {
 		return {
 			error: 'No se pudo desactivar la tienda. Inténtalo nuevamente.',
 		}

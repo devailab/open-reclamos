@@ -11,6 +11,7 @@ import {
 	stores,
 	users,
 } from '@/database/schema'
+import { createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { DOCUMENT_LOOKUP_PROVIDER } from '@/lib/config'
 import {
@@ -165,34 +166,53 @@ export async function $setupOrganizationAction(
 	}
 
 	try {
-		const [org] = await db
-			.insert(organizations)
-			.values({
-				taxId: input.ruc,
-				name: input.name,
-				legalName: input.legalName,
-				slug: input.slug,
-				ubigeoId: input.ubigeoId,
-				addressType: input.addressType,
-				address: input.address,
-				phoneCode: input.phoneCode,
-				phone: input.phone,
-				website: input.website,
+		await db.transaction(async (tx) => {
+			const [org] = await tx
+				.insert(organizations)
+				.values({
+					taxId: input.ruc,
+					name: input.name,
+					legalName: input.legalName,
+					slug: input.slug,
+					ubigeoId: input.ubigeoId,
+					addressType: input.addressType,
+					address: input.address,
+					phoneCode: input.phoneCode,
+					phone: input.phone,
+					website: input.website,
+					createdBy: session.user.id,
+				})
+				.returning({ id: organizations.id })
+
+			await tx.insert(organizationMembers).values({
+				userId: session.user.id,
+				organizationId: org.id,
+				role: 'admin',
 				createdBy: session.user.id,
 			})
-			.returning({ id: organizations.id })
 
-		await db.insert(organizationMembers).values({
-			userId: session.user.id,
-			organizationId: org.id,
-			role: 'admin',
-			createdBy: session.user.id,
+			await tx
+				.update(users)
+				.set({ setupStatus: 'store' })
+				.where(eq(users.id, session.user.id))
+
+			await createAuditLog(
+				{
+					organizationId: org.id,
+					userId: session.user.id,
+					action: 'organization.created',
+					entityType: 'organization',
+					entityId: org.id,
+					newData: {
+						taxId: input.ruc,
+						name: input.name,
+						legalName: input.legalName,
+						slug: input.slug,
+					},
+				},
+				tx,
+			)
 		})
-
-		await db
-			.update(users)
-			.set({ setupStatus: 'store' })
-			.where(eq(users.id, session.user.id))
 	} catch {
 		return {
 			error: 'Error al guardar la organización. Inténtalo de nuevo.',
@@ -224,22 +244,43 @@ export async function $setupStoreAction(
 	const slug = await $getStoreSlugSuggestionAction(input.name)
 
 	try {
-		await db.insert(stores).values({
-			organizationId: input.organizationId,
-			name: input.name,
-			slug,
-			type: input.type,
-			ubigeoId: input.ubigeoId,
-			addressType: input.addressType,
-			address: input.address,
-			url: input.url,
-			createdBy: session.user.id,
-		})
+		await db.transaction(async (tx) => {
+			const [store] = await tx
+				.insert(stores)
+				.values({
+					organizationId: input.organizationId,
+					name: input.name,
+					slug,
+					type: input.type,
+					ubigeoId: input.ubigeoId,
+					addressType: input.addressType,
+					address: input.address,
+					url: input.url,
+					createdBy: session.user.id,
+				})
+				.returning({ id: stores.id })
 
-		await db
-			.update(users)
-			.set({ setupStatus: 'complete' })
-			.where(eq(users.id, session.user.id))
+			await tx
+				.update(users)
+				.set({ setupStatus: 'complete' })
+				.where(eq(users.id, session.user.id))
+
+			await createAuditLog(
+				{
+					organizationId: input.organizationId,
+					userId: session.user.id,
+					action: 'store.created',
+					entityType: 'store',
+					entityId: store.id,
+					newData: {
+						name: input.name,
+						type: input.type,
+						organizationId: input.organizationId,
+					},
+				},
+				tx,
+			)
+		})
 	} catch {
 		return { error: 'Error al guardar la tienda. Inténtalo de nuevo.' }
 	}

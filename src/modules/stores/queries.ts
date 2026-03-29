@@ -88,6 +88,12 @@ export async function getStoreByIdForOrganization(
 		.select({
 			id: stores.id,
 			slug: stores.slug,
+			name: stores.name,
+			type: stores.type,
+			ubigeoId: stores.ubigeoId,
+			addressType: stores.addressType,
+			address: stores.address,
+			url: stores.url,
 			deletedAt: stores.deletedAt,
 		})
 		.from(stores)
