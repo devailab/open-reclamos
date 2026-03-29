@@ -67,7 +67,7 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 		}
 	}
 
-	const ubigeo = await getUbigeoByCode(data.ubigeoSunat)
+	const ubigeo = await getUbigeoByCode(data.ubigeoCode)
 
 	if (!ubigeo) {
 		return {

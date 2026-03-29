@@ -69,7 +69,7 @@ export class ApiPeruDevProvider implements DocumentLookupProvider {
 			province: d.provincia,
 			district: d.distrito,
 			address: d.direccion,
-			ubigeoSunat: d.ubigeo_sunat,
+			ubigeoCode: d.ubigeo_sunat,
 		}
 	}
 }

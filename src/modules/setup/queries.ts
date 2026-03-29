@@ -24,7 +24,12 @@ export async function getUbigeoByCode(ubigeoCode: string) {
 	const result = await db
 		.select()
 		.from(ubigeos)
-		.where(eq(ubigeos.ubigeo, ubigeoCode))
+		.where(
+			or(
+				eq(ubigeos.ubigeo, ubigeoCode),
+				eq(ubigeos.ubigeoReniec, ubigeoCode),
+			),
+		)
 		.limit(1)
 	return result[0] ?? null
 }

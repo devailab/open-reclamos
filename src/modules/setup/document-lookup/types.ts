@@ -7,7 +7,7 @@ export interface RucData {
 	province: string
 	district: string
 	address: string
-	ubigeoSunat: string
+	ubigeoCode: string
 }
 
 export interface DocumentLookupProvider {
