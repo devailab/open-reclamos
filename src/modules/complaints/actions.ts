@@ -12,6 +12,7 @@ import {
 import { createAuditLog } from '@/lib/audit'
 import { moveS3Object } from '@/lib/s3'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
+import { createComplaintHistoryEntry } from './history'
 import { generateTrackingCode } from './lib'
 import { getStoreForOrganization } from './queries'
 
@@ -223,6 +224,17 @@ export async function $submitComplaintAction(
 						reqHeaders.get('x-forwarded-for') ??
 						reqHeaders.get('x-real-ip'),
 					userAgent: reqHeaders.get('user-agent'),
+				},
+				tx,
+			)
+
+			await createComplaintHistoryEntry(
+				{
+					complaintId: inserted.id,
+					eventType: 'complaint_created',
+					toStatus: 'open',
+					publicNote: 'Tu reclamo fue registrado exitosamente.',
+					performedByRole: 'consumer',
 				},
 				tx,
 			)

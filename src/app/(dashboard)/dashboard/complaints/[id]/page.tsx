@@ -5,6 +5,7 @@ import {
 	getComplaintAttachments,
 	getComplaintAuditHistory,
 	getComplaintDetailById,
+	getComplaintHistory,
 } from '@/modules/complaints/detail-queries'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { ComplaintDetailPage } from './_features/complaint-detail-page'
@@ -38,12 +39,16 @@ const ComplaintDetailRoute: FC<Props> = async ({ params }) => {
 		redirect('/dashboard/complaints')
 	}
 
-	const attachments = await getComplaintAttachments(complaint.id)
+	const [attachments, history] = await Promise.all([
+		getComplaintAttachments(complaint.id),
+		getComplaintHistory(complaint.id, membership.organizationId),
+	])
 
 	return (
 		<ComplaintDetailPage
 			complaint={complaint}
 			auditHistory={auditHistory}
+			history={history}
 			attachments={attachments}
 		/>
 	)

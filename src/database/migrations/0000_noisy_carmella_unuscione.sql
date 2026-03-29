@@ -37,6 +37,19 @@ CREATE TABLE "complaint_attachments" (
 	"description" text
 );
 --> statement-breakpoint
+CREATE TABLE "complaint_history" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"complaint_id" uuid NOT NULL,
+	"event_type" text NOT NULL,
+	"from_status" text,
+	"to_status" text,
+	"public_note" text,
+	"internal_note" text,
+	"performed_by" uuid,
+	"performed_by_role" text DEFAULT 'system' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "complaint_reasons" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"organization_id" uuid,
@@ -313,6 +326,8 @@ CREATE TABLE "verifications" (
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaint_history" ADD CONSTRAINT "complaint_history_complaint_id_complaints_id_fk" FOREIGN KEY ("complaint_id") REFERENCES "public"."complaints"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaint_history" ADD CONSTRAINT "complaint_history_performed_by_users_id_fk" FOREIGN KEY ("performed_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_deleted_by_users_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
@@ -372,6 +387,9 @@ CREATE INDEX "audit_logs_action_idx" ON "audit_logs" USING btree ("action");--> 
 CREATE INDEX "audit_logs_entity_type_idx" ON "audit_logs" USING btree ("entity_type");--> statement-breakpoint
 CREATE INDEX "audit_logs_entity_id_idx" ON "audit_logs" USING btree ("entity_id");--> statement-breakpoint
 CREATE INDEX "audit_logs_organization_created_at_idx" ON "audit_logs" USING btree ("organization_id","created_at");--> statement-breakpoint
+CREATE INDEX "complaint_history_complaint_id_idx" ON "complaint_history" USING btree ("complaint_id");--> statement-breakpoint
+CREATE INDEX "complaint_history_created_at_idx" ON "complaint_history" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "complaint_history_complaint_id_created_at_idx" ON "complaint_history" USING btree ("complaint_id","created_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "complaints_store_id_tracking_code_uidx" ON "complaints" USING btree ("store_id","tracking_code");--> statement-breakpoint
 CREATE UNIQUE INDEX "complaints_store_id_correlative_uidx" ON "complaints" USING btree ("store_id","correlative");--> statement-breakpoint
 CREATE INDEX "organization_invitation_stores_store_id_idx" ON "organization_invitation_stores" USING btree ("store_id");--> statement-breakpoint

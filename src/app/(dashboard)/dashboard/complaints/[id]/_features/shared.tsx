@@ -12,6 +12,7 @@ export const COMPLAINT_TYPE_LABEL: Record<string, string> = {
 export const COMPLAINT_STATUS_LABEL: Record<string, string> = {
 	open: 'Abierto',
 	in_progress: 'En proceso',
+	in_review: 'En revisión',
 	resolved: 'Resuelto',
 	closed: 'Cerrado',
 }
@@ -34,6 +35,7 @@ export const STATUS_BADGE_VARIANT: Record<
 > = {
 	open: 'default',
 	in_progress: 'outline',
+	in_review: 'outline',
 	resolved: 'secondary',
 	closed: 'secondary',
 }
@@ -57,7 +59,7 @@ export const getDeadlineStatus = (
 	responseDeadline: Date | null,
 	status: string,
 ): DeadlineStatus | null => {
-	const activeStatuses = new Set(['open', 'in_progress'])
+	const activeStatuses = new Set(['open', 'in_progress', 'in_review'])
 	if (!responseDeadline || !activeStatuses.has(status)) return null
 
 	const days = differenceInCalendarDays(responseDeadline, new Date())
@@ -114,6 +116,8 @@ export const InfoRow: FC<{
 		<span className='text-xs text-muted-foreground shrink-0 sm:w-36'>
 			{label}
 		</span>
-		<span className='text-sm font-medium break-words'>{value ?? '—'}</span>
+		<span className='text-sm font-medium wrap-break-word'>
+			{value ?? '—'}
+		</span>
 	</div>
 )

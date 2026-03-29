@@ -1,6 +1,7 @@
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, asc, eq, isNull } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
+	complaintHistory,
 	complaintReasons,
 	complaints,
 	organizationSettings,
@@ -141,6 +142,7 @@ export async function getComplaintByTrackingCode(
 ) {
 	const [result] = await db
 		.select({
+			id: complaints.id,
 			trackingCode: complaints.trackingCode,
 			correlative: complaints.correlative,
 			status: complaints.status,
@@ -160,4 +162,28 @@ export async function getComplaintByTrackingCode(
 		)
 		.limit(1)
 	return result ?? null
+}
+
+export interface PublicHistoryEntry {
+	eventType: string
+	toStatus: string | null
+	publicNote: string | null
+	performedByRole: string
+	createdAt: Date
+}
+
+export async function getPublicComplaintHistory(
+	complaintId: string,
+): Promise<PublicHistoryEntry[]> {
+	return db
+		.select({
+			eventType: complaintHistory.eventType,
+			toStatus: complaintHistory.toStatus,
+			publicNote: complaintHistory.publicNote,
+			performedByRole: complaintHistory.performedByRole,
+			createdAt: complaintHistory.createdAt,
+		})
+		.from(complaintHistory)
+		.where(eq(complaintHistory.complaintId, complaintId))
+		.orderBy(asc(complaintHistory.createdAt))
 }

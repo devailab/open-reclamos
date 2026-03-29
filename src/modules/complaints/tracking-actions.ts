@@ -1,10 +1,16 @@
 'use server'
 
-import { getComplaintByTrackingCode } from '@/modules/complaints/queries'
+import {
+	getComplaintByTrackingCode,
+	getPublicComplaintHistory,
+	type PublicHistoryEntry,
+} from '@/modules/complaints/queries'
 
 export type TrackingResult = NonNullable<
 	Awaited<ReturnType<typeof getComplaintByTrackingCode>>
->
+> & {
+	history: PublicHistoryEntry[]
+}
 
 export type LookupComplaintResult =
 	| { success: true; data: TrackingResult }
@@ -29,5 +35,7 @@ export async function lookupComplaintByTrackingCodeAction(
 		}
 	}
 
-	return { success: true, data: complaint }
+	const history = await getPublicComplaintHistory(complaint.id)
+
+	return { success: true, data: { ...complaint, history } }
 }

@@ -15,10 +15,18 @@ export interface DashboardTrendPoint {
 export const COMPLAINT_STATUSES = [
 	'open',
 	'in_progress',
+	'in_review',
 	'resolved',
 	'closed',
 ] as const
 export type ComplaintStatus = (typeof COMPLAINT_STATUSES)[number]
+
+export const CHANGEABLE_STATUSES = [
+	'in_progress',
+	'in_review',
+	'closed',
+] as const
+export type ChangeableStatus = (typeof CHANGEABLE_STATUSES)[number]
 
 export const COMPLAINT_TYPES = ['complaint', 'claim'] as const
 export type ComplaintType = (typeof COMPLAINT_TYPES)[number]

@@ -754,6 +754,59 @@ export const storeCorrelatives = pgTable('store_correlatives', {
 		.notNull(),
 })
 
+export const complaintHistory = pgTable(
+	'complaint_history',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		complaintId: uuid('complaint_id')
+			.notNull()
+			.references(() => complaints.id, { onDelete: 'cascade' }),
+		// tipo de evento: complaint_created | status_changed | response_added | note_added
+		eventType: text('event_type').notNull(),
+		// estado anterior (solo en status_changed)
+		fromStatus: text('from_status'),
+		// estado nuevo
+		toStatus: text('to_status'),
+		// mensaje visible al consumidor en el seguimiento público
+		publicNote: text('public_note'),
+		// nota interna solo visible para operadores/admin
+		internalNote: text('internal_note'),
+		// null = sistema o consumidor; uuid = operador/admin
+		performedBy: uuid('performed_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+		// 'system' | 'consumer' | 'operator'
+		performedByRole: text('performed_by_role').notNull().default('system'),
+		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index('complaint_history_complaint_id_idx').on(table.complaintId),
+		index('complaint_history_created_at_idx').on(table.createdAt),
+		index('complaint_history_complaint_id_created_at_idx').on(
+			table.complaintId,
+			table.createdAt,
+		),
+	],
+)
+
+export const complaintHistoryRelations = relations(
+	complaintHistory,
+	({ one }) => ({
+		complaint: one(complaints, {
+			fields: [complaintHistory.complaintId],
+			references: [complaints.id],
+		}),
+		performer: one(users, {
+			fields: [complaintHistory.performedBy],
+			references: [users.id],
+		}),
+	}),
+)
+
 export const auditLogs = pgTable(
 	'audit_logs',
 	{

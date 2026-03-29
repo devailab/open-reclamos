@@ -1,5 +1,5 @@
 {
-    "id": "1ab6c96f-7465-4889-bbc2-cf237ac4da8a",
+    "id": "fdfceb34-fcf6-4efc-addc-19c21ed27f5a",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -361,6 +361,152 @@
             },
             "indexes": {},
             "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.complaint_history": {
+            "name": "complaint_history",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "complaint_id": {
+                    "name": "complaint_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "event_type": {
+                    "name": "event_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "from_status": {
+                    "name": "from_status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "to_status": {
+                    "name": "to_status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "public_note": {
+                    "name": "public_note",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "internal_note": {
+                    "name": "internal_note",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "performed_by": {
+                    "name": "performed_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "performed_by_role": {
+                    "name": "performed_by_role",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'system'"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "complaint_history_complaint_id_idx": {
+                    "name": "complaint_history_complaint_id_idx",
+                    "columns": [
+                        {
+                            "expression": "complaint_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_history_created_at_idx": {
+                    "name": "complaint_history_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_history_complaint_id_created_at_idx": {
+                    "name": "complaint_history_complaint_id_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "complaint_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "complaint_history_complaint_id_complaints_id_fk": {
+                    "name": "complaint_history_complaint_id_complaints_id_fk",
+                    "tableFrom": "complaint_history",
+                    "tableTo": "complaints",
+                    "columnsFrom": ["complaint_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "complaint_history_performed_by_users_id_fk": {
+                    "name": "complaint_history_performed_by_users_id_fk",
+                    "tableFrom": "complaint_history",
+                    "tableTo": "users",
+                    "columnsFrom": ["performed_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
             "compositePrimaryKeys": {},
             "uniqueConstraints": {},
             "policies": {},

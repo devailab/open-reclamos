@@ -6,6 +6,9 @@ import {
 	AlertCircleIcon,
 	CheckCircle2Icon,
 	ClockIcon,
+	FileTextIcon,
+	MessageSquareIcon,
+	PenLineIcon,
 	SearchIcon,
 	XCircleIcon,
 } from 'lucide-react'
@@ -17,14 +20,11 @@ import {
 	lookupComplaintByTrackingCodeAction,
 	type TrackingResult,
 } from '@/modules/complaints/tracking-actions'
+import type { PublicHistoryEntry } from '../queries'
 
 const STATUS_CONFIG: Record<
 	string,
-	{
-		label: string
-		colorClass: string
-		icon: React.ElementType
-	}
+	{ label: string; colorClass: string; icon: React.ElementType }
 > = {
 	open: {
 		label: 'Abierto',
@@ -34,6 +34,11 @@ const STATUS_CONFIG: Record<
 	in_progress: {
 		label: 'En proceso',
 		colorClass: 'text-amber-700 bg-amber-50 ring-amber-200',
+		icon: AlertCircleIcon,
+	},
+	in_review: {
+		label: 'En revisión',
+		colorClass: 'text-purple-700 bg-purple-50 ring-purple-200',
 		icon: AlertCircleIcon,
 	},
 	resolved: {
@@ -51,6 +56,35 @@ const STATUS_CONFIG: Record<
 const TYPE_LABEL: Record<string, string> = {
 	claim: 'Reclamo',
 	complaint: 'Queja',
+}
+
+const HISTORY_EVENT_CONFIG: Record<
+	string,
+	{ label: string; icon: React.ElementType; color: string }
+> = {
+	complaint_created: {
+		label: 'Reclamo registrado',
+		icon: FileTextIcon,
+		color: 'text-blue-600 bg-blue-50 ring-blue-200',
+	},
+	status_changed: {
+		label: 'Estado actualizado',
+		icon: PenLineIcon,
+		color: 'text-amber-600 bg-amber-50 ring-amber-200',
+	},
+	response_added: {
+		label: 'Respuesta registrada',
+		icon: MessageSquareIcon,
+		color: 'text-green-600 bg-green-50 ring-green-200',
+	},
+}
+
+const STATUS_LABEL: Record<string, string> = {
+	open: 'Abierto',
+	in_progress: 'En proceso',
+	in_review: 'En revisión',
+	resolved: 'Resuelto',
+	closed: 'Cerrado',
 }
 
 interface TrackingPanelProps {
@@ -250,6 +284,79 @@ function TrackingCard({ complaint }: { complaint: TrackingResult }) {
 					)}
 				</div>
 			)}
+
+			{/* Línea de tiempo del historial */}
+			{complaint.history.length > 0 && (
+				<HistoryTimeline history={complaint.history} />
+			)}
+		</div>
+	)
+}
+
+function HistoryTimeline({ history }: { history: PublicHistoryEntry[] }) {
+	return (
+		<div className='rounded-xl border bg-muted/30 px-4 py-3'>
+			<p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-3'>
+				Historial
+			</p>
+			<div className='space-y-0'>
+				{history.map((entry, i) => {
+					const config = HISTORY_EVENT_CONFIG[entry.eventType] ?? {
+						label: entry.eventType,
+						icon: CheckCircle2Icon,
+						color: 'text-muted-foreground bg-muted ring-border',
+					}
+					const Icon = config.icon
+					const isLast = i === history.length - 1
+
+					return (
+						<div
+							key={`${entry.eventType}-${entry.createdAt.toString()}`}
+							className='flex gap-2.5'
+						>
+							{/* Línea + icono */}
+							<div className='flex flex-col items-center'>
+								<span
+									className={`flex size-6 shrink-0 items-center justify-center rounded-full ring-1 ${config.color}`}
+								>
+									<Icon className='size-3' />
+								</span>
+								{!isLast && (
+									<div className='w-px flex-1 bg-border my-1' />
+								)}
+							</div>
+
+							{/* Contenido */}
+							<div
+								className={`min-w-0 flex-1 ${isLast ? 'pb-0' : 'pb-3'}`}
+							>
+								<p className='text-xs font-medium'>
+									{config.label}
+									{entry.toStatus && (
+										<span className='ml-1.5 font-normal text-muted-foreground'>
+											→{' '}
+											{STATUS_LABEL[entry.toStatus] ??
+												entry.toStatus}
+										</span>
+									)}
+								</p>
+								{entry.publicNote && (
+									<p className='text-[11px] text-muted-foreground mt-0.5 leading-snug'>
+										{entry.publicNote}
+									</p>
+								)}
+								<p className='text-[10px] text-muted-foreground/70 mt-0.5'>
+									{format(
+										new Date(entry.createdAt),
+										"d 'de' MMM yyyy, HH:mm",
+										{ locale: es },
+									)}
+								</p>
+							</div>
+						</div>
+					)
+				})}
+			</div>
 		</div>
 	)
 }

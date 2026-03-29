@@ -1,8 +1,9 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
 	auditLogs,
 	complaintAttachments,
+	complaintHistory,
 	complaintReasons,
 	complaints,
 	stores,
@@ -181,4 +182,44 @@ export async function getComplaintAuditHistory(
 		)
 		.orderBy(desc(auditLogs.createdAt))
 		.limit(50)
+}
+
+export interface ComplaintHistoryEntry {
+	id: string
+	eventType: string
+	fromStatus: string | null
+	toStatus: string | null
+	publicNote: string | null
+	internalNote: string | null
+	performedByName: string | null
+	performedByRole: string
+	createdAt: Date
+}
+
+export async function getComplaintHistory(
+	complaintId: string,
+	organizationId: string,
+): Promise<ComplaintHistoryEntry[]> {
+	return db
+		.select({
+			id: complaintHistory.id,
+			eventType: complaintHistory.eventType,
+			fromStatus: complaintHistory.fromStatus,
+			toStatus: complaintHistory.toStatus,
+			publicNote: complaintHistory.publicNote,
+			internalNote: complaintHistory.internalNote,
+			performedByName: users.name,
+			performedByRole: complaintHistory.performedByRole,
+			createdAt: complaintHistory.createdAt,
+		})
+		.from(complaintHistory)
+		.innerJoin(complaints, eq(complaintHistory.complaintId, complaints.id))
+		.leftJoin(users, eq(complaintHistory.performedBy, users.id))
+		.where(
+			and(
+				eq(complaintHistory.complaintId, complaintId),
+				eq(complaints.organizationId, organizationId),
+			),
+		)
+		.orderBy(asc(complaintHistory.createdAt))
 }

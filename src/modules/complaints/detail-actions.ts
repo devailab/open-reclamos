@@ -9,16 +9,21 @@ import { createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import { getPresignedDownloadUrl } from '@/lib/s3'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import type { ChangeableStatus } from './dashboard-validation'
 import {
 	type ComplaintAuditEntry,
 	type ComplaintDetail,
+	type ComplaintHistoryEntry,
 	getComplaintAuditHistory,
 	getComplaintDetailById,
+	getComplaintHistory,
 } from './detail-queries'
+import { createComplaintHistoryEntry } from './history'
 
 export interface GetComplaintDetailResult {
 	complaint: ComplaintDetail
 	auditHistory: ComplaintAuditEntry[]
+	history: ComplaintHistoryEntry[]
 }
 
 async function requireAccess(permissionKey: string) {
@@ -56,9 +61,10 @@ export async function $getComplaintDetailAction(
 	const access = await requireAccess('complaints.view')
 	if ('error' in access) redirect('/dashboard/complaints')
 
-	const [complaint, auditHistory] = await Promise.all([
+	const [complaint, auditHistory, history] = await Promise.all([
 		getComplaintDetailById(id, access.membership.organizationId),
 		getComplaintAuditHistory(id, access.membership.organizationId),
+		getComplaintHistory(id, access.membership.organizationId),
 	])
 
 	if (!complaint) redirect('/dashboard/complaints')
@@ -73,7 +79,7 @@ export async function $getComplaintDetailAction(
 		redirect('/dashboard/complaints')
 	}
 
-	return { complaint, auditHistory }
+	return { complaint, auditHistory, history }
 }
 
 export interface RespondToComplaintInput {
@@ -178,11 +184,141 @@ export async function $respondToComplaintAction(
 				},
 				tx,
 			)
+
+			await createComplaintHistoryEntry(
+				{
+					complaintId: input.id,
+					eventType: 'response_added',
+					fromStatus: existing.status,
+					toStatus: 'resolved',
+					publicNote:
+						'Se registró una respuesta oficial a tu reclamo.',
+					performedBy: access.session.user.id,
+					performedByRole: 'operator',
+				},
+				tx,
+			)
 		})
 	} catch {
 		return {
 			success: false,
 			error: 'Error al guardar la respuesta. Intenta de nuevo.',
+		}
+	}
+
+	return { success: true }
+}
+
+const STATUS_CHANGE_NOTE: Record<ChangeableStatus, string> = {
+	in_progress: 'Tu reclamo está siendo procesado por nuestro equipo.',
+	in_review: 'Tu reclamo está siendo revisado por nuestro equipo.',
+	closed: 'Tu reclamo ha sido cerrado.',
+}
+
+export interface ChangeComplaintStatusInput {
+	id: string
+	status: ChangeableStatus
+	internalNote?: string
+}
+
+export interface ChangeComplaintStatusResult {
+	success: boolean
+	error?: string
+}
+
+export async function $changeComplaintStatusAction(
+	input: ChangeComplaintStatusInput,
+): Promise<ChangeComplaintStatusResult> {
+	const access = await requireAccess('complaints.respond')
+	if ('error' in access) {
+		return {
+			success: false,
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
+	}
+
+	const existing = await getComplaintDetailById(
+		input.id,
+		access.membership.organizationId,
+	)
+	if (!existing) return { success: false, error: 'Reclamo no encontrado.' }
+
+	if (
+		!canAccessStore(
+			existing.storeId,
+			access.membership.storeAccessMode,
+			access.membership.storeIds,
+		)
+	) {
+		return { success: false, error: 'No tienes acceso a este reclamo.' }
+	}
+
+	if (existing.status === 'resolved') {
+		return { success: false, error: 'El reclamo ya fue resuelto.' }
+	}
+
+	if (existing.status === input.status) {
+		return { success: false, error: 'El reclamo ya tiene ese estado.' }
+	}
+
+	const now = new Date()
+	const reqHeaders = await headers()
+
+	try {
+		await db.transaction(async (tx) => {
+			await tx
+				.update(complaints)
+				.set({
+					status: input.status,
+					updatedAt: now,
+					updatedBy: access.session.user.id,
+				})
+				.where(
+					and(
+						eq(complaints.id, input.id),
+						eq(
+							complaints.organizationId,
+							access.membership.organizationId,
+						),
+					),
+				)
+
+			await createAuditLog(
+				{
+					organizationId: access.membership.organizationId,
+					userId: access.session.user.id,
+					action: 'complaint.status_changed',
+					entityType: 'complaint',
+					entityId: input.id,
+					oldData: { status: existing.status },
+					newData: { status: input.status },
+					ipAddress:
+						reqHeaders.get('x-forwarded-for') ??
+						reqHeaders.get('x-real-ip'),
+					userAgent: reqHeaders.get('user-agent'),
+				},
+				tx,
+			)
+
+			await createComplaintHistoryEntry(
+				{
+					complaintId: input.id,
+					eventType: 'status_changed',
+					fromStatus: existing.status,
+					toStatus: input.status,
+					publicNote: STATUS_CHANGE_NOTE[input.status],
+					internalNote: input.internalNote ?? null,
+					performedBy: access.session.user.id,
+					performedByRole: 'operator',
+				},
+				tx,
+			)
+		})
+	} catch {
+		return {
+			success: false,
+			error: 'Error al cambiar el estado. Intenta de nuevo.',
 		}
 	}
 
