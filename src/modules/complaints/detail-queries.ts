@@ -143,7 +143,10 @@ export async function getAttachmentByStorageKey(
 	const [attachment] = await db
 		.select({ id: complaintAttachments.id })
 		.from(complaintAttachments)
-		.innerJoin(complaints, eq(complaintAttachments.complaintId, complaints.id))
+		.innerJoin(
+			complaints,
+			eq(complaintAttachments.complaintId, complaints.id),
+		)
 		.where(
 			and(
 				eq(complaintAttachments.storageKey, storageKey),

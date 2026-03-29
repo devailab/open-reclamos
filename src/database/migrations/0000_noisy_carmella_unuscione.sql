@@ -100,6 +100,9 @@ CREATE TABLE "complaints" (
 	"response_deadline" timestamp with time zone,
 	"description" text,
 	"request" text,
+	"draft_response" text,
+	"draft_updated_at" timestamp with time zone,
+	"draft_saved_by" uuid,
 	"official_response" text,
 	"responded_at" timestamp with time zone,
 	"responded_by" uuid,
@@ -336,6 +339,7 @@ ALTER TABLE "complaints" ADD CONSTRAINT "complaints_organization_id_organization
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_store_id_stores_id_fk" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_reason_id_complaint_reasons_id_fk" FOREIGN KEY ("reason_id") REFERENCES "public"."complaint_reasons"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_ubigeo_id_ubigeos_id_fk" FOREIGN KEY ("ubigeo_id") REFERENCES "public"."ubigeos"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaints" ADD CONSTRAINT "complaints_draft_saved_by_users_id_fk" FOREIGN KEY ("draft_saved_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_responded_by_users_id_fk" FOREIGN KEY ("responded_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "organization_invitation_stores" ADD CONSTRAINT "organization_invitation_stores_invitation_id_organization_invitations_id_fk" FOREIGN KEY ("invitation_id") REFERENCES "public"."organization_invitations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

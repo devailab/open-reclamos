@@ -1,5 +1,5 @@
 {
-    "id": "fdfceb34-fcf6-4efc-addc-19c21ed27f5a",
+    "id": "b9680933-75b2-4a43-bf81-2cd9d66e6e4e",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -849,6 +849,24 @@
                     "primaryKey": false,
                     "notNull": false
                 },
+                "draft_response": {
+                    "name": "draft_response",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "draft_updated_at": {
+                    "name": "draft_updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "draft_saved_by": {
+                    "name": "draft_saved_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
                 "official_response": {
                     "name": "official_response",
                     "type": "text",
@@ -964,6 +982,15 @@
                     "tableFrom": "complaints",
                     "tableTo": "ubigeos",
                     "columnsFrom": ["ubigeo_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "complaints_draft_saved_by_users_id_fk": {
+                    "name": "complaints_draft_saved_by_users_id_fk",
+                    "tableFrom": "complaints",
+                    "tableTo": "users",
+                    "columnsFrom": ["draft_saved_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
                     "onUpdate": "no action"
