@@ -1,3 +1,7 @@
+import {
+	MAX_RESPONSE_DEADLINE_DAYS,
+	MIN_RESPONSE_DEADLINE_DAYS,
+} from '@/lib/constants'
 import { required } from '@/lib/validators'
 
 export const validateOrgName = required
@@ -15,6 +19,8 @@ export interface UpdateOrganizationInput {
 	phoneCode: string | null
 	phone: string | null
 	website: string | null
+	formEnabled: boolean
+	responseDeadlineDays: number | null
 }
 
 export function normalizeUpdateOrganizationInput(
@@ -29,6 +35,10 @@ export function normalizeUpdateOrganizationInput(
 		phoneCode: input.phoneCode?.trim() || null,
 		phone: input.phone?.trim() || null,
 		website: input.website?.trim() || null,
+		formEnabled: input.formEnabled,
+		responseDeadlineDays: Number.isFinite(input.responseDeadlineDays)
+			? Math.trunc(input.responseDeadlineDays as number)
+			: null,
 	}
 }
 
@@ -40,5 +50,14 @@ export function validateUpdateOrganizationInput(
 	if (!input.ubigeoId) return 'El distrito es requerido'
 	if (!input.addressType) return 'El tipo de vía es requerido'
 	if (!input.address) return 'La dirección es requerida'
+	if (input.responseDeadlineDays === null) {
+		return 'Debes indicar el plazo máximo de respuesta.'
+	}
+	if (input.responseDeadlineDays < MIN_RESPONSE_DEADLINE_DAYS) {
+		return `El plazo máximo de respuesta debe ser de al menos ${MIN_RESPONSE_DEADLINE_DAYS} día.`
+	}
+	if (input.responseDeadlineDays > MAX_RESPONSE_DEADLINE_DAYS) {
+		return `El plazo máximo de respuesta no puede superar los ${MAX_RESPONSE_DEADLINE_DAYS} días.`
+	}
 	return null
 }

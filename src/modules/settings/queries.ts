@@ -2,10 +2,12 @@ import { eq } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
 	organizationMembers,
+	organizationSettings,
 	organizations,
 	roles,
 	ubigeos,
 } from '@/database/schema'
+import { DEFAULT_RESPONSE_DEADLINE_DAYS } from '@/lib/constants'
 
 export interface OrganizationSettings {
 	id: string
@@ -19,12 +21,19 @@ export interface OrganizationSettings {
 	phoneCode: string | null
 	phone: string | null
 	website: string | null
+	formEnabled: boolean
+	responseDeadlineDays: number
 	role: string
 }
 
 export interface UbigeoOption {
 	id: string
 	label: string
+}
+
+export interface OrganizationComplaintSettings {
+	formEnabled: boolean
+	responseDeadlineDays: number
 }
 
 export async function getOrganizationSettingsForUser(
@@ -43,6 +52,8 @@ export async function getOrganizationSettingsForUser(
 			phoneCode: organizations.phoneCode,
 			phone: organizations.phone,
 			website: organizations.website,
+			formEnabled: organizationSettings.formEnabled,
+			responseDeadlineDays: organizationSettings.responseDeadlineDays,
 			role: roles.slug,
 		})
 		.from(organizations)
@@ -51,10 +62,40 @@ export async function getOrganizationSettingsForUser(
 			eq(organizationMembers.organizationId, organizations.id),
 		)
 		.innerJoin(roles, eq(organizationMembers.roleId, roles.id))
+		.leftJoin(
+			organizationSettings,
+			eq(organizationSettings.organizationId, organizations.id),
+		)
 		.where(eq(organizationMembers.userId, userId))
 		.limit(1)
 
-	return result ?? null
+	if (!result) return null
+
+	return {
+		...result,
+		formEnabled: result.formEnabled ?? true,
+		responseDeadlineDays:
+			result.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
+	}
+}
+
+export async function getOrganizationComplaintSettingsForOrganization(
+	organizationId: string,
+): Promise<OrganizationComplaintSettings> {
+	const [result] = await db
+		.select({
+			formEnabled: organizationSettings.formEnabled,
+			responseDeadlineDays: organizationSettings.responseDeadlineDays,
+		})
+		.from(organizationSettings)
+		.where(eq(organizationSettings.organizationId, organizationId))
+		.limit(1)
+
+	return {
+		formEnabled: result?.formEnabled ?? true,
+		responseDeadlineDays:
+			result?.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
+	}
 }
 
 export async function getUbigeoById(

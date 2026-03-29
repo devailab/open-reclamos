@@ -7,6 +7,7 @@ import type { AutocompleteOption } from '@/components/forms/autocomplete-field'
 import { db } from '@/database/database'
 import {
 	organizationMembers,
+	organizationSettings,
 	organizations,
 	stores,
 	users,
@@ -211,6 +212,11 @@ export async function $setupOrganizationAction(
 				organizationId: org.id,
 				role: adminRole.slug,
 				roleId: adminRole.id,
+				createdBy: session.user.id,
+			})
+
+			await tx.insert(organizationSettings).values({
+				organizationId: org.id,
 				createdBy: session.user.id,
 			})
 

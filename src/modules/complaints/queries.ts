@@ -3,9 +3,11 @@ import { db } from '@/database/database'
 import {
 	complaintReasons,
 	complaints,
+	organizationSettings,
 	organizations,
 	stores,
 } from '@/database/schema'
+import { DEFAULT_RESPONSE_DEADLINE_DAYS } from '@/lib/constants'
 
 export async function getOrganizationBySlug(slug: string) {
 	const [org] = await db
@@ -15,11 +17,25 @@ export async function getOrganizationBySlug(slug: string) {
 			slug: organizations.slug,
 			logoKey: organizations.logoKey,
 			primaryColor: organizations.primaryColor,
+			formEnabled: organizationSettings.formEnabled,
+			responseDeadlineDays: organizationSettings.responseDeadlineDays,
 		})
 		.from(organizations)
+		.leftJoin(
+			organizationSettings,
+			eq(organizationSettings.organizationId, organizations.id),
+		)
 		.where(eq(organizations.slug, slug))
 		.limit(1)
-	return org ?? null
+
+	if (!org) return null
+
+	return {
+		...org,
+		formEnabled: org.formEnabled ?? true,
+		responseDeadlineDays:
+			org.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
+	}
 }
 
 export async function getStoreBySlug(slug: string) {
@@ -29,6 +45,8 @@ export async function getStoreBySlug(slug: string) {
 			name: stores.name,
 			slug: stores.slug,
 			organizationId: stores.organizationId,
+			formEnabled: stores.formEnabled,
+			deletedAt: stores.deletedAt,
 		})
 		.from(stores)
 		.where(eq(stores.slug, slug))
@@ -47,6 +65,7 @@ export async function getStoreForOrganization(
 			and(
 				eq(stores.id, storeId),
 				eq(stores.organizationId, organizationId),
+				eq(stores.formEnabled, true),
 				isNull(stores.deletedAt),
 			),
 		)
@@ -65,6 +84,7 @@ export async function getStoresByOrganizationId(organizationId: string) {
 		.where(
 			and(
 				eq(stores.organizationId, organizationId),
+				eq(stores.formEnabled, true),
 				isNull(stores.deletedAt),
 			),
 		)
@@ -94,11 +114,25 @@ export async function getOrganizationById(id: string) {
 			slug: organizations.slug,
 			logoKey: organizations.logoKey,
 			primaryColor: organizations.primaryColor,
+			formEnabled: organizationSettings.formEnabled,
+			responseDeadlineDays: organizationSettings.responseDeadlineDays,
 		})
 		.from(organizations)
+		.leftJoin(
+			organizationSettings,
+			eq(organizationSettings.organizationId, organizations.id),
+		)
 		.where(eq(organizations.id, id))
 		.limit(1)
-	return org ?? null
+
+	if (!org) return null
+
+	return {
+		...org,
+		formEnabled: org.formEnabled ?? true,
+		responseDeadlineDays:
+			org.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
+	}
 }
 
 export async function getComplaintByTrackingCode(

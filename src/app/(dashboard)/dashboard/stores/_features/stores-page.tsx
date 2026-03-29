@@ -11,6 +11,7 @@ import TextField from '@/components/forms/text-field'
 import TableFiltersBar from '@/components/table-filters-bar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { useDataTable } from '@/hooks/use-data-table'
 import { STORE_TYPE_FILTER_OPTIONS } from '@/lib/constants'
 import { feedback } from '@/lib/feedback'
@@ -18,6 +19,7 @@ import { formatDateDisplay } from '@/lib/formatters'
 import {
 	$deactivateStoreAction,
 	$getStoresTableAction,
+	$setStoreFormEnabledAction,
 } from '@/modules/stores/actions'
 import {
 	DEFAULT_STORES_TABLE_FILTERS,
@@ -43,9 +45,14 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 	const [filters, setFilters] = useState<StoresTableFilters>(
 		initialState.filters,
 	)
+	const [organizationFormEnabled, setOrganizationFormEnabled] = useState(
+		initialState.organizationFormEnabled,
+	)
 	const [isCreateDialogOpen, setCreateDialogOpen] = useState(false)
 	const [editingStore, setEditingStore] = useState<StoreRow | null>(null)
 	const [isDeactivating, startDeactivateTransition] = useTransition()
+	const [isTogglingForm, startToggleFormTransition] = useTransition()
+	const [togglingStoreId, setTogglingStoreId] = useState<string | null>(null)
 
 	const {
 		controller,
@@ -65,6 +72,7 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 				pageSize,
 				filters,
 			})
+			setOrganizationFormEnabled(result.organizationFormEnabled)
 
 			return {
 				rows: result.rows,
@@ -150,6 +158,31 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 		void search()
 	}
 
+	const handleToggleForm = (store: StoreRow, nextValue: boolean) => {
+		if (store.deletedAt) return
+
+		setTogglingStoreId(store.id)
+		startToggleFormTransition(async () => {
+			const result = await $setStoreFormEnabledAction(store.id, nextValue)
+			setTogglingStoreId(null)
+
+			if ('error' in result) {
+				sileo.error({
+					title: 'Error al actualizar formulario',
+					description: result.error,
+				})
+				return
+			}
+
+			sileo.success({
+				title: nextValue
+					? 'Formulario habilitado'
+					: 'Formulario deshabilitado',
+			})
+			void search()
+		})
+	}
+
 	const handleDeactivate = (store: StoreRow) => {
 		if (store.deletedAt) return
 
@@ -215,26 +248,67 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 					typeof window !== 'undefined'
 						? `${window.location.origin}${path}`
 						: path
+				const isTogglePending =
+					isTogglingForm && togglingStoreId === row.id
+				const isPubliclyBlocked =
+					Boolean(row.deletedAt) ||
+					!row.formEnabled ||
+					!organizationFormEnabled
+
 				return (
-					<div className='flex items-center gap-1'>
-						<CopyButton value={fullUrl} size='icon-sm' />
-						<Button
-							type='button'
-							variant='ghost'
-							size='icon-sm'
-							title='Abrir formulario de reclamos'
-							onClick={(event) => {
-								event.stopPropagation()
-								window.open(
-									fullUrl,
-									'_blank',
-									'noopener,noreferrer',
-								)
-							}}
-						>
-							<ExternalLink />
-							<span className='sr-only'>Abrir formulario</span>
-						</Button>
+					<div className='space-y-2'>
+						{!organizationFormEnabled && !row.deletedAt && (
+							<Badge variant='secondary'>
+								Bloqueado globalmente
+							</Badge>
+						)}
+						<div className='flex items-center gap-3'>
+							<Switch
+								checked={row.formEnabled}
+								disabled={
+									Boolean(row.deletedAt) || isTogglePending
+								}
+								onClick={(event) => event.stopPropagation()}
+								onCheckedChange={(checked) =>
+									handleToggleForm(row, checked)
+								}
+							/>
+							<p className='text-xs text-muted-foreground'>
+								{row.deletedAt
+									? 'La tienda está inactiva.'
+									: row.formEnabled
+										? 'Formulario disponible para esta tienda.'
+										: 'Formulario oculto para esta tienda.'}
+							</p>
+						</div>
+
+						<div className='flex items-center gap-1'>
+							<CopyButton value={fullUrl} size='icon-sm' />
+							<Button
+								type='button'
+								variant='ghost'
+								size='icon-sm'
+								title='Abrir formulario de reclamos'
+								onClick={(event) => {
+									event.stopPropagation()
+									window.open(
+										fullUrl,
+										'_blank',
+										'noopener,noreferrer',
+									)
+								}}
+							>
+								<ExternalLink />
+								<span className='sr-only'>
+									Abrir formulario
+								</span>
+							</Button>
+							<span className='text-xs text-muted-foreground'>
+								{isPubliclyBlocked
+									? 'Actualmente no estará disponible al público.'
+									: path}
+							</span>
+						</div>
 					</div>
 				)
 			},
@@ -293,6 +367,15 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 
 			<div className='rounded-xl border bg-card'>
 				<div className='space-y-4 border-b px-4 py-3'>
+					{!organizationFormEnabled && (
+						<div className='rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800'>
+							El formulario global de la organización está
+							desactivado. Aunque una tienda esté marcada como
+							habilitada, su enlace público seguirá bloqueado
+							hasta reactivarlo en Configuración.
+						</div>
+					)}
+
 					<p className='text-sm text-muted-foreground'>
 						{controller.store.totalItems}{' '}
 						{controller.store.totalItems === 1

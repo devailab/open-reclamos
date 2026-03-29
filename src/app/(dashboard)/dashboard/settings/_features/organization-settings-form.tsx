@@ -2,6 +2,7 @@
 
 import {
 	Building2,
+	CalendarClock,
 	FileText,
 	Globe,
 	Hash,
@@ -15,6 +16,8 @@ import { sileo } from 'sileo'
 import AutocompleteField, {
 	type AutocompleteOption,
 } from '@/components/forms/autocomplete-field'
+import BooleanField from '@/components/forms/boolean-field'
+import NumberField from '@/components/forms/number-field'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import TextField from '@/components/forms/text-field'
 import { PublicFormLink } from '@/components/public-form-link'
@@ -28,7 +31,11 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useForm } from '@/hooks/use-form'
-import { ADDRESS_TYPE_OPTIONS } from '@/lib/constants'
+import {
+	ADDRESS_TYPE_OPTIONS,
+	MAX_RESPONSE_DEADLINE_DAYS,
+	MIN_RESPONSE_DEADLINE_DAYS,
+} from '@/lib/constants'
 import { required } from '@/lib/validators'
 import { $updateOrganizationSettingsAction } from '@/modules/settings/actions'
 import type { OrganizationSettings } from '@/modules/settings/queries'
@@ -43,6 +50,8 @@ interface OrgFormValues {
 	phoneCode: string | null
 	phone: string | null
 	website: string | null
+	formEnabled: boolean
+	responseDeadlineDays: number | null
 }
 
 interface OrganizationSettingsFormProps {
@@ -72,6 +81,8 @@ export function OrganizationSettingsForm({
 		phoneCode: org.phoneCode,
 		phone: org.phone,
 		website: org.website,
+		formEnabled: org.formEnabled,
+		responseDeadlineDays: org.responseDeadlineDays,
 	}
 
 	const [values, setValues] = useState<OrgFormValues>(initialValues)
@@ -81,6 +92,19 @@ export function OrganizationSettingsForm({
 		setValues,
 		initialValues,
 	})
+
+	const validateResponseDeadlineDays = (value: number | null) => {
+		if (value === null) {
+			return 'Debes indicar el plazo máximo de respuesta.'
+		}
+		if (value < MIN_RESPONSE_DEADLINE_DAYS) {
+			return `El plazo mínimo es ${MIN_RESPONSE_DEADLINE_DAYS} día.`
+		}
+		if (value > MAX_RESPONSE_DEADLINE_DAYS) {
+			return `El plazo máximo es ${MAX_RESPONSE_DEADLINE_DAYS} días.`
+		}
+		return null
+	}
 
 	const handleSubmit = () => {
 		const errors = validate({ focus: 'first' })
@@ -96,6 +120,8 @@ export function OrganizationSettingsForm({
 				phoneCode: values.phoneCode,
 				phone: values.phone,
 				website: values.website,
+				formEnabled: values.formEnabled,
+				responseDeadlineDays: values.responseDeadlineDays,
 			})
 
 			if ('error' in result) {
@@ -231,10 +257,42 @@ export function OrganizationSettingsForm({
 						Formulario de reclamos
 					</CardTitle>
 					<CardDescription>
-						Enlace público del libro de reclamaciones de tu empresa.
+						Controla la disponibilidad pública y el plazo de
+						respuesta de toda la organización.
 					</CardDescription>
 				</CardHeader>
-				<CardContent>
+				<CardContent className='space-y-4'>
+					<BooleanField
+						{...register('formEnabled')}
+						label='Formulario público habilitado'
+						description='Si lo desactivas, ningún formulario de tus tiendas estará disponible públicamente.'
+						disabled={disabled}
+					/>
+
+					<NumberField
+						{...register('responseDeadlineDays')}
+						label='Plazo máximo de respuesta'
+						placeholder='15'
+						prefix={<CalendarClock className='size-3.5' />}
+						validate={validateResponseDeadlineDays}
+						min={MIN_RESPONSE_DEADLINE_DAYS}
+						max={MAX_RESPONSE_DEADLINE_DAYS}
+						allowDecimals={false}
+						allowNegative={false}
+						suffix='días'
+						disabled={disabled}
+					/>
+
+					{!values.formEnabled && (
+						<div className='rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800'>
+							El formulario general y los formularios de todas las
+							tiendas quedarán bloqueados públicamente hasta que
+							lo vuelvas a activar.
+						</div>
+					)}
+
+					<Separator />
+
 					<PublicFormLink path={`/c/${org.slug}`} />
 				</CardContent>
 			</Card>

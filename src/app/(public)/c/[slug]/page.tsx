@@ -1,6 +1,7 @@
 import type { Metadata, NextPage } from 'next'
 import { notFound } from 'next/navigation'
 import { ComplaintForm } from '@/modules/complaints/components/complaint-form'
+import { FormUnavailableCard } from '@/modules/complaints/components/form-unavailable-card'
 import { TrackingPanel } from '@/modules/complaints/components/tracking-panel'
 import {
 	getComplaintReasonsForOrg,
@@ -42,6 +43,8 @@ const OrgComplaintPage: NextPage<PageProps> = async ({ params }) => {
 		getStoresByOrganizationId(org.id),
 		getComplaintReasonsForOrg(org.id),
 	])
+	const isOrganizationFormUnavailable = !org.formEnabled
+	const shouldShowForm = !isOrganizationFormUnavailable && stores.length > 0
 
 	return (
 		<main className='min-h-screen bg-muted/30'>
@@ -56,21 +59,31 @@ const OrgComplaintPage: NextPage<PageProps> = async ({ params }) => {
 					</p>
 				</div>
 
-				<ComplaintForm
-					organizationId={org.id}
-					organizationName={org.name}
-					stores={stores}
-					countries={countries}
-					reasons={reasons}
-				/>
+				{shouldShowForm ? (
+					<ComplaintForm
+						organizationId={org.id}
+						organizationName={org.name}
+						stores={stores}
+						countries={countries}
+						reasons={reasons}
+					/>
+				) : (
+					<FormUnavailableCard
+						description={
+							isOrganizationFormUnavailable
+								? 'No existe un formulario de reclamos disponible para esta organización en este momento.'
+								: 'No existe un formulario de reclamos disponible para ninguna tienda activa de esta organización.'
+						}
+					/>
+				)}
 
 				<TrackingPanel organizationId={org.id} />
 
 				<p className='mt-6 text-center text-xs text-muted-foreground'>
 					De acuerdo al Código de Protección y Defensa del Consumidor,
 					toda empresa debe contar con un Libro de Reclamaciones. El
-					proveedor debe dar respuesta en un plazo máximo de 15 días
-					calendario.
+					proveedor debe dar respuesta en un plazo máximo de{' '}
+					{org.responseDeadlineDays} días calendario.
 				</p>
 			</div>
 		</main>

@@ -9,6 +9,7 @@ export interface StoresInitialState {
 	page: number
 	pageSize: number
 	filters: StoresTableFilters
+	organizationFormEnabled: boolean
 }
 
 export interface StoresPageProps {

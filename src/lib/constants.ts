@@ -3,6 +3,10 @@ export interface OptionItem {
 	label: string
 }
 
+export const DEFAULT_RESPONSE_DEADLINE_DAYS = 15
+export const MIN_RESPONSE_DEADLINE_DAYS = 1
+export const MAX_RESPONSE_DEADLINE_DAYS = 365
+
 export const DOCUMENT_TYPE_OPTIONS: OptionItem[] = [
 	{ value: 'DNI', label: 'DNI' },
 	{ value: 'CE', label: 'Carné de extranjería' },

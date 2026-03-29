@@ -2,7 +2,10 @@ import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
-import { getStoresTableForOrganization } from '@/modules/stores/queries'
+import {
+	getOrganizationFormEnabledForOrganization,
+	getStoresTableForOrganization,
+} from '@/modules/stores/queries'
 import { DEFAULT_STORES_TABLE_FILTERS } from '@/modules/stores/validation'
 import { StoresPage } from './_features/stores-page'
 import type { StoresInitialState } from './_features/types'
@@ -24,6 +27,10 @@ const StoresRoute: FC = async () => {
 		pageSize: INITIAL_PAGE_SIZE,
 		filters: DEFAULT_STORES_TABLE_FILTERS,
 	})
+	const organizationFormEnabled =
+		await getOrganizationFormEnabledForOrganization(
+			membership.organizationId,
+		)
 
 	const initialState: StoresInitialState = {
 		rows,
@@ -31,6 +38,7 @@ const StoresRoute: FC = async () => {
 		page: INITIAL_PAGE,
 		pageSize: INITIAL_PAGE_SIZE,
 		filters: DEFAULT_STORES_TABLE_FILTERS,
+		organizationFormEnabled,
 	}
 
 	return <StoresPage initialState={initialState} />

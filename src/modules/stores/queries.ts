@@ -9,7 +9,11 @@ import {
 	type SQL,
 } from 'drizzle-orm'
 import { db } from '@/database/database'
-import { organizationMembers, stores } from '@/database/schema'
+import {
+	organizationMembers,
+	organizationSettings,
+	stores,
+} from '@/database/schema'
 import type { StoresTableFilters } from './validation'
 
 export interface StoreTableRow {
@@ -21,6 +25,7 @@ export interface StoreTableRow {
 	addressType: string | null
 	address: string | null
 	url: string | null
+	formEnabled: boolean
 	deletedAt: Date | null
 	createdAt: Date
 	updatedAt: Date | null
@@ -94,6 +99,7 @@ export async function getStoreByIdForOrganization(
 			addressType: stores.addressType,
 			address: stores.address,
 			url: stores.url,
+			formEnabled: stores.formEnabled,
 			deletedAt: stores.deletedAt,
 		})
 		.from(stores)
@@ -137,6 +143,7 @@ export async function getStoresTableForOrganization({
 			addressType: stores.addressType,
 			address: stores.address,
 			url: stores.url,
+			formEnabled: stores.formEnabled,
 			deletedAt: stores.deletedAt,
 			createdAt: stores.createdAt,
 			updatedAt: stores.updatedAt,
@@ -156,4 +163,16 @@ export async function getStoresTableForOrganization({
 		rows,
 		totalItems: total?.total ?? 0,
 	}
+}
+
+export async function getOrganizationFormEnabledForOrganization(
+	organizationId: string,
+) {
+	const [result] = await db
+		.select({ formEnabled: organizationSettings.formEnabled })
+		.from(organizationSettings)
+		.where(eq(organizationSettings.organizationId, organizationId))
+		.limit(1)
+
+	return result?.formEnabled ?? true
 }

@@ -10,6 +10,7 @@ import { getSession } from '@/lib/auth-server'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
 	checkStoreSlugExists,
+	getOrganizationFormEnabledForOrganization,
 	getStoreByIdForOrganization,
 	getStoresTableForOrganization,
 	type StoreTableRow,
@@ -38,6 +39,7 @@ export interface GetStoresTableActionResult {
 	page: number
 	pageSize: number
 	filters: StoresTableFilters
+	organizationFormEnabled: boolean
 }
 
 async function requireAccess(permissionKey: string) {
@@ -67,6 +69,7 @@ export async function $getStoresTableAction(
 			page: 1,
 			pageSize: 10,
 			filters: normalizeStoresTableFilters(),
+			organizationFormEnabled: true,
 		}
 	}
 
@@ -82,8 +85,19 @@ export async function $getStoresTableAction(
 		pageSize,
 		filters,
 	})
+	const organizationFormEnabled =
+		await getOrganizationFormEnabledForOrganization(
+			access.membership.organizationId,
+		)
 
-	return { rows, totalItems, page, pageSize, filters }
+	return {
+		rows,
+		totalItems,
+		page,
+		pageSize,
+		filters,
+		organizationFormEnabled,
+	}
 }
 
 const buildStoreSlugBase = (name: string): string => {
@@ -174,6 +188,8 @@ export async function $createStoreAction(
 	}
 
 	revalidatePath('/dashboard/stores')
+	revalidatePath('/s/[slug]', 'page')
+	revalidatePath('/c/[slug]', 'page')
 	return { success: true }
 }
 
@@ -252,6 +268,8 @@ export async function $updateStoreAction(
 	}
 
 	revalidatePath('/dashboard/stores')
+	revalidatePath('/s/[slug]', 'page')
+	revalidatePath('/c/[slug]', 'page')
 	return { success: true }
 }
 
@@ -326,5 +344,84 @@ export async function $deactivateStoreAction(
 	}
 
 	revalidatePath('/dashboard/stores')
+	revalidatePath('/s/[slug]', 'page')
+	revalidatePath('/c/[slug]', 'page')
+	return { success: true }
+}
+
+export async function $setStoreFormEnabledAction(
+	id: string,
+	formEnabled: boolean,
+): Promise<StoreActionResult> {
+	const access = await requireAccess('stores.manage')
+	if ('error' in access)
+		return { error: 'No tienes permisos para realizar esta acción.' }
+
+	const idError = validateStoreId(id)
+	if (idError) return { error: idError }
+
+	const currentStore = await getStoreByIdForOrganization(
+		id,
+		access.membership.organizationId,
+	)
+	if (!currentStore) return { error: 'La tienda no fue encontrada.' }
+	if (currentStore.deletedAt) {
+		return { error: 'La tienda está inactiva y no se puede editar.' }
+	}
+	if (currentStore.formEnabled === formEnabled) {
+		return { success: true }
+	}
+
+	try {
+		await db.transaction(async (tx) => {
+			const now = new Date()
+
+			const [updatedStore] = await tx
+				.update(stores)
+				.set({
+					formEnabled,
+					updatedAt: now,
+					updatedBy: access.session.user.id,
+				})
+				.where(
+					and(
+						eq(stores.id, id),
+						eq(
+							stores.organizationId,
+							access.membership.organizationId,
+						),
+						isNull(stores.deletedAt),
+					),
+				)
+				.returning({ id: stores.id })
+
+			if (!updatedStore) {
+				throw new Error('store form toggle failed')
+			}
+
+			await createAuditLog(
+				{
+					organizationId: access.membership.organizationId,
+					userId: access.session.user.id,
+					action: formEnabled
+						? 'store.form.enabled'
+						: 'store.form.disabled',
+					entityType: 'store_form',
+					entityId: id,
+					oldData: { formEnabled: currentStore.formEnabled },
+					newData: { formEnabled },
+				},
+				tx,
+			)
+		})
+	} catch {
+		return {
+			error: 'No se pudo actualizar el formulario de la tienda. Inténtalo nuevamente.',
+		}
+	}
+
+	revalidatePath('/dashboard/stores')
+	revalidatePath('/s/[slug]', 'page')
+	revalidatePath('/c/[slug]', 'page')
 	return { success: true }
 }

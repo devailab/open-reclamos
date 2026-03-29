@@ -32,7 +32,10 @@ export function CopyButton({
 			size={size}
 			title={copied ? 'Copiado' : 'Copiar enlace'}
 			className={cn(className)}
-			onClick={handleCopy}
+			onClick={(event) => {
+				event.stopPropagation()
+				handleCopy()
+			}}
 		>
 			{copied ? <Check className='text-green-500' /> : <Copy />}
 			<span className='sr-only'>

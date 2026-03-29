@@ -11,6 +11,7 @@ import {
 } from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
 import { moveS3Object } from '@/lib/s3'
+import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
 import { generateTrackingCode } from './lib'
 import { getStoreForOrganization } from './queries'
 
@@ -28,8 +29,6 @@ async function confirmUploadedFiles(
 		}),
 	)
 }
-
-const RESPONSE_DEADLINE_DAYS = 15
 
 export interface UploadedFileInput {
 	key: string
@@ -98,6 +97,18 @@ export async function $submitComplaintAction(
 		return { success: false, error: 'Tipo de reclamo requerido.' }
 	}
 
+	const organizationSettings =
+		await getOrganizationComplaintSettingsForOrganization(
+			input.organizationId,
+		)
+
+	if (!organizationSettings.formEnabled) {
+		return {
+			success: false,
+			error: 'El formulario de reclamos no está disponible actualmente.',
+		}
+	}
+
 	// Verificar que la tienda pertenece a la organización indicada
 	const store = await getStoreForOrganization(
 		input.storeId,
@@ -115,7 +126,10 @@ export async function $submitComplaintAction(
 
 		const trackingCode = generateTrackingCode()
 		const now = new Date()
-		const responseDeadline = addDays(now, RESPONSE_DEADLINE_DAYS)
+		const responseDeadline = addDays(
+			now,
+			organizationSettings.responseDeadlineDays,
+		)
 
 		const reqHeaders = await headers()
 		let correlative!: string
@@ -171,7 +185,8 @@ export async function $submitComplaintAction(
 					proofOfPaymentType: input.proofOfPaymentType ?? null,
 					proofOfPaymentNumber: input.proofOfPaymentNumber ?? null,
 					incidentDate: input.incidentDate ?? null,
-					responseDeadlineDays: RESPONSE_DEADLINE_DAYS,
+					responseDeadlineDays:
+						organizationSettings.responseDeadlineDays,
 					responseDeadline,
 					description: input.description ?? null,
 					request: input.request ?? null,
