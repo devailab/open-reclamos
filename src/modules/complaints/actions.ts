@@ -6,7 +6,7 @@ import { db } from '@/database/database'
 import { complaintAttachments, complaints } from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
 import { generateTrackingCode } from './lib'
-import { getNextCorrelative } from './queries'
+import { getNextCorrelative, getStoreForOrganization } from './queries'
 
 const RESPONSE_DEADLINE_DAYS = 15
 
@@ -75,6 +75,15 @@ export async function $submitComplaintAction(
 	}
 	if (!input.type) {
 		return { success: false, error: 'Tipo de reclamo requerido.' }
+	}
+
+	// Verificar que la tienda pertenece a la organización indicada
+	const store = await getStoreForOrganization(
+		input.storeId,
+		input.organizationId,
+	)
+	if (!store) {
+		return { success: false, error: 'Datos de tienda inválidos.' }
 	}
 
 	try {

@@ -29,13 +29,7 @@ const SetupPage: NextPage = async () => {
 	if (userData?.setupStatus === 'store') {
 		const organization = await getUserOrganization(session.user.id)
 		if (!organization) redirect('/login')
-		return (
-			<SetupForm
-				step='store'
-				countries={countries}
-				organizationId={organization.id}
-			/>
-		)
+		return <SetupForm step='store' countries={countries} />
 	}
 
 	return <SetupForm step='organization' countries={countries} />

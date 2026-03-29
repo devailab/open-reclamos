@@ -36,6 +36,24 @@ export async function getStoreBySlug(slug: string) {
 	return store ?? null
 }
 
+export async function getStoreForOrganization(
+	storeId: string,
+	organizationId: string,
+) {
+	const [store] = await db
+		.select({ id: stores.id })
+		.from(stores)
+		.where(
+			and(
+				eq(stores.id, storeId),
+				eq(stores.organizationId, organizationId),
+				isNull(stores.deletedAt),
+			),
+		)
+		.limit(1)
+	return store ?? null
+}
+
 export async function getStoresByOrganizationId(organizationId: string) {
 	return db
 		.select({
@@ -44,7 +62,12 @@ export async function getStoresByOrganizationId(organizationId: string) {
 			slug: stores.slug,
 		})
 		.from(stores)
-		.where(eq(stores.organizationId, organizationId))
+		.where(
+			and(
+				eq(stores.organizationId, organizationId),
+				isNull(stores.deletedAt),
+			),
+		)
 }
 
 export async function getComplaintReasonsForOrg(organizationId: string) {

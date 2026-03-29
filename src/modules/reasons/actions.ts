@@ -87,7 +87,12 @@ export async function $updateReasonAction(input: {
 			updatedAt: new Date(),
 			updatedBy: session.user.id,
 		})
-		.where(eq(complaintReasons.id, input.id))
+		.where(
+			and(
+				eq(complaintReasons.id, input.id),
+				eq(complaintReasons.organizationId, organizationId),
+			),
+		)
 
 	revalidatePath('/dashboard/reasons')
 	return { success: true }
@@ -122,7 +127,12 @@ export async function $deleteReasonAction(id: string): Promise<ActionResult> {
 	await db
 		.update(complaintReasons)
 		.set({ deletedAt: now, deletedBy: userId })
-		.where(eq(complaintReasons.id, id))
+		.where(
+			and(
+				eq(complaintReasons.id, id),
+				eq(complaintReasons.organizationId, organizationId),
+			),
+		)
 
 	await db
 		.update(complaintReasons)
@@ -130,6 +140,7 @@ export async function $deleteReasonAction(id: string): Promise<ActionResult> {
 		.where(
 			and(
 				eq(complaintReasons.parentId, id),
+				eq(complaintReasons.organizationId, organizationId),
 				isNull(complaintReasons.deletedAt),
 			),
 		)

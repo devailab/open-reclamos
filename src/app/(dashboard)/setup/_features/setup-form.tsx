@@ -12,7 +12,7 @@ interface CountryData {
 
 type SetupFormProps =
 	| { step: 'organization'; countries: CountryData[] }
-	| { step: 'store'; countries: CountryData[]; organizationId: string }
+	| { step: 'store'; countries: CountryData[] }
 
 export const SetupForm: FC<SetupFormProps> = (props) => {
 	return (
@@ -35,9 +35,7 @@ export const SetupForm: FC<SetupFormProps> = (props) => {
 				<StepOrganization countries={props.countries} />
 			)}
 
-			{props.step === 'store' && (
-				<StepStore organizationId={props.organizationId} />
-			)}
+			{props.step === 'store' && <StepStore />}
 		</div>
 	)
 }

@@ -23,6 +23,7 @@ import {
 	checkSlugExists,
 	checkStoreSlugExists,
 	getUbigeoByCode,
+	getUserOrganization,
 	searchUbigeos,
 } from './queries'
 
@@ -223,7 +224,6 @@ export async function $setupOrganizationAction(
 }
 
 export type SetupStoreInput = {
-	organizationId: string
 	name: string
 	type: string
 	ubigeoId: string | null
@@ -241,6 +241,12 @@ export async function $setupStoreAction(
 		redirect('/login')
 	}
 
+	// Derivar la organización desde la membresía del usuario — nunca confiar en input del cliente
+	const org = await getUserOrganization(session.user.id)
+	if (!org) {
+		return { error: 'No se encontró una organización asociada.' }
+	}
+
 	const slug = await $getStoreSlugSuggestionAction(input.name)
 
 	try {
@@ -248,7 +254,7 @@ export async function $setupStoreAction(
 			const [store] = await tx
 				.insert(stores)
 				.values({
-					organizationId: input.organizationId,
+					organizationId: org.id,
 					name: input.name,
 					slug,
 					type: input.type,
@@ -267,7 +273,7 @@ export async function $setupStoreAction(
 
 			await createAuditLog(
 				{
-					organizationId: input.organizationId,
+					organizationId: org.id,
 					userId: session.user.id,
 					action: 'store.created',
 					entityType: 'store',
@@ -275,7 +281,7 @@ export async function $setupStoreAction(
 					newData: {
 						name: input.name,
 						type: input.type,
-						organizationId: input.organizationId,
+						organizationId: org.id,
 					},
 				},
 				tx,

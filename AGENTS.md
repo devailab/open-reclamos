@@ -173,6 +173,81 @@ Core tables and their relationships:
 
 UUIDs use `uuidv7()` as the default function.
 
+### Multi-Tenant Isolation Rules
+
+Every server action and query that reads or writes tenant data **must** be scoped to the authenticated user's organization. Never trust an `organizationId`, `storeId`, or any other tenant-scoped ID that comes from the client — always derive it from the session.
+
+**The golden rule:** tenant IDs flow **from session → DB → client**, never the other way around.
+
+#### Deriving the organization
+
+```ts
+// ✅ Correct: organizationId derived from the authenticated user
+const organizationId = await getOrganizationForUser(session.user.id)
+if (!organizationId) return { error: 'No organization found.' }
+```
+
+#### Scoping reads
+
+Every SELECT on tenant-owned tables must include `organizationId` in the WHERE clause:
+
+```ts
+// ✅ Correct
+const complaint = await db
+  .select()
+  .from(complaints)
+  .where(
+    and(
+      eq(complaints.id, id),
+      eq(complaints.organizationId, organizationId), // required
+    ),
+  )
+  .limit(1)
+
+// ❌ Wrong — fetches by ID alone, any org's data can be accessed
+const complaint = await db.select().from(complaints).where(eq(complaints.id, id))
+```
+
+#### Scoping writes (UPDATE / soft-delete)
+
+The `organizationId` guard must be in the UPDATE's own WHERE clause — a pre-check SELECT is not enough because the check and the write are two separate operations (TOCTOU):
+
+```ts
+// ✅ Correct — the UPDATE itself is scoped
+await db
+  .update(stores)
+  .set({ name: input.name })
+  .where(
+    and(
+      eq(stores.id, input.id),
+      eq(stores.organizationId, organizationId), // required
+    ),
+  )
+
+// ❌ Wrong — pre-check is not atomic with the write
+const existing = await db.select().from(stores).where(eq(stores.id, input.id))
+if (!existing) return { error: 'Not found' }
+await db.update(stores).set({ name: input.name }).where(eq(stores.id, input.id))
+```
+
+#### Validating cross-entity ownership
+
+When an action involves two tenant-scoped entities (e.g., a store and an organization), always verify the relationship server-side before writing:
+
+```ts
+// ✅ Correct — verify storeId belongs to organizationId before inserting
+const store = await getStoreForOrganization(input.storeId, organizationId)
+if (!store) return { error: 'Invalid store.' }
+```
+
+#### Public forms (unauthenticated)
+
+Public server actions that accept `organizationId`/`storeId` from the client (e.g., the complaint submission form) must still verify the relationship between those IDs in the database before writing — they cannot assume the client sent a valid combination.
+
+#### Soft-deleted records
+
+Always filter `isNull(table.deletedAt)` when selecting records for active use. Soft-deleted records must not appear in dropdowns or be accepted in writes.
+
 ### Database Transactions
 
 Use `db.transaction(async (tx) => { ... })` whenever a server action performs **more than one write** (INSERT/UPDATE/DELETE). All writes inside the callback use `tx` — if any step throws, Drizzle automatically rolls back the entire block.

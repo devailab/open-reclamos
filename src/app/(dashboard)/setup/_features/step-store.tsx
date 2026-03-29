@@ -31,10 +31,6 @@ import {
 	validateStoreUbigeo,
 } from '@/modules/setup/validation'
 
-type StepStoreProps = {
-	organizationId: string
-}
-
 type StoreFormValues = {
 	name: string | null
 	type: SelectOption | null
@@ -53,7 +49,7 @@ const INITIAL_VALUES: StoreFormValues = {
 	url: null,
 }
 
-export function StepStore({ organizationId }: StepStoreProps) {
+export function StepStore() {
 	const [isPending, startTransition] = useTransition()
 
 	const [values, setValues] = useState<StoreFormValues>(INITIAL_VALUES)
@@ -73,7 +69,6 @@ export function StepStore({ organizationId }: StepStoreProps) {
 
 		startTransition(async () => {
 			const result = await $setupStoreAction({
-				organizationId,
 				name: values.name ?? '',
 				type: values.type?.value ?? '',
 				ubigeoId: isPhysical
