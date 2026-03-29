@@ -185,7 +185,8 @@ export async function $updateStoreAction(
 	input: UpdateStoreActionInput,
 ): Promise<StoreActionResult> {
 	const access = await requireAccess('stores.manage')
-	if ('error' in access) return { error: 'No tienes permisos para realizar esta acción.' }
+	if ('error' in access)
+		return { error: 'No tienes permisos para realizar esta acción.' }
 
 	const idError = validateStoreId(input.id)
 	if (idError) return { error: idError }
@@ -258,7 +259,8 @@ export async function $deactivateStoreAction(
 	id: string,
 ): Promise<StoreActionResult> {
 	const access = await requireAccess('stores.manage')
-	if ('error' in access) return { error: 'No tienes permisos para realizar esta acción.' }
+	if ('error' in access)
+		return { error: 'No tienes permisos para realizar esta acción.' }
 
 	const idError = validateStoreId(id)
 	if (idError) return { error: idError }
