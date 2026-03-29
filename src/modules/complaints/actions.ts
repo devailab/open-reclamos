@@ -1,11 +1,12 @@
 'use server'
 
 import { addDays } from 'date-fns'
-import { sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { db } from '@/database/database'
 import {
 	complaintAttachments,
+	complaintReasons,
 	complaints,
 	storeCorrelatives,
 } from '@/database/schema'
@@ -17,13 +18,22 @@ import { generateTrackingCode } from './lib'
 import { getStoreForOrganization } from './queries'
 
 const TMP_PREFIX = 'tmp/'
+// Formato esperado: tmp/complaints/<storeId>/<filename>
+const TMP_KEY_STORE_SEGMENT = 2
 
 async function confirmUploadedFiles(
 	files: UploadedFileInput[],
+	expectedStoreId: string,
 ): Promise<UploadedFileInput[]> {
 	return Promise.all(
 		files.map(async (file) => {
-			if (!file.key.startsWith(TMP_PREFIX)) return file
+			if (!file.key.startsWith(TMP_PREFIX)) {
+				throw new Error('Archivo no válido.')
+			}
+			const segments = file.key.split('/')
+			if (segments[TMP_KEY_STORE_SEGMENT] !== expectedStoreId) {
+				throw new Error('Archivo no pertenece a la tienda indicada.')
+			}
 			const permanentKey = file.key.slice(TMP_PREFIX.length)
 			await moveS3Object(file.key, permanentKey)
 			return { ...file, key: permanentKey }
@@ -119,10 +129,28 @@ export async function $submitComplaintAction(
 		return { success: false, error: 'Datos de tienda inválidos.' }
 	}
 
+	// Verificar que el motivo pertenece a la organización y no está eliminado
+	if (input.reasonId) {
+		const [reason] = await db
+			.select({ id: complaintReasons.id })
+			.from(complaintReasons)
+			.where(
+				and(
+					eq(complaintReasons.id, input.reasonId),
+					eq(complaintReasons.organizationId, input.organizationId),
+					isNull(complaintReasons.deletedAt),
+				),
+			)
+			.limit(1)
+		if (!reason) {
+			return { success: false, error: 'Motivo de reclamo no válido.' }
+		}
+	}
+
 	try {
 		const confirmedFiles =
 			input.files.length > 0
-				? await confirmUploadedFiles(input.files)
+				? await confirmUploadedFiles(input.files, input.storeId)
 				: input.files
 
 		const trackingCode = generateTrackingCode()

@@ -3,6 +3,8 @@ import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth-server'
 import { S3_BUCKET, s3Client } from '@/lib/s3'
+import { getAttachmentByStorageKey } from '@/modules/complaints/detail-queries'
+import { getMembershipContext } from '@/modules/rbac/queries'
 
 export async function GET(
 	request: Request,
@@ -13,8 +15,21 @@ export async function GET(
 		return new NextResponse('Unauthorized', { status: 401 })
 	}
 
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) {
+		return new NextResponse('Forbidden', { status: 403 })
+	}
+
 	const { key: segments } = await params
 	const key = segments.join('/')
+
+	const attachment = await getAttachmentByStorageKey(
+		key,
+		membership.organizationId,
+	)
+	if (!attachment) {
+		return new NextResponse('Forbidden', { status: 403 })
+	}
 
 	const rangeHeader = request.headers.get('range') ?? undefined
 

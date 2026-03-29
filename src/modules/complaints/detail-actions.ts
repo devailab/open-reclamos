@@ -14,6 +14,7 @@ import {
 	type ComplaintAuditEntry,
 	type ComplaintDetail,
 	type ComplaintHistoryEntry,
+	getAttachmentByStorageKey,
 	getComplaintAuditHistory,
 	getComplaintDetailById,
 	getComplaintHistory,
@@ -392,6 +393,14 @@ export async function $getAttachmentDownloadUrlAction(
 			error:
 				access.error ?? 'No tienes permisos para realizar esta acción.',
 		}
+
+	const attachment = await getAttachmentByStorageKey(
+		storageKey,
+		access.membership.organizationId,
+	)
+	if (!attachment) {
+		return { error: 'Archivo no encontrado o sin acceso.' }
+	}
 
 	const url = await getPresignedDownloadUrl(storageKey)
 	return { url }

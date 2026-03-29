@@ -136,6 +136,24 @@ export interface ComplaintAttachment {
 	contentType: string | null
 }
 
+export async function getAttachmentByStorageKey(
+	storageKey: string,
+	organizationId: string,
+): Promise<{ id: string } | null> {
+	const [attachment] = await db
+		.select({ id: complaintAttachments.id })
+		.from(complaintAttachments)
+		.innerJoin(complaints, eq(complaintAttachments.complaintId, complaints.id))
+		.where(
+			and(
+				eq(complaintAttachments.storageKey, storageKey),
+				eq(complaints.organizationId, organizationId),
+			),
+		)
+		.limit(1)
+	return attachment ?? null
+}
+
 export async function getComplaintAttachments(
 	complaintId: string,
 ): Promise<ComplaintAttachment[]> {
