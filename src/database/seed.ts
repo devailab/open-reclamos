@@ -10,7 +10,7 @@ const BATCH_SIZE = 500
 
 type UbigeoRow = {
 	ubigeo_reniec: number
-	ubigeo_inei: number
+	ubigeo_inei: number | ''
 	department: string
 	province: string
 	district: string
@@ -37,20 +37,24 @@ async function seedUbigeos(db: ReturnType<typeof drizzle>) {
 		return
 	}
 
-	console.log(`[seed] ubigeos: seeding ${ubigeosData.length} records...`)
+	const rows = (ubigeosData as UbigeoRow[])
+		.filter((row) => row.ubigeo_inei !== '')
+		.map((row) => ({
+			ubigeo: String(row.ubigeo_inei).padStart(6, '0'),
+			ubigeoReniec: String(row.ubigeo_reniec).padStart(6, '0'),
+			department: row.department,
+			province: row.province,
+			district: row.district,
+			name: row.district,
+		}))
 
-	const rows = (ubigeosData as UbigeoRow[]).map((row) => ({
-		ubigeo: String(row.ubigeo_inei).padStart(6, '0'),
-		ubigeoReniec: String(row.ubigeo_reniec).padStart(6, '0'),
-		department: row.department,
-		province: row.province,
-		district: row.district,
-		name: row.district,
-	}))
+	console.log(`[seed] ubigeos: seeding ${rows.length} records...`)
 
-	for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-		await db.insert(ubigeos).values(rows.slice(i, i + BATCH_SIZE))
-	}
+	await db.transaction(async (tx) => {
+		for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+			await tx.insert(ubigeos).values(rows.slice(i, i + BATCH_SIZE))
+		}
+	})
 
 	console.log(`[seed] ubigeos: done.`)
 }
@@ -67,8 +71,6 @@ async function seedCountries(db: ReturnType<typeof drizzle>) {
 		return
 	}
 
-	console.log(`[seed] countries: seeding ${countriesData.length} records...`)
-
 	const rows = (countriesData as CountryRow[]).map((row) => ({
 		id: row.id,
 		name: row.name,
@@ -78,9 +80,13 @@ async function seedCountries(db: ReturnType<typeof drizzle>) {
 		continent: row.continent,
 	}))
 
-	for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-		await db.insert(countries).values(rows.slice(i, i + BATCH_SIZE))
-	}
+	console.log(`[seed] countries: seeding ${rows.length} records...`)
+
+	await db.transaction(async (tx) => {
+		for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+			await tx.insert(countries).values(rows.slice(i, i + BATCH_SIZE))
+		}
+	})
 
 	console.log(`[seed] countries: done.`)
 }
