@@ -1,13 +1,18 @@
 'use server'
 
 import { addDays } from 'date-fns'
+import { sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { db } from '@/database/database'
-import { complaintAttachments, complaints } from '@/database/schema'
+import {
+	complaintAttachments,
+	complaints,
+	storeCorrelatives,
+} from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
 import { moveS3Object } from '@/lib/s3'
 import { generateTrackingCode } from './lib'
-import { getNextCorrelative, getStoreForOrganization } from './queries'
+import { getStoreForOrganization } from './queries'
 
 const TMP_PREFIX = 'tmp/'
 
@@ -109,12 +114,28 @@ export async function $submitComplaintAction(
 				: input.files
 
 		const trackingCode = generateTrackingCode()
-		const correlative = await getNextCorrelative(input.storeId)
 		const now = new Date()
 		const responseDeadline = addDays(now, RESPONSE_DEADLINE_DAYS)
 
 		const reqHeaders = await headers()
+		let correlative!: string
 		await db.transaction(async (tx) => {
+			const [correlativeRow] = await tx
+				.insert(storeCorrelatives)
+				.values({ storeId: input.storeId, currentValue: 1 })
+				.onConflictDoUpdate({
+					target: storeCorrelatives.storeId,
+					set: {
+						currentValue: sql`${storeCorrelatives.currentValue} + 1`,
+						updatedAt: now,
+					},
+				})
+				.returning({ currentValue: storeCorrelatives.currentValue })
+
+			if (!correlativeRow) throw new Error('correlative increment failed')
+
+			correlative = String(correlativeRow.currentValue).padStart(4, '0')
+
 			const [inserted] = await tx
 				.insert(complaints)
 				.values({

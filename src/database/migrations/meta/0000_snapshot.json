@@ -1,5 +1,5 @@
 {
-    "id": "3993d26e-616e-42f6-b76f-b59011d0ca7e",
+    "id": "421078f7-9398-4479-8910-ec7ad67bfc4d",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -1347,6 +1347,61 @@
                     "name": "sessions_token_unique",
                     "nullsNotDistinct": false,
                     "columns": ["token"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.store_correlatives": {
+            "name": "store_correlatives",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "store_id": {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "current_value": {
+                    "name": "current_value",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "store_correlatives_store_id_stores_id_fk": {
+                    "name": "store_correlatives_store_id_stores_id_fk",
+                    "tableFrom": "store_correlatives",
+                    "tableTo": "stores",
+                    "columnsFrom": ["store_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "store_correlatives_store_id_unique": {
+                    "name": "store_correlatives_store_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["store_id"]
                 }
             },
             "policies": {},

@@ -468,6 +468,20 @@ export const complaintAttachments = pgTable('complaint_attachments', {
 	description: text('description'),
 })
 
+export const storeCorrelatives = pgTable('store_correlatives', {
+	id: uuid('id')
+		.primaryKey()
+		.$defaultFn(() => uuidv7()),
+	storeId: uuid('store_id')
+		.notNull()
+		.unique()
+		.references(() => stores.id, { onDelete: 'cascade' }),
+	currentValue: integer('current_value').notNull().default(0),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
+		.defaultNow()
+		.notNull(),
+})
+
 export const auditLogs = pgTable(
 	'audit_logs',
 	{

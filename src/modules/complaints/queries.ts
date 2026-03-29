@@ -1,4 +1,4 @@
-import { and, count, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
 	complaintReasons,
@@ -99,17 +99,6 @@ export async function getOrganizationById(id: string) {
 		.where(eq(organizations.id, id))
 		.limit(1)
 	return org ?? null
-}
-
-export async function getNextCorrelative(storeId: string): Promise<string> {
-	const year = new Date().getFullYear()
-	const [result] = await db
-		.select({ total: count() })
-		.from(complaints)
-		.where(eq(complaints.storeId, storeId))
-
-	const next = (result?.total ?? 0) + 1
-	return `${year}-${String(next).padStart(4, '0')}`
 }
 
 export async function getComplaintByTrackingCode(
