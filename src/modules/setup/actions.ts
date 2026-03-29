@@ -15,6 +15,10 @@ import { createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { DOCUMENT_LOOKUP_PROVIDER } from '@/lib/config'
 import {
+	ensureOrganizationRoles,
+	findRoleByKeyForOrganization,
+} from '@/modules/rbac/queries'
+import {
 	getDocumentLookupProvider,
 	type RucData,
 	RucNotFoundError,
@@ -185,10 +189,28 @@ export async function $setupOrganizationAction(
 				})
 				.returning({ id: organizations.id })
 
+			await ensureOrganizationRoles(
+				{
+					organizationId: org.id,
+					userId: session.user.id,
+				},
+				tx,
+			)
+
+			const adminRole = await findRoleByKeyForOrganization(
+				'organization-admin',
+				org.id,
+				tx,
+			)
+			if (!adminRole) {
+				throw new Error('Base admin role not found for organization')
+			}
+
 			await tx.insert(organizationMembers).values({
 				userId: session.user.id,
 				organizationId: org.id,
-				role: 'admin',
+				role: adminRole.slug,
+				roleId: adminRole.id,
 				createdBy: session.user.id,
 			})
 

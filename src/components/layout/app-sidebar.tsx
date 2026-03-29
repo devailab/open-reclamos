@@ -2,19 +2,28 @@
 
 import {
 	BookOpen,
+	ChevronRight,
 	ChevronsUpDown,
 	ClipboardList,
 	Clock3,
+	KeyRound,
 	LayoutDashboard,
 	LogOut,
 	Settings,
+	ShieldCheck,
 	Store,
 	UserRound,
+	Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -33,6 +42,9 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	SidebarMenuSub,
+	SidebarMenuSubButton,
+	SidebarMenuSubItem,
 	SidebarRail,
 } from '@/components/ui/sidebar'
 import { $logoutAction } from '@/modules/auth/actions'
@@ -77,6 +89,27 @@ const navItems = [
 	},
 ]
 
+const administrationItems = [
+	{
+		label: 'Usuarios',
+		href: '/dashboard/users',
+		icon: Users,
+		permission: 'users.view',
+	},
+	{
+		label: 'Roles',
+		href: '/dashboard/roles',
+		icon: ShieldCheck,
+		permission: 'roles.view',
+	},
+	{
+		label: 'Permisos',
+		href: '/dashboard/permissions',
+		icon: KeyRound,
+		permission: 'permissions.view',
+	},
+]
+
 function getInitials(name: string): string {
 	return name
 		.split(' ')
@@ -91,11 +124,26 @@ export interface AppSidebarProps {
 		name: string
 		email: string
 	}
+	permissionKeys?: string[]
 }
 
-export function AppSidebar({ user }: AppSidebarProps) {
+export function AppSidebar({ user, permissionKeys = [] }: AppSidebarProps) {
 	const pathname = usePathname()
 	const [isPending, startTransition] = useTransition()
+	const visibleAdministrationItems = administrationItems.filter((item) =>
+		permissionKeys.includes(item.permission),
+	)
+	const isAdministrationActive = visibleAdministrationItems.some(
+		(item) =>
+			pathname === item.href || pathname.startsWith(`${item.href}/`),
+	)
+	const [isAdministrationOpen, setIsAdministrationOpen] = useState(
+		isAdministrationActive,
+	)
+
+	useEffect(() => {
+		if (isAdministrationActive) setIsAdministrationOpen(true)
+	}, [isAdministrationActive])
 
 	const handleLogout = () => {
 		startTransition(async () => {
@@ -139,6 +187,63 @@ export function AppSidebar({ user }: AppSidebarProps) {
 									</SidebarMenuItem>
 								)
 							})}
+							{visibleAdministrationItems.length > 0 && (
+								<SidebarMenuItem>
+									<Collapsible
+										open={isAdministrationOpen}
+										onOpenChange={setIsAdministrationOpen}
+									>
+										<CollapsibleTrigger
+											render={
+												<SidebarMenuButton tooltip='Administración'>
+													<ShieldCheck />
+													<span>Administración</span>
+													<ChevronRight className='ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
+												</SidebarMenuButton>
+											}
+										/>
+										<CollapsibleContent>
+											<SidebarMenuSub>
+												{visibleAdministrationItems.map(
+													(item) => {
+														const isActive =
+															pathname ===
+																item.href ||
+															pathname.startsWith(
+																`${item.href}/`,
+															)
+														return (
+															<SidebarMenuSubItem
+																key={item.href}
+															>
+																<SidebarMenuSubButton
+																	render={
+																		<Link
+																			href={
+																				item.href
+																			}
+																		/>
+																	}
+																	isActive={
+																		isActive
+																	}
+																>
+																	<item.icon />
+																	<span>
+																		{
+																			item.label
+																		}
+																	</span>
+																</SidebarMenuSubButton>
+															</SidebarMenuSubItem>
+														)
+													},
+												)}
+											</SidebarMenuSub>
+										</CollapsibleContent>
+									</Collapsible>
+								</SidebarMenuItem>
+							)}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>

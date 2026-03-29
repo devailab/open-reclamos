@@ -1,0 +1,186 @@
+{
+    "permissions": [
+        {
+            "key": "complaints.view",
+            "slug": "complaints-view",
+            "module": "complaints",
+            "name": "Ver reclamos",
+            "description": "Permite consultar el listado y detalle de reclamos."
+        },
+        {
+            "key": "complaints.manage",
+            "slug": "complaints-manage",
+            "module": "complaints",
+            "name": "Gestionar reclamos",
+            "description": "Permite actualizar el estado y atender reclamos."
+        },
+        {
+            "key": "complaints.respond",
+            "slug": "complaints-respond",
+            "module": "complaints",
+            "name": "Responder reclamos",
+            "description": "Permite registrar respuestas oficiales a reclamos."
+        },
+        {
+            "key": "stores.view",
+            "slug": "stores-view",
+            "module": "stores",
+            "name": "Ver tiendas",
+            "description": "Permite consultar las tiendas de la organizacion."
+        },
+        {
+            "key": "stores.manage",
+            "slug": "stores-manage",
+            "module": "stores",
+            "name": "Gestionar tiendas",
+            "description": "Permite crear, editar y desactivar tiendas."
+        },
+        {
+            "key": "reasons.view",
+            "slug": "reasons-view",
+            "module": "reasons",
+            "name": "Ver motivos",
+            "description": "Permite consultar los motivos de reclamo."
+        },
+        {
+            "key": "reasons.manage",
+            "slug": "reasons-manage",
+            "module": "reasons",
+            "name": "Gestionar motivos",
+            "description": "Permite crear, editar y eliminar motivos."
+        },
+        {
+            "key": "audit.view",
+            "slug": "audit-view",
+            "module": "audit",
+            "name": "Ver auditoria",
+            "description": "Permite revisar el historial de auditoria."
+        },
+        {
+            "key": "settings.view",
+            "slug": "settings-view",
+            "module": "settings",
+            "name": "Ver configuracion",
+            "description": "Permite consultar la configuracion de la organizacion."
+        },
+        {
+            "key": "settings.manage",
+            "slug": "settings-manage",
+            "module": "settings",
+            "name": "Gestionar configuracion",
+            "description": "Permite editar la configuracion de la organizacion."
+        },
+        {
+            "key": "users.view",
+            "slug": "users-view",
+            "module": "users",
+            "name": "Ver usuarios",
+            "description": "Permite consultar usuarios e invitaciones."
+        },
+        {
+            "key": "users.invite",
+            "slug": "users-invite",
+            "module": "users",
+            "name": "Invitar usuarios",
+            "description": "Permite generar enlaces de invitacion para usuarios."
+        },
+        {
+            "key": "users.manage",
+            "slug": "users-manage",
+            "module": "users",
+            "name": "Gestionar usuarios",
+            "description": "Permite cambiar roles y acceso a tiendas de usuarios."
+        },
+        {
+            "key": "users.revoke",
+            "slug": "users-revoke",
+            "module": "users",
+            "name": "Revocar usuarios",
+            "description": "Permite revocar invitaciones o retirar usuarios."
+        },
+        {
+            "key": "roles.view",
+            "slug": "roles-view",
+            "module": "roles",
+            "name": "Ver roles",
+            "description": "Permite consultar roles y sus permisos."
+        },
+        {
+            "key": "roles.manage",
+            "slug": "roles-manage",
+            "module": "roles",
+            "name": "Gestionar roles",
+            "description": "Permite crear, editar y eliminar roles."
+        },
+        {
+            "key": "permissions.view",
+            "slug": "permissions-view",
+            "module": "permissions",
+            "name": "Ver permisos",
+            "description": "Permite consultar el catalogo de permisos."
+        },
+        {
+            "key": "permissions.manage",
+            "slug": "permissions-manage",
+            "module": "permissions",
+            "name": "Gestionar permisos",
+            "description": "Permite crear, editar y eliminar permisos personalizados."
+        }
+    ],
+    "roles": [
+        {
+            "key": "organization-admin",
+            "slug": "admin",
+            "name": "Administrador",
+            "description": "Acceso total al panel administrativo de la organizacion.",
+            "permissionKeys": [
+                "complaints.view",
+                "complaints.manage",
+                "complaints.respond",
+                "stores.view",
+                "stores.manage",
+                "reasons.view",
+                "reasons.manage",
+                "audit.view",
+                "settings.view",
+                "settings.manage",
+                "users.view",
+                "users.invite",
+                "users.manage",
+                "users.revoke",
+                "roles.view",
+                "roles.manage",
+                "permissions.view",
+                "permissions.manage"
+            ]
+        },
+        {
+            "key": "organization-operator",
+            "slug": "operator",
+            "name": "Operador",
+            "description": "Atiende reclamos y consulta la configuracion operativa.",
+            "permissionKeys": [
+                "complaints.view",
+                "complaints.manage",
+                "complaints.respond",
+                "stores.view",
+                "reasons.view",
+                "audit.view",
+                "settings.view"
+            ]
+        },
+        {
+            "key": "organization-viewer",
+            "slug": "viewer",
+            "name": "Visualizador",
+            "description": "Solo lectura sobre la informacion operativa de la organizacion.",
+            "permissionKeys": [
+                "complaints.view",
+                "stores.view",
+                "reasons.view",
+                "audit.view",
+                "settings.view"
+            ]
+        }
+    ]
+}

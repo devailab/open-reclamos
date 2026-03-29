@@ -1,5 +1,5 @@
 {
-    "id": "421078f7-9398-4479-8910-ec7ad67bfc4d",
+    "id": "1ab6c96f-7465-4889-bbc2-cf237ac4da8a",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -907,6 +907,455 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
+        "public.organization_invitation_stores": {
+            "name": "organization_invitation_stores",
+            "schema": "",
+            "columns": {
+                "invitation_id": {
+                    "name": "invitation_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "store_id": {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "organization_invitation_stores_store_id_idx": {
+                    "name": "organization_invitation_stores_store_id_idx",
+                    "columns": [
+                        {
+                            "expression": "store_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "organization_invitation_stores_invitation_id_organization_invitations_id_fk": {
+                    "name": "organization_invitation_stores_invitation_id_organization_invitations_id_fk",
+                    "tableFrom": "organization_invitation_stores",
+                    "tableTo": "organization_invitations",
+                    "columnsFrom": ["invitation_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "organization_invitation_stores_store_id_stores_id_fk": {
+                    "name": "organization_invitation_stores_store_id_stores_id_fk",
+                    "tableFrom": "organization_invitation_stores",
+                    "tableTo": "stores",
+                    "columnsFrom": ["store_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "organization_invitation_stores_invitation_id_store_id_pk": {
+                    "name": "organization_invitation_stores_invitation_id_store_id_pk",
+                    "columns": ["invitation_id", "store_id"]
+                }
+            },
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.organization_invitations": {
+            "name": "organization_invitations",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "role_id": {
+                    "name": "role_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "email": {
+                    "name": "email",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "token_hash": {
+                    "name": "token_hash",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "store_access_mode": {
+                    "name": "store_access_mode",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'all'"
+                },
+                "expires_at": {
+                    "name": "expires_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "accepted_at": {
+                    "name": "accepted_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "revoked_at": {
+                    "name": "revoked_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "accepted_by": {
+                    "name": "accepted_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "revoked_by": {
+                    "name": "revoked_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "organization_invitations_organization_id_idx": {
+                    "name": "organization_invitations_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "organization_invitations_email_idx": {
+                    "name": "organization_invitations_email_idx",
+                    "columns": [
+                        {
+                            "expression": "email",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "organization_invitations_role_id_idx": {
+                    "name": "organization_invitations_role_id_idx",
+                    "columns": [
+                        {
+                            "expression": "role_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "organization_invitations_organization_id_organizations_id_fk": {
+                    "name": "organization_invitations_organization_id_organizations_id_fk",
+                    "tableFrom": "organization_invitations",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "organization_invitations_role_id_roles_id_fk": {
+                    "name": "organization_invitations_role_id_roles_id_fk",
+                    "tableFrom": "organization_invitations",
+                    "tableTo": "roles",
+                    "columnsFrom": ["role_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "restrict",
+                    "onUpdate": "no action"
+                },
+                "organization_invitations_created_by_users_id_fk": {
+                    "name": "organization_invitations_created_by_users_id_fk",
+                    "tableFrom": "organization_invitations",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "organization_invitations_accepted_by_users_id_fk": {
+                    "name": "organization_invitations_accepted_by_users_id_fk",
+                    "tableFrom": "organization_invitations",
+                    "tableTo": "users",
+                    "columnsFrom": ["accepted_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "organization_invitations_revoked_by_users_id_fk": {
+                    "name": "organization_invitations_revoked_by_users_id_fk",
+                    "tableFrom": "organization_invitations",
+                    "tableTo": "users",
+                    "columnsFrom": ["revoked_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "organization_invitations_token_hash_unique": {
+                    "name": "organization_invitations_token_hash_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["token_hash"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.organization_member_permissions": {
+            "name": "organization_member_permissions",
+            "schema": "",
+            "columns": {
+                "user_id": {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "permission_id": {
+                    "name": "permission_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "organization_member_permissions_permission_id_idx": {
+                    "name": "organization_member_permissions_permission_id_idx",
+                    "columns": [
+                        {
+                            "expression": "permission_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "organization_member_permissions_permission_id_permissions_id_fk": {
+                    "name": "organization_member_permissions_permission_id_permissions_id_fk",
+                    "tableFrom": "organization_member_permissions",
+                    "tableTo": "permissions",
+                    "columnsFrom": ["permission_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "organization_member_permissions_created_by_users_id_fk": {
+                    "name": "organization_member_permissions_created_by_users_id_fk",
+                    "tableFrom": "organization_member_permissions",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "organization_member_permissions_member_fk": {
+                    "name": "organization_member_permissions_member_fk",
+                    "tableFrom": "organization_member_permissions",
+                    "tableTo": "organization_members",
+                    "columnsFrom": ["user_id", "organization_id"],
+                    "columnsTo": ["user_id", "organization_id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "organization_member_permissions_user_id_organization_id_permission_id_pk": {
+                    "name": "organization_member_permissions_user_id_organization_id_permission_id_pk",
+                    "columns": ["user_id", "organization_id", "permission_id"]
+                }
+            },
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.organization_member_stores": {
+            "name": "organization_member_stores",
+            "schema": "",
+            "columns": {
+                "user_id": {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "store_id": {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "organization_member_stores_store_id_idx": {
+                    "name": "organization_member_stores_store_id_idx",
+                    "columns": [
+                        {
+                            "expression": "store_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "organization_member_stores_store_id_stores_id_fk": {
+                    "name": "organization_member_stores_store_id_stores_id_fk",
+                    "tableFrom": "organization_member_stores",
+                    "tableTo": "stores",
+                    "columnsFrom": ["store_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "organization_member_stores_created_by_users_id_fk": {
+                    "name": "organization_member_stores_created_by_users_id_fk",
+                    "tableFrom": "organization_member_stores",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "organization_member_stores_member_fk": {
+                    "name": "organization_member_stores_member_fk",
+                    "tableFrom": "organization_member_stores",
+                    "tableTo": "organization_members",
+                    "columnsFrom": ["user_id", "organization_id"],
+                    "columnsTo": ["user_id", "organization_id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "organization_member_stores_user_id_organization_id_store_id_pk": {
+                    "name": "organization_member_stores_user_id_organization_id_store_id_pk",
+                    "columns": ["user_id", "organization_id", "store_id"]
+                }
+            },
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
         "public.organization_members": {
             "name": "organization_members",
             "schema": "",
@@ -929,6 +1378,19 @@
                     "primaryKey": false,
                     "notNull": true,
                     "default": "'operator'"
+                },
+                "role_id": {
+                    "name": "role_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "store_access_mode": {
+                    "name": "store_access_mode",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'all'"
                 },
                 "created_at": {
                     "name": "created_at",
@@ -956,7 +1418,23 @@
                     "notNull": false
                 }
             },
-            "indexes": {},
+            "indexes": {
+                "organization_members_role_id_idx": {
+                    "name": "organization_members_role_id_idx",
+                    "columns": [
+                        {
+                            "expression": "role_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
             "foreignKeys": {
                 "organization_members_user_id_users_id_fk": {
                     "name": "organization_members_user_id_users_id_fk",
@@ -974,6 +1452,15 @@
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "organization_members_role_id_roles_id_fk": {
+                    "name": "organization_members_role_id_roles_id_fk",
+                    "tableFrom": "organization_members",
+                    "tableTo": "roles",
+                    "columnsFrom": ["role_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "restrict",
                     "onUpdate": "no action"
                 },
                 "organization_members_created_by_users_id_fk": {
@@ -1255,6 +1742,484 @@
                     "columns": ["tax_id"]
                 }
             },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.permissions": {
+            "name": "permissions",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "key": {
+                    "name": "key",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "slug": {
+                    "name": "slug",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "module": {
+                    "name": "module",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "is_system": {
+                    "name": "is_system",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "deleted_at": {
+                    "name": "deleted_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "deleted_by": {
+                    "name": "deleted_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_by": {
+                    "name": "updated_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "permissions_organization_id_idx": {
+                    "name": "permissions_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "permissions_module_idx": {
+                    "name": "permissions_module_idx",
+                    "columns": [
+                        {
+                            "expression": "module",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "permissions_slug_idx": {
+                    "name": "permissions_slug_idx",
+                    "columns": [
+                        {
+                            "expression": "slug",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "permissions_organization_id_organizations_id_fk": {
+                    "name": "permissions_organization_id_organizations_id_fk",
+                    "tableFrom": "permissions",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "permissions_deleted_by_users_id_fk": {
+                    "name": "permissions_deleted_by_users_id_fk",
+                    "tableFrom": "permissions",
+                    "tableTo": "users",
+                    "columnsFrom": ["deleted_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "permissions_created_by_users_id_fk": {
+                    "name": "permissions_created_by_users_id_fk",
+                    "tableFrom": "permissions",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "permissions_updated_by_users_id_fk": {
+                    "name": "permissions_updated_by_users_id_fk",
+                    "tableFrom": "permissions",
+                    "tableTo": "users",
+                    "columnsFrom": ["updated_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "permissions_key_unique": {
+                    "name": "permissions_key_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["key"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.role_permissions": {
+            "name": "role_permissions",
+            "schema": "",
+            "columns": {
+                "role_id": {
+                    "name": "role_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "permission_id": {
+                    "name": "permission_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "role_permissions_permission_id_idx": {
+                    "name": "role_permissions_permission_id_idx",
+                    "columns": [
+                        {
+                            "expression": "permission_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "role_permissions_role_id_roles_id_fk": {
+                    "name": "role_permissions_role_id_roles_id_fk",
+                    "tableFrom": "role_permissions",
+                    "tableTo": "roles",
+                    "columnsFrom": ["role_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "role_permissions_permission_id_permissions_id_fk": {
+                    "name": "role_permissions_permission_id_permissions_id_fk",
+                    "tableFrom": "role_permissions",
+                    "tableTo": "permissions",
+                    "columnsFrom": ["permission_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "role_permissions_created_by_users_id_fk": {
+                    "name": "role_permissions_created_by_users_id_fk",
+                    "tableFrom": "role_permissions",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "role_permissions_role_id_permission_id_pk": {
+                    "name": "role_permissions_role_id_permission_id_pk",
+                    "columns": ["role_id", "permission_id"]
+                }
+            },
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.roles": {
+            "name": "roles",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "key": {
+                    "name": "key",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "slug": {
+                    "name": "slug",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "is_system": {
+                    "name": "is_system",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "deleted_at": {
+                    "name": "deleted_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "deleted_by": {
+                    "name": "deleted_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_by": {
+                    "name": "updated_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "roles_organization_id_idx": {
+                    "name": "roles_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "roles_slug_idx": {
+                    "name": "roles_slug_idx",
+                    "columns": [
+                        {
+                            "expression": "slug",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "roles_organization_id_key_uidx": {
+                    "name": "roles_organization_id_key_uidx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "key",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "roles_organization_id_slug_uidx": {
+                    "name": "roles_organization_id_slug_uidx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "slug",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "roles_organization_id_organizations_id_fk": {
+                    "name": "roles_organization_id_organizations_id_fk",
+                    "tableFrom": "roles",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "roles_deleted_by_users_id_fk": {
+                    "name": "roles_deleted_by_users_id_fk",
+                    "tableFrom": "roles",
+                    "tableTo": "users",
+                    "columnsFrom": ["deleted_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "roles_created_by_users_id_fk": {
+                    "name": "roles_created_by_users_id_fk",
+                    "tableFrom": "roles",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "roles_updated_by_users_id_fk": {
+                    "name": "roles_updated_by_users_id_fk",
+                    "tableFrom": "roles",
+                    "tableTo": "users",
+                    "columnsFrom": ["updated_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
             "policies": {},
             "checkConstraints": {},
             "isRLSEnabled": false

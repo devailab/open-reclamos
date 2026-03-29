@@ -11,6 +11,7 @@ import {
 import { db } from '@/database/database'
 import { users } from '@/database/schema'
 import { getSession } from '@/lib/auth-server'
+import { getMembershipContext } from '@/modules/rbac/queries'
 
 const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 	const session = await getSession()
@@ -27,6 +28,8 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 		redirect('/setup')
 	}
 
+	const membership = await getMembershipContext(session.user.id)
+
 	return (
 		<SidebarProvider>
 			<AppSidebar
@@ -34,6 +37,7 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 					name: session.user.name,
 					email: session.user.email,
 				}}
+				permissionKeys={membership?.permissionKeys ?? []}
 			/>
 			<SidebarInset>
 				<header className='flex h-12 shrink-0 items-center gap-2 border-b px-4'>

@@ -1,12 +1,13 @@
 'use server'
 
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
-import { organizationMembers, organizations } from '@/database/schema'
+import { organizations } from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { getOrganizationSettingsForUser } from './queries'
 import {
 	normalizeUpdateOrganizationInput,
@@ -47,19 +48,12 @@ export async function $updateOrganizationSettingsAction(
 	const org = await getOrganizationSettingsForUser(session.user.id)
 	if (!org) return { error: 'No se encontró una organización asociada.' }
 
-	// Solo administradores pueden editar la organización
-	const [membership] = await db
-		.select({ role: organizationMembers.role })
-		.from(organizationMembers)
-		.where(
-			and(
-				eq(organizationMembers.userId, session.user.id),
-				eq(organizationMembers.organizationId, org.id),
-			),
-		)
-		.limit(1)
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership || membership.organizationId !== org.id) {
+		return { error: 'No se encontró una membresía válida.' }
+	}
 
-	if (membership?.role !== 'admin') {
+	if (!hasPermission(membership, 'settings.manage')) {
 		return { error: 'No tienes permisos para editar la organización.' }
 	}
 

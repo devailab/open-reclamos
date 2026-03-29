@@ -1,6 +1,11 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/database/database'
-import { organizationMembers, organizations, ubigeos } from '@/database/schema'
+import {
+	organizationMembers,
+	organizations,
+	roles,
+	ubigeos,
+} from '@/database/schema'
 
 export interface OrganizationSettings {
 	id: string
@@ -38,13 +43,14 @@ export async function getOrganizationSettingsForUser(
 			phoneCode: organizations.phoneCode,
 			phone: organizations.phone,
 			website: organizations.website,
-			role: organizationMembers.role,
+			role: roles.slug,
 		})
 		.from(organizations)
 		.innerJoin(
 			organizationMembers,
 			eq(organizationMembers.organizationId, organizations.id),
 		)
+		.innerJoin(roles, eq(organizationMembers.roleId, roles.id))
 		.where(eq(organizationMembers.userId, userId))
 		.limit(1)
 

@@ -2,9 +2,10 @@ import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import countriesData from './base/countries.json'
+import rbacData from './base/rbac.json'
 
 import ubigeosData from './base/ubigeos.json'
-import { countries, ubigeos } from './schema'
+import { countries, permissions, ubigeos } from './schema'
 
 const BATCH_SIZE = 500
 
@@ -23,6 +24,14 @@ type CountryRow = {
 	iso3: string
 	phone_code: string
 	continent: string
+}
+
+type PermissionSeedRow = {
+	key: string
+	slug: string
+	module: string
+	name: string
+	description: string
 }
 
 async function seedUbigeos(db: ReturnType<typeof drizzle>) {
@@ -91,6 +100,30 @@ async function seedCountries(db: ReturnType<typeof drizzle>) {
 	console.log(`[seed] countries: done.`)
 }
 
+// Solo sincroniza los permisos del sistema (globales, isSystem = true).
+// Los roles y role_permissions se crean por organización durante el setup.
+async function seedRbac(db: ReturnType<typeof drizzle>) {
+	const permissionDefs = (rbacData.permissions as PermissionSeedRow[]).map(
+		(row) => ({
+			key: row.key,
+			slug: row.slug,
+			module: row.module,
+			name: row.name,
+			description: row.description,
+			isSystem: true,
+		}),
+	)
+
+	await db
+		.insert(permissions)
+		.values(permissionDefs)
+		.onConflictDoNothing({ target: permissions.key })
+
+	console.log(
+		`[seed] permissions: ensured ${permissionDefs.length} system permissions.`,
+	)
+}
+
 async function main() {
 	const pool = new Pool({
 		host: process.env.DB_HOST,
@@ -105,6 +138,7 @@ async function main() {
 	try {
 		await seedCountries(db)
 		await seedUbigeos(db)
+		await seedRbac(db)
 		console.log('[seed] completed.')
 	} finally {
 		await pool.end()

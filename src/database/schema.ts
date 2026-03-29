@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm'
 import {
 	boolean,
+	foreignKey,
 	index,
 	integer,
 	jsonb,
@@ -219,6 +220,134 @@ export const organizations = pgTable('organizations', {
 	}),
 })
 
+export const permissions = pgTable(
+	'permissions',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		organizationId: uuid('organization_id').references(
+			() => organizations.id,
+			{
+				onDelete: 'cascade',
+			},
+		),
+		key: text('key').notNull().unique(),
+		slug: text('slug').notNull(),
+		module: text('module').notNull(),
+		name: text('name').notNull(),
+		description: text('description'),
+		isSystem: boolean('is_system').notNull().default(false),
+		deletedAt: timestamp('deleted_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		deletedBy: uuid('deleted_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+		updatedAt: timestamp('updated_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		updatedBy: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		index('permissions_organization_id_idx').on(table.organizationId),
+		index('permissions_module_idx').on(table.module),
+		index('permissions_slug_idx').on(table.slug),
+	],
+)
+
+export const roles = pgTable(
+	'roles',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, {
+				onDelete: 'cascade',
+			}),
+		key: text('key').notNull(),
+		slug: text('slug').notNull(),
+		name: text('name').notNull(),
+		description: text('description'),
+		isSystem: boolean('is_system').notNull().default(false),
+		deletedAt: timestamp('deleted_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		deletedBy: uuid('deleted_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+		updatedAt: timestamp('updated_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		updatedBy: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		index('roles_organization_id_idx').on(table.organizationId),
+		index('roles_slug_idx').on(table.slug),
+		uniqueIndex('roles_organization_id_key_uidx').on(
+			table.organizationId,
+			table.key,
+		),
+		uniqueIndex('roles_organization_id_slug_uidx').on(
+			table.organizationId,
+			table.slug,
+		),
+	],
+)
+
+export const rolePermissions = pgTable(
+	'role_permissions',
+	{
+		roleId: uuid('role_id')
+			.notNull()
+			.references(() => roles.id, { onDelete: 'cascade' }),
+		permissionId: uuid('permission_id')
+			.notNull()
+			.references(() => permissions.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		primaryKey({ columns: [table.roleId, table.permissionId] }),
+		index('role_permissions_permission_id_idx').on(table.permissionId),
+	],
+)
+
 // tabla intermedia para multi-tenant (muchos a muchos)
 export const organizationMembers = pgTable(
 	'organization_members',
@@ -229,8 +358,11 @@ export const organizationMembers = pgTable(
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id, { onDelete: 'cascade' }),
-		// rol del usuario en esta empresa específica
-		role: text('role').notNull().default('operator'), // 'admin' | 'operator' | 'viewer'
+		role: text('role').notNull().default('operator'),
+		roleId: uuid('role_id')
+			.notNull()
+			.references(() => roles.id, { onDelete: 'restrict' }),
+		storeAccessMode: text('store_access_mode').notNull().default('all'),
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 			.defaultNow()
 			.notNull(),
@@ -245,7 +377,43 @@ export const organizationMembers = pgTable(
 			onDelete: 'set null',
 		}),
 	},
-	(table) => [primaryKey({ columns: [table.userId, table.organizationId] })],
+	(table) => [
+		primaryKey({ columns: [table.userId, table.organizationId] }),
+		index('organization_members_role_id_idx').on(table.roleId),
+	],
+)
+
+export const organizationMemberPermissions = pgTable(
+	'organization_member_permissions',
+	{
+		userId: uuid('user_id').notNull(),
+		organizationId: uuid('organization_id').notNull(),
+		permissionId: uuid('permission_id')
+			.notNull()
+			.references(() => permissions.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+			.defaultNow()
+			.notNull(),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.userId, table.organizationId, table.permissionId],
+		}),
+		foreignKey({
+			name: 'organization_member_permissions_member_fk',
+			columns: [table.userId, table.organizationId],
+			foreignColumns: [
+				organizationMembers.userId,
+				organizationMembers.organizationId,
+			],
+		}).onDelete('cascade'),
+		index('organization_member_permissions_permission_id_idx').on(
+			table.permissionId,
+		),
+	],
 )
 
 // tiendas
@@ -286,6 +454,110 @@ export const stores = pgTable('stores', {
 		onDelete: 'set null',
 	}),
 })
+
+export const organizationMemberStores = pgTable(
+	'organization_member_stores',
+	{
+		userId: uuid('user_id').notNull(),
+		organizationId: uuid('organization_id').notNull(),
+		storeId: uuid('store_id')
+			.notNull()
+			.references(() => stores.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+			.defaultNow()
+			.notNull(),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.userId, table.organizationId, table.storeId],
+		}),
+		foreignKey({
+			name: 'organization_member_stores_member_fk',
+			columns: [table.userId, table.organizationId],
+			foreignColumns: [
+				organizationMembers.userId,
+				organizationMembers.organizationId,
+			],
+		}).onDelete('cascade'),
+		index('organization_member_stores_store_id_idx').on(table.storeId),
+	],
+)
+
+export const organizationInvitations = pgTable(
+	'organization_invitations',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		roleId: uuid('role_id')
+			.notNull()
+			.references(() => roles.id, { onDelete: 'restrict' }),
+		email: text('email').notNull(),
+		tokenHash: text('token_hash').notNull().unique(),
+		storeAccessMode: text('store_access_mode').notNull().default('all'),
+		expiresAt: timestamp('expires_at', {
+			withTimezone: true,
+			mode: 'date',
+		}).notNull(),
+		acceptedAt: timestamp('accepted_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		revokedAt: timestamp('revoked_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+		createdBy: uuid('created_by')
+			.notNull()
+			.references(() => users.id, { onDelete: 'set null' }),
+		acceptedBy: uuid('accepted_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+		revokedBy: uuid('revoked_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		index('organization_invitations_organization_id_idx').on(
+			table.organizationId,
+		),
+		index('organization_invitations_email_idx').on(table.email),
+		index('organization_invitations_role_id_idx').on(table.roleId),
+	],
+)
+
+export const organizationInvitationStores = pgTable(
+	'organization_invitation_stores',
+	{
+		invitationId: uuid('invitation_id')
+			.notNull()
+			.references(() => organizationInvitations.id, {
+				onDelete: 'cascade',
+			}),
+		storeId: uuid('store_id')
+			.notNull()
+			.references(() => stores.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.invitationId, table.storeId] }),
+		index('organization_invitation_stores_store_id_idx').on(table.storeId),
+	],
+)
 
 export const organizationSettings = pgTable('organization_settings', {
 	id: uuid('id')
