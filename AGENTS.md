@@ -173,6 +173,30 @@ Core tables and their relationships:
 
 UUIDs use `uuidv7()` as the default function.
 
+### Database Transactions
+
+Use `db.transaction(async (tx) => { ... })` whenever a server action performs **more than one write** (INSERT/UPDATE/DELETE). All writes inside the callback use `tx` — if any step throws, Drizzle automatically rolls back the entire block.
+
+```ts
+// ✅ Correct: multiple writes are atomic
+const result = await db.transaction(async (tx) => {
+  const [row] = await tx.insert(complaints).values({...}).returning({ id: complaints.id })
+  await tx.insert(complaintAttachments).values({ complaintId: row.id, ... })
+  await createAuditLog({ action: 'complaint.created', ... }, tx)
+  return row
+})
+
+// ❌ Incorrect: if the second insert fails, the first one is left orphaned
+await db.insert(complaints).values({...})
+await db.insert(complaintAttachments).values({...})
+```
+
+**Rules:**
+- Always pass `tx` down to any helper function that writes to the DB within a transaction — helpers must accept an optional `tx` parameter instead of using the global `db` directly.
+- Call Next.js functions like `headers()`, `cookies()`, or `redirect()` **before** entering the transaction — they are not DB operations and must not live inside the callback.
+- A single-write action does not need a transaction, but wrapping it is fine for consistency.
+- Any helper that accepts an optional `tx` should propagate errors when `tx` is provided (to trigger rollback) and catch them silently when called standalone (best-effort).
+
 ### Coding Conventions
 
 - All validators return `string | null` (null = valid). Compose them with `combine(...validators)`.
