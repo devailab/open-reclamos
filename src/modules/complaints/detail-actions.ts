@@ -78,48 +78,58 @@ export async function $respondToComplaintAction(
 	}
 
 	const now = new Date()
-
-	await db
-		.update(complaints)
-		.set({
-			officialResponse: response,
-			respondedAt: now,
-			respondedBy: session.user.id,
-			status: 'resolved',
-			updatedAt: now,
-			updatedBy: session.user.id,
-		})
-		.where(
-			and(
-				eq(complaints.id, input.id),
-				eq(complaints.organizationId, organizationId),
-			),
-		)
-
-	// Obtener cabeceras para el log de auditoría
 	const reqHeaders = await headers()
 	const ipAddress =
 		reqHeaders.get('x-forwarded-for') ?? reqHeaders.get('x-real-ip')
 	const userAgent = reqHeaders.get('user-agent')
 
-	await createAuditLog({
-		organizationId,
-		userId: session.user.id,
-		action: 'complaint.responded',
-		entityType: 'complaint',
-		entityId: input.id,
-		oldData: {
-			status: existing.status,
-			officialResponse: null,
-		},
-		newData: {
-			status: 'resolved',
-			officialResponse: response,
-			respondedAt: now.toISOString(),
-		},
-		ipAddress,
-		userAgent,
-	})
+	try {
+		await db.transaction(async (tx) => {
+			await tx
+				.update(complaints)
+				.set({
+					officialResponse: response,
+					respondedAt: now,
+					respondedBy: session.user.id,
+					status: 'resolved',
+					updatedAt: now,
+					updatedBy: session.user.id,
+				})
+				.where(
+					and(
+						eq(complaints.id, input.id),
+						eq(complaints.organizationId, organizationId),
+					),
+				)
+
+			await createAuditLog(
+				{
+					organizationId,
+					userId: session.user.id,
+					action: 'complaint.responded',
+					entityType: 'complaint',
+					entityId: input.id,
+					oldData: {
+						status: existing.status,
+						officialResponse: null,
+					},
+					newData: {
+						status: 'resolved',
+						officialResponse: response,
+						respondedAt: now.toISOString(),
+					},
+					ipAddress,
+					userAgent,
+				},
+				tx,
+			)
+		})
+	} catch {
+		return {
+			success: false,
+			error: 'Error al guardar la respuesta. Intenta de nuevo.',
+		}
+	}
 
 	return { success: true }
 }

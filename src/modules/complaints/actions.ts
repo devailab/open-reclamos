@@ -83,79 +83,85 @@ export async function $submitComplaintAction(
 		const now = new Date()
 		const responseDeadline = addDays(now, RESPONSE_DEADLINE_DAYS)
 
-		const [complaint] = await db
-			.insert(complaints)
-			.values({
-				organizationId: input.organizationId,
-				storeId: input.storeId,
-				reasonId: input.reasonId ?? null,
-				ubigeoId: input.ubigeoId ?? null,
-				status: 'open',
-				trackingCode,
-				correlative,
-				personType: input.personType,
-				firstName: input.firstName,
-				lastName: input.lastName,
-				documentType: input.documentType,
-				documentNumber: input.documentNumber,
-				legalName: input.legalName ?? null,
-				isMinor: input.isMinor,
-				guardianFirstName: input.guardianFirstName ?? null,
-				guardianLastName: input.guardianLastName ?? null,
-				guardianDocumentType: input.guardianDocumentType ?? null,
-				guardianDocumentNumber: input.guardianDocumentNumber ?? null,
-				email: input.email,
-				dialCode: input.dialCode ?? null,
-				phone: input.phone ?? null,
-				address: input.address ?? null,
-				type: input.type,
-				itemType: input.itemType ?? null,
-				itemDescription: input.itemDescription ?? null,
-				currency: input.currency ?? null,
-				amount: input.amount ?? null,
-				hasProofOfPayment: input.hasProofOfPayment,
-				proofOfPaymentType: input.proofOfPaymentType ?? null,
-				proofOfPaymentNumber: input.proofOfPaymentNumber ?? null,
-				incidentDate: input.incidentDate ?? null,
-				responseDeadlineDays: RESPONSE_DEADLINE_DAYS,
-				responseDeadline,
-				description: input.description ?? null,
-				request: input.request ?? null,
-			})
-			.returning({ id: complaints.id })
-
-		if (!complaint?.id) {
-			return { success: false, error: 'Error al registrar el reclamo.' }
-		}
-
-		if (input.files.length > 0) {
-			await db.insert(complaintAttachments).values(
-				input.files.map((f) => ({
-					complaintId: complaint.id,
-					storageKey: f.key,
-					fileName: f.fileName,
-					contentType: f.contentType,
-				})),
-			)
-		}
-
 		const reqHeaders = await headers()
-		void createAuditLog({
-			organizationId: input.organizationId,
-			action: 'complaint.created',
-			entityType: 'complaint',
-			entityId: complaint.id,
-			newData: {
-				correlative,
-				trackingCode,
-				type: input.type,
-				status: 'open',
-				storeId: input.storeId,
-			},
-			ipAddress:
-				reqHeaders.get('x-forwarded-for') ??
-				reqHeaders.get('x-real-ip'),
-			userAgent: reqHeaders.get('user-agent'),
+		await db.transaction(async (tx) => {
+			const [inserted] = await tx
+				.insert(complaints)
+				.values({
+					organizationId: input.organizationId,
+					storeId: input.storeId,
+					reasonId: input.reasonId ?? null,
+					ubigeoId: input.ubigeoId ?? null,
+					status: 'open',
+					trackingCode,
+					correlative,
+					personType: input.personType,
+					firstName: input.firstName,
+					lastName: input.lastName,
+					documentType: input.documentType,
+					documentNumber: input.documentNumber,
+					legalName: input.legalName ?? null,
+					isMinor: input.isMinor,
+					guardianFirstName: input.guardianFirstName ?? null,
+					guardianLastName: input.guardianLastName ?? null,
+					guardianDocumentType: input.guardianDocumentType ?? null,
+					guardianDocumentNumber:
+						input.guardianDocumentNumber ?? null,
+					email: input.email,
+					dialCode: input.dialCode ?? null,
+					phone: input.phone ?? null,
+					address: input.address ?? null,
+					type: input.type,
+					itemType: input.itemType ?? null,
+					itemDescription: input.itemDescription ?? null,
+					currency: input.currency ?? null,
+					amount: input.amount ?? null,
+					hasProofOfPayment: input.hasProofOfPayment,
+					proofOfPaymentType: input.proofOfPaymentType ?? null,
+					proofOfPaymentNumber: input.proofOfPaymentNumber ?? null,
+					incidentDate: input.incidentDate ?? null,
+					responseDeadlineDays: RESPONSE_DEADLINE_DAYS,
+					responseDeadline,
+					description: input.description ?? null,
+					request: input.request ?? null,
+				})
+				.returning({ id: complaints.id })
+
+			if (!inserted?.id) throw new Error('insert failed')
+
+			if (input.files.length > 0) {
+				await tx.insert(complaintAttachments).values(
+					input.files.map((f) => ({
+						complaintId: inserted.id,
+						storageKey: f.key,
+						fileName: f.fileName,
+						contentType: f.contentType,
+					})),
+				)
+			}
+
+			await createAuditLog(
+				{
+					organizationId: input.organizationId,
+					action: 'complaint.created',
+					entityType: 'complaint',
+					entityId: inserted.id,
+					newData: {
+						correlative,
+						trackingCode,
+						type: input.type,
+						status: 'open',
+						storeId: input.storeId,
+					},
+					ipAddress:
+						reqHeaders.get('x-forwarded-for') ??
+						reqHeaders.get('x-real-ip'),
+					userAgent: reqHeaders.get('user-agent'),
+				},
+				tx,
+			)
+
+			return inserted
 		})
 
 		return {

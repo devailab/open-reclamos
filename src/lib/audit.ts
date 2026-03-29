@@ -1,4 +1,4 @@
-import { db } from '@/database/database'
+import { type DbTransaction, db } from '@/database/database'
 import { auditLogs } from '@/database/schema'
 
 export interface CreateAuditLogParams {
@@ -16,41 +16,46 @@ export interface CreateAuditLogParams {
 /**
  * Registra una entrada en el log de auditoría.
  *
- * Esta función está optimizada para usarse dentro de transacciones existentes
- * o de forma independiente. No lanza errores que interrumpan el flujo
- * principal — los falla silenciosamente para no afectar la experiencia del
- * usuario, pero registra el error en consola para debugging.
+ * Acepta opcionalmente una transacción activa (`tx`):
+ * - Con `tx`: el insert forma parte de la transacción — si falla, propaga el
+ *   error y provoca el rollback del bloque completo.
+ * - Sin `tx`: comportamiento best-effort — el error se captura silenciosamente
+ *   para no interrumpir el flujo principal.
  *
- * Ejemplo de uso:
+ * Ejemplo dentro de una transacción:
  * ```ts
- * await createAuditLog({
- *   organizationId,
- *   userId: session.user.id,
- *   action: 'complaint.responded',
- *   entityType: 'complaint',
- *   entityId: complaintId,
- *   oldData: { status: 'open' },
- *   newData: { status: 'resolved', officialResponse: '...' },
+ * await db.transaction(async (tx) => {
+ *   await tx.update(complaints).set({ status: 'resolved' }).where(...)
+ *   await createAuditLog({ action: 'complaint.responded', ... }, tx)
  * })
  * ```
  */
 export async function createAuditLog(
 	params: CreateAuditLogParams,
+	tx?: DbTransaction,
 ): Promise<void> {
-	try {
-		await db.insert(auditLogs).values({
-			organizationId: params.organizationId,
-			userId: params.userId ?? null,
-			action: params.action,
-			entityType: params.entityType,
-			entityId: params.entityId ?? null,
-			oldData: params.oldData ?? null,
-			newData: params.newData ?? null,
-			ipAddress: params.ipAddress ?? null,
-			userAgent: params.userAgent ?? null,
-		})
-	} catch (error) {
-		// El log de auditoría no debe bloquear la operación principal
-		console.error('[audit] Error al registrar log de auditoría:', error)
+	const client = tx ?? db
+	const values = {
+		organizationId: params.organizationId,
+		userId: params.userId ?? null,
+		action: params.action,
+		entityType: params.entityType,
+		entityId: params.entityId ?? null,
+		oldData: params.oldData ?? null,
+		newData: params.newData ?? null,
+		ipAddress: params.ipAddress ?? null,
+		userAgent: params.userAgent ?? null,
+	}
+
+	if (tx) {
+		// Dentro de transacción: propagar errores para hacer rollback
+		await client.insert(auditLogs).values(values)
+	} else {
+		// Standalone: best-effort, no interrumpe el flujo principal
+		try {
+			await client.insert(auditLogs).values(values)
+		} catch (error) {
+			console.error('[audit] Error al registrar log de auditoría:', error)
+		}
 	}
 }
