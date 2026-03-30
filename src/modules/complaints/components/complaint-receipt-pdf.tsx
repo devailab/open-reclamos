@@ -130,16 +130,17 @@ const styles = StyleSheet.create({
 		gap: 6,
 	},
 	sectionNumber: {
-		minWidth: 16,
+		width: 16,
+		height: 16,
 		borderRadius: 999,
-		paddingTop: 2,
-		paddingRight: 5,
-		paddingBottom: 2,
-		paddingLeft: 5,
 		backgroundColor: '#E2E8F0',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	sectionNumberText: {
 		fontSize: 7.5,
 		fontWeight: 700,
-		textAlign: 'center',
+		lineHeight: 1,
 	},
 	sectionTitle: {
 		fontSize: 10,
@@ -219,6 +220,11 @@ const styles = StyleSheet.create({
 
 export interface ComplaintReceiptPdfInput {
 	accentColor: string | null
+	document: {
+		title: string
+		subject: string
+		footerNote: string
+	}
 	organization: {
 		name: string
 		legalName: string
@@ -257,7 +263,11 @@ export interface ComplaintReceiptPdfInput {
 		detail: string
 		request: string
 		attachments: string
-		providerActions: string
+	}
+	providerSection: {
+		title: string
+		content: string
+		tone: 'default' | 'response'
 	}
 }
 
@@ -301,16 +311,36 @@ function Section({
 	number,
 	title,
 	children,
+	tone = 'default',
 }: {
 	number: string
 	title: string
 	children: ReactNode
+	tone?: 'default' | 'response'
 }) {
+	const isResponseTone = tone === 'response'
+	const sectionNumberStyle = isResponseTone
+		? [
+				styles.sectionNumber,
+				{
+					backgroundColor: '#DCFCE7',
+				},
+			]
+		: styles.sectionNumber
+	const sectionNumberTextStyle = isResponseTone
+		? [styles.sectionNumberText, { color: '#166534' }]
+		: styles.sectionNumberText
+	const sectionTitleStyle = isResponseTone
+		? [styles.sectionTitle, { color: '#166534' }]
+		: styles.sectionTitle
+
 	return (
 		<View style={styles.section}>
 			<View style={styles.sectionHeader}>
-				<Text style={styles.sectionNumber}>{number}</Text>
-				<Text style={styles.sectionTitle}>{title}</Text>
+				<View style={sectionNumberStyle}>
+					<Text style={sectionNumberTextStyle}>{number}</Text>
+				</View>
+				<Text style={sectionTitleStyle}>{title}</Text>
 			</View>
 			{children}
 		</View>
@@ -324,9 +354,9 @@ function ComplaintReceiptPdf({ data }: { data: ComplaintReceiptPdfInput }) {
 
 	return (
 		<Document
-			title={`Constancia de reclamo ${data.complaint.correlative}`}
+			title={`${data.document.title} ${data.complaint.correlative}`}
 			author='Open Reclamos'
-			subject='Constancia de recepción de reclamo'
+			subject={data.document.subject}
 		>
 			<Page size='A4' style={styles.page}>
 				<View style={styles.header}>
@@ -338,7 +368,7 @@ function ComplaintReceiptPdf({ data }: { data: ComplaintReceiptPdfInput }) {
 								Libro de Reclamaciones
 							</Text>
 							<Text style={styles.headerTitle}>
-								Constancia de recepción
+								{data.document.title}
 							</Text>
 							<Text style={styles.headerSubtitle}>
 								{data.organization.name}
@@ -526,19 +556,17 @@ function ComplaintReceiptPdf({ data }: { data: ComplaintReceiptPdfInput }) {
 
 				<Section
 					number='6'
-					title='Observaciones y acciones del proveedor'
+					title={data.providerSection.title}
+					tone={data.providerSection.tone}
 				>
 					<Text style={styles.fieldValue}>
-						{data.narratives.providerActions}
+						{data.providerSection.content}
 					</Text>
 				</Section>
 
 				<View style={styles.footer}>
 					<Text style={styles.footerText}>
-						Constancia generada automáticamente por Open Reclamos.
-						La presentación del reclamo o queja no limita el acceso
-						a otras vías de solución de controversias ni constituye
-						un requisito previo para acudir al INDECOPI.
+						{data.document.footerNote}
 					</Text>
 				</View>
 			</Page>

@@ -21,6 +21,7 @@ import { getComplaintReceiptContext, getStoreForOrganization } from './queries'
 import {
 	buildComplaintReceiptEmailMessage,
 	buildComplaintReceiptPdfInput,
+	getComplaintEmailErrorMessage,
 } from './receipt'
 
 const TMP_PREFIX = 'tmp/'
@@ -68,45 +69,6 @@ async function rollbackConfirmedFiles(
 			)
 		}
 	}
-}
-
-function getSubmitComplaintErrorMessage(error: unknown) {
-	if (!(error instanceof Error)) {
-		return 'Ocurrió un error inesperado. Intenta de nuevo.'
-	}
-
-	if (
-		error.message === 'Archivo no válido.' ||
-		error.message === 'Archivo no pertenece a la tienda indicada.'
-	) {
-		return error.message
-	}
-
-	const message = error.message.toLowerCase()
-
-	if (
-		message.includes('email_transport') ||
-		message.includes('email_smtp_') ||
-		message.includes('email_from_')
-	) {
-		return 'No pudimos confirmar tu reclamo porque el servicio de correo no está configurado correctamente.'
-	}
-
-	if (
-		message.includes('auth') ||
-		message.includes('invalid login') ||
-		message.includes('invalid credentials') ||
-		message.includes('enotfound') ||
-		message.includes('econnrefused') ||
-		message.includes('etimedout') ||
-		message.includes('certificate') ||
-		message.includes('tls') ||
-		message.includes('ssl')
-	) {
-		return 'No pudimos registrar tu reclamo porque ocurrió un problema al enviar la constancia por correo.'
-	}
-
-	return 'Ocurrió un error inesperado. Intenta de nuevo.'
 }
 
 export interface UploadedFileInput {
@@ -427,7 +389,13 @@ export async function $submitComplaintAction(
 		console.error('[complaints] Error al registrar reclamo:', error)
 		return {
 			success: false,
-			error: getSubmitComplaintErrorMessage(error),
+			error:
+				error instanceof Error &&
+				(error.message === 'Archivo no válido.' ||
+					error.message ===
+						'Archivo no pertenece a la tienda indicada.')
+					? error.message
+					: getComplaintEmailErrorMessage(error, 'submission'),
 		}
 	}
 }

@@ -28,7 +28,12 @@ type DraftStatus = 'idle' | 'saving' | 'saved' | 'error'
 interface ResponseFormProps {
 	complaintId: string
 	initialDraft?: string | null
-	onSuccess: (response: string) => void
+	onSuccess: (result: {
+		response: string
+		respondedAt: string
+		respondedByName: string | null
+		publicNote: string
+	}) => void
 }
 
 export const ResponseForm: FC<ResponseFormProps> = ({
@@ -41,6 +46,7 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [draftStatus, setDraftStatus] = useState<DraftStatus>('idle')
 	const isFirstRender = useRef(true)
+	const lastSavedDraftRef = useRef((initialDraft ?? '').trim())
 
 	const { register, validate } = useForm({
 		values,
@@ -58,10 +64,20 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 		}
 
 		const draft = debouncedResponse?.trim() ?? ''
+		if (draft === lastSavedDraftRef.current) {
+			return
+		}
+
 		setDraftStatus('saving')
 
 		$saveDraftResponseAction(complaintId, draft).then((result) => {
-			setDraftStatus(result.success ? 'saved' : 'error')
+			if (result.success) {
+				lastSavedDraftRef.current = draft
+				setDraftStatus('saved')
+				return
+			}
+
+			setDraftStatus('error')
 		})
 	}, [debouncedResponse, complaintId])
 
@@ -96,9 +112,11 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 			sileo.success({
 				title: 'Respuesta registrada exitosamente',
 				description:
-					'El reclamo ha sido marcado como Resuelto y el consumidor puede ver la respuesta.',
+					'El reclamo pasó a Resuelto y se envió el PDF de respuesta al correo del consumidor.',
 			})
-			onSuccess(values.response ?? '')
+			if (result.data) {
+				onSuccess(result.data)
+			}
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -137,7 +155,7 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 }
 
 function DraftIndicator({ status }: { status: DraftStatus }) {
-	if (status === 'idle') return null
+	if (status === 'idle') return <div></div>
 
 	if (status === 'saving') {
 		return (

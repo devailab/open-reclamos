@@ -17,7 +17,7 @@ interface ComplaintReceiptAttachment {
 	contentType: string | null
 }
 
-interface BuildComplaintReceiptParams {
+interface ComplaintReceiptPayload {
 	context: ComplaintReceiptContext
 	attachments: ComplaintReceiptAttachment[]
 	complaint: {
@@ -50,6 +50,15 @@ interface BuildComplaintReceiptParams {
 		incidentDate: Date | null
 		description: string | null
 		request: string | null
+	}
+}
+
+interface BuildComplaintReceiptParams extends ComplaintReceiptPayload {}
+
+interface BuildComplaintResponseParams extends ComplaintReceiptPayload {
+	complaint: ComplaintReceiptPayload['complaint'] & {
+		officialResponse: string
+		respondedAt: Date
 	}
 }
 
@@ -226,9 +235,7 @@ function formatAttachments(attachments: ComplaintReceiptAttachment[]) {
 	return `Se adjuntaron ${attachments.length} archivo(s).`
 }
 
-export function buildComplaintReceiptPdfInput(
-	params: BuildComplaintReceiptParams,
-): ComplaintReceiptPdfInput {
+function buildComplaintPdfBaseData(params: ComplaintReceiptPayload) {
 	const typeMeta = getComplaintTypeMeta(params.complaint.type)
 
 	return {
@@ -290,9 +297,56 @@ export function buildComplaintReceiptPdfInput(
 				params.complaint.request?.trim() ||
 				'El consumidor no consignó un pedido específico.',
 			attachments: formatAttachments(params.attachments),
-			providerActions: `Constancia generada automáticamente al momento del registro. La empresa aún no registra observaciones ni acciones adoptadas sobre este caso. La respuesta debe ser comunicada hasta el ${formatDateLong(
+		},
+	}
+}
+
+export function buildComplaintReceiptPdfInput(
+	params: BuildComplaintReceiptParams,
+): ComplaintReceiptPdfInput {
+	const baseData = buildComplaintPdfBaseData(params)
+
+	return {
+		...baseData,
+		document: {
+			title: 'Constancia de recepción',
+			subject: 'Constancia de recepción de reclamo',
+			footerNote:
+				'Constancia generada automáticamente por Open Reclamos. La presentación del reclamo o queja no limita el acceso a otras vías de solución de controversias ni constituye un requisito previo para acudir al INDECOPI.',
+		},
+		providerSection: {
+			title: 'Observaciones y acciones adaptadas por el proveedor',
+			content: `Constancia generada automáticamente al momento del registro. La empresa aún no registra observaciones ni acciones adoptadas sobre este caso. La respuesta debe ser comunicada hasta el ${formatDateLong(
 				params.complaint.responseDeadline,
 			)}.`,
+			tone: 'default',
+		},
+	}
+}
+
+export function buildComplaintResponsePdfInput(
+	params: BuildComplaintResponseParams,
+): ComplaintReceiptPdfInput {
+	const baseData = buildComplaintPdfBaseData(params)
+
+	return {
+		...baseData,
+		document: {
+			title: `Respuesta al reclamo ${params.complaint.correlative}`,
+			subject: `Respuesta de ${params.context.organization.name} a tu reclamo ${params.complaint.correlative}`,
+			footerNote:
+				'Respuesta generada automáticamente por Open Reclamos como parte del seguimiento del reclamo o queja registrado.',
+		},
+		providerSection: {
+			title: 'Observaciones y acciones adaptadas por el proveedor',
+			content: [
+				`Respuesta emitida el ${formatDateTimeDisplay(
+					params.complaint.respondedAt,
+				)}.`,
+				'',
+				params.complaint.officialResponse.trim(),
+			].join('\n'),
+			tone: 'response',
 		},
 	}
 }
@@ -334,4 +388,104 @@ export function buildComplaintReceiptEmailMessage(params: {
 		text,
 		html,
 	}
+}
+
+function escapeHtml(value: string) {
+	return value
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#39;')
+}
+
+function formatResponseHtml(response: string) {
+	return escapeHtml(response).replaceAll('\n', '<br />')
+}
+
+export function buildComplaintResponseEmailMessage(params: {
+	pdf: ComplaintReceiptPdfInput
+	response: string
+	respondedAt: Date
+}) {
+	const fileName = `respuesta-reclamo-${params.pdf.complaint.correlative}.pdf`
+	const subject = `Respuesta a tu reclamo ${params.pdf.complaint.correlative} - ${params.pdf.organization.name}`
+	const responseDate = formatDateTimeDisplay(params.respondedAt)
+	const text = [
+		'Hola,',
+		'',
+		`${params.pdf.organization.name} registró una respuesta oficial para tu ${params.pdf.complaint.typeLabel.toLowerCase()}.`,
+		`Código de seguimiento: ${params.pdf.complaint.trackingCode}`,
+		`Correlativo: ${params.pdf.complaint.correlative}`,
+		`Fecha de respuesta: ${responseDate}`,
+		'',
+		'Respuesta:',
+		params.response,
+		'',
+		'Adjuntamos el PDF de respuesta para tu constancia.',
+	].join('\n')
+
+	const html = `
+		<p>Hola,</p>
+		<p><strong>${params.pdf.organization.name}</strong> registró una respuesta oficial para tu <strong>${params.pdf.complaint.typeLabel.toLowerCase()}</strong>.</p>
+		<p>
+			<strong>Código de seguimiento:</strong> ${params.pdf.complaint.trackingCode}<br />
+			<strong>Correlativo:</strong> ${params.pdf.complaint.correlative}<br />
+			<strong>Fecha de respuesta:</strong> ${responseDate}
+		</p>
+		<p><strong>Respuesta:</strong></p>
+		<p>${formatResponseHtml(params.response)}</p>
+		<p>Adjuntamos el PDF de respuesta para tu constancia.</p>
+	`
+
+	return {
+		fileName,
+		subject,
+		text,
+		html,
+	}
+}
+
+export function getComplaintEmailErrorMessage(
+	error: unknown,
+	workflow: 'submission' | 'response',
+) {
+	const defaultMessage =
+		workflow === 'submission'
+			? 'Ocurrió un error inesperado. Intenta de nuevo.'
+			: 'Error al guardar la respuesta. Intenta de nuevo.'
+
+	if (!(error instanceof Error)) {
+		return defaultMessage
+	}
+
+	const message = error.message.toLowerCase()
+
+	if (
+		message.includes('email_transport') ||
+		message.includes('email_smtp_') ||
+		message.includes('email_from_')
+	) {
+		return workflow === 'submission'
+			? 'No pudimos confirmar tu reclamo porque el servicio de correo no está configurado correctamente.'
+			: 'No pudimos enviar la respuesta porque el servicio de correo no está configurado correctamente.'
+	}
+
+	if (
+		message.includes('auth') ||
+		message.includes('invalid login') ||
+		message.includes('invalid credentials') ||
+		message.includes('enotfound') ||
+		message.includes('econnrefused') ||
+		message.includes('etimedout') ||
+		message.includes('certificate') ||
+		message.includes('tls') ||
+		message.includes('ssl')
+	) {
+		return workflow === 'submission'
+			? 'No pudimos registrar tu reclamo porque ocurrió un problema al enviar la constancia por correo.'
+			: 'No pudimos registrar la respuesta porque ocurrió un problema al enviar el correo.'
+	}
+
+	return defaultMessage
 }

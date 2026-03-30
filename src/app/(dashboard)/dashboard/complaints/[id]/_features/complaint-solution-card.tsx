@@ -9,14 +9,21 @@ interface ComplaintSolutionCardProps {
 	complaint: ComplaintDetail
 	resolvedResponse: string | null
 	resolvedAt: Date | null
+	respondedByName: string | null
 	isRespondable: boolean
-	onResponseSuccess: (response: string) => void
+	onResponseSuccess: (result: {
+		response: string
+		respondedAt: string
+		respondedByName: string | null
+		publicNote: string
+	}) => void
 }
 
 export const ComplaintSolutionCard: FC<ComplaintSolutionCardProps> = ({
 	complaint,
 	resolvedResponse,
 	resolvedAt,
+	respondedByName,
 	isRespondable,
 	onResponseSuccess,
 }) => {
@@ -34,9 +41,7 @@ export const ComplaintSolutionCard: FC<ComplaintSolutionCardProps> = ({
 								{formatDateTimeDisplay(resolvedAt)}
 							</span>
 						)}
-						{complaint.respondedByName && (
-							<span>por {complaint.respondedByName}</span>
-						)}
+						{respondedByName && <span>por {respondedByName}</span>}
 					</div>
 				</div>
 			) : isRespondable ? (

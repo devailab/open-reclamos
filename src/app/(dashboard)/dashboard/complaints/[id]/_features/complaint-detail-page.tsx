@@ -40,6 +40,9 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 	const [resolvedAt, setResolvedAt] = useState<Date | null>(
 		complaint.respondedAt,
 	)
+	const [respondedByName, setRespondedByName] = useState<string | null>(
+		complaint.respondedByName,
+	)
 	const [historyEntries, setHistoryEntries] = useState(history)
 	const [isPending, startTransition] = useTransition()
 
@@ -54,10 +57,30 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 		currentStatus,
 	)
 
-	const handleResponseSuccess = (response: string) => {
-		setResolvedResponse(response)
-		setResolvedAt(new Date())
+	const handleResponseSuccess = (result: {
+		response: string
+		respondedAt: string
+		respondedByName: string | null
+		publicNote: string
+	}) => {
+		setResolvedResponse(result.response)
+		setResolvedAt(new Date(result.respondedAt))
+		setRespondedByName(result.respondedByName)
 		setCurrentStatus('resolved')
+		setHistoryEntries((prev) => [
+			...prev,
+			{
+				id: crypto.randomUUID(),
+				eventType: 'response_added',
+				fromStatus: currentStatus,
+				toStatus: 'resolved',
+				publicNote: result.publicNote,
+				internalNote: null,
+				performedByName: result.respondedByName,
+				performedByRole: 'operator',
+				createdAt: new Date(result.respondedAt),
+			},
+		])
 	}
 
 	const handleStatusChange = (status: ChangeableStatus) => {
@@ -160,6 +183,7 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 						complaint={{ ...complaint, status: currentStatus }}
 						resolvedResponse={resolvedResponse}
 						resolvedAt={resolvedAt}
+						respondedByName={respondedByName}
 						isRespondable={isRespondable}
 						onResponseSuccess={handleResponseSuccess}
 					/>

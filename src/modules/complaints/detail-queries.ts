@@ -16,6 +16,8 @@ export interface ComplaintDetail {
 	trackingCode: string
 	organizationId: string
 	storeId: string
+	reasonId: string | null
+	ubigeoId: string | null
 	storeName: string
 	// estado
 	status: string
@@ -73,6 +75,8 @@ export async function getComplaintDetailById(
 			trackingCode: complaints.trackingCode,
 			organizationId: complaints.organizationId,
 			storeId: complaints.storeId,
+			reasonId: complaints.reasonId,
+			ubigeoId: complaints.ubigeoId,
 			storeName: stores.name,
 			status: complaints.status,
 			type: complaints.type,

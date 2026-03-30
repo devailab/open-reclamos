@@ -7,7 +7,9 @@ import { db } from '@/database/database'
 import { complaints } from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
+import { sendEmail } from '@/lib/email'
 import { getPresignedDownloadUrl } from '@/lib/s3'
+import { renderComplaintReceiptPdfBuffer } from '@/modules/complaints/components/complaint-receipt-pdf'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import type { ChangeableStatus } from './dashboard-validation'
 import {
@@ -15,11 +17,18 @@ import {
 	type ComplaintDetail,
 	type ComplaintHistoryEntry,
 	getAttachmentByStorageKey,
+	getComplaintAttachments,
 	getComplaintAuditHistory,
 	getComplaintDetailById,
 	getComplaintHistory,
 } from './detail-queries'
 import { createComplaintHistoryEntry } from './history'
+import { getComplaintReceiptContext } from './queries'
+import {
+	buildComplaintResponseEmailMessage,
+	buildComplaintResponsePdfInput,
+	getComplaintEmailErrorMessage,
+} from './receipt'
 
 export interface GetComplaintDetailResult {
 	complaint: ComplaintDetail
@@ -144,6 +153,12 @@ export async function $saveDraftResponseAction(
 
 export interface RespondToComplaintResult {
 	success: boolean
+	data?: {
+		response: string
+		respondedAt: string
+		respondedByName: string | null
+		publicNote: string
+	}
 	error?: string
 }
 
@@ -195,8 +210,73 @@ export async function $respondToComplaintAction(
 	const ipAddress =
 		reqHeaders.get('x-forwarded-for') ?? reqHeaders.get('x-real-ip')
 	const userAgent = reqHeaders.get('user-agent')
+	const [receiptContext, attachments] = await Promise.all([
+		getComplaintReceiptContext({
+			organizationId: access.membership.organizationId,
+			storeId: existing.storeId,
+			reasonId: existing.reasonId,
+			consumerUbigeoId: existing.ubigeoId,
+		}),
+		getComplaintAttachments(input.id),
+	])
 
+	if (!receiptContext) {
+		return {
+			success: false,
+			error: 'No se pudo preparar el PDF de respuesta.',
+		}
+	}
+
+	const publicNote = 'Se registró una respuesta oficial a tu reclamo.'
 	try {
+		const responsePdfInput = buildComplaintResponsePdfInput({
+			context: receiptContext,
+			attachments: attachments.map((file) => ({
+				fileName: file.fileName,
+				contentType: file.contentType,
+			})),
+			complaint: {
+				correlative: existing.correlative,
+				trackingCode: existing.trackingCode,
+				createdAt: existing.createdAt,
+				responseDeadline: existing.responseDeadline ?? now,
+				personType: existing.personType,
+				documentType: existing.documentType,
+				documentNumber: existing.documentNumber,
+				firstName: existing.firstName,
+				lastName: existing.lastName,
+				legalName: existing.legalName,
+				guardianFirstName: existing.guardianFirstName,
+				guardianLastName: existing.guardianLastName,
+				guardianDocumentType: existing.guardianDocumentType,
+				guardianDocumentNumber: existing.guardianDocumentNumber,
+				email: existing.email,
+				dialCode: existing.dialCode,
+				phone: existing.phone,
+				address: existing.address,
+				type: existing.type,
+				itemType: existing.itemType,
+				itemDescription: existing.itemDescription,
+				currency: existing.currency,
+				amount: existing.amount,
+				hasProofOfPayment: existing.hasProofOfPayment ?? false,
+				proofOfPaymentType: existing.proofOfPaymentType,
+				proofOfPaymentNumber: existing.proofOfPaymentNumber,
+				incidentDate: existing.incidentDate,
+				description: existing.description,
+				request: existing.request,
+				officialResponse: response,
+				respondedAt: now,
+			},
+		})
+		const responsePdfBuffer =
+			await renderComplaintReceiptPdfBuffer(responsePdfInput)
+		const emailMessage = buildComplaintResponseEmailMessage({
+			pdf: responsePdfInput,
+			response,
+			respondedAt: now,
+		})
+
 		await db.transaction(async (tx) => {
 			await tx
 				.update(complaints)
@@ -250,22 +330,44 @@ export async function $respondToComplaintAction(
 					eventType: 'response_added',
 					fromStatus: existing.status,
 					toStatus: 'resolved',
-					publicNote:
-						'Se registró una respuesta oficial a tu reclamo.',
+					publicNote,
 					performedBy: access.session.user.id,
 					performedByRole: 'operator',
 				},
 				tx,
 			)
+
+			await sendEmail({
+				to: existing.email,
+				subject: emailMessage.subject,
+				text: emailMessage.text,
+				html: emailMessage.html,
+				attachments: [
+					{
+						filename: emailMessage.fileName,
+						content: responsePdfBuffer,
+						contentType: 'application/pdf',
+					},
+				],
+			})
 		})
-	} catch {
+	} catch (error) {
+		console.error('[complaints] Error al responder reclamo:', error)
 		return {
 			success: false,
-			error: 'Error al guardar la respuesta. Intenta de nuevo.',
+			error: getComplaintEmailErrorMessage(error, 'response'),
 		}
 	}
 
-	return { success: true }
+	return {
+		success: true,
+		data: {
+			response,
+			respondedAt: now.toISOString(),
+			respondedByName: access.session.user.name ?? null,
+			publicNote,
+		},
+	}
 }
 
 const STATUS_CHANGE_NOTE: Record<ChangeableStatus, string> = {
