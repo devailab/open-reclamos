@@ -2,7 +2,7 @@ import {
 	MAX_RESPONSE_DEADLINE_DAYS,
 	MIN_RESPONSE_DEADLINE_DAYS,
 } from '@/lib/constants'
-import { required } from '@/lib/validators'
+import { email, required } from '@/lib/validators'
 
 export const validateOrgName = required
 export const validateLegalName = required
@@ -60,4 +60,24 @@ export function validateUpdateOrganizationInput(
 		return `El plazo máximo de respuesta no puede superar los ${MAX_RESPONSE_DEADLINE_DAYS} días.`
 	}
 	return null
+}
+
+export interface SendTestEmailInput {
+	recipientEmail: string | null
+}
+
+export function normalizeSendTestEmailInput(input: SendTestEmailInput) {
+	return {
+		recipientEmail: input.recipientEmail?.trim() ?? null,
+	}
+}
+
+export function validateSendTestEmailInput(
+	input: ReturnType<typeof normalizeSendTestEmailInput>,
+): string | null {
+	if (!input.recipientEmail) {
+		return 'Debes indicar un correo de destino.'
+	}
+
+	return email(input.recipientEmail)
 }

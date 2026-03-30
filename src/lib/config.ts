@@ -8,3 +8,5 @@ export const DATABASE_URL = `postgresql://${user}:${password}@${host}:${port}/${
 
 export const DOCUMENT_LOOKUP_PROVIDER =
 	process.env.DOCUMENT_LOOKUP_PROVIDER ?? 'JSON_PE'
+
+export const EMAIL_TRANSPORT = process.env.EMAIL_TRANSPORT ?? 'SMTP'
