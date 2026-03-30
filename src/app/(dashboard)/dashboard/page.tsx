@@ -6,7 +6,7 @@ import type { DashboardInitialState } from './_features/types'
 
 const DashboardRoute: FC = async () => {
 	const session = await getSession()
-	const metrics = await $getComplaintsDashboardMetricsAction({ days: 7 })
+	const metrics = await $getComplaintsDashboardMetricsAction({ days: 15 })
 
 	const initialState: DashboardInitialState = {
 		days: metrics.days,

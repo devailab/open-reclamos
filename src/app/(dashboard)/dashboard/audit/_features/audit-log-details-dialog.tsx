@@ -72,7 +72,7 @@ export function AuditLogDetailsDialog({
 							/>
 							<DetailItem
 								label='Usuario'
-								value={formatOptionalText(log.userId)}
+								value={`${log.userName}${log.userEmail !== '—' ? ` (${log.userEmail})` : ''}`}
 							/>
 							<DetailItem
 								label='IP'
