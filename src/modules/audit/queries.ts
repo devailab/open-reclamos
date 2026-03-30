@@ -1,12 +1,25 @@
-import { and, count, desc, eq, gte, ilike, lte, type SQL } from 'drizzle-orm'
+import {
+	and,
+	count,
+	desc,
+	eq,
+	gte,
+	ilike,
+	lte,
+	or,
+	type SQL,
+	sql,
+} from 'drizzle-orm'
 import { db } from '@/database/database'
-import { auditLogs, organizationMembers } from '@/database/schema'
+import { auditLogs, organizationMembers, users } from '@/database/schema'
 import type { AuditTableFilters } from './validation'
 
 export interface AuditLogTableRow {
 	id: string
 	organizationId: string | null
 	userId: string | null
+	userName: string
+	userEmail: string
 	action: string
 	entityType: string
 	entityId: string | null
@@ -22,6 +35,13 @@ interface GetAuditLogsTableForOrganizationParams {
 	page: number
 	pageSize: number
 	filters: AuditTableFilters
+}
+
+export interface AuditUserAutocompleteOption {
+	value: string
+	label: string
+	userName: string
+	userEmail: string
 }
 
 const buildAuditTableConditions = (
@@ -44,6 +64,10 @@ const buildAuditTableConditions = (
 
 	if (filters.entityId) {
 		conditions.push(eq(auditLogs.entityId, filters.entityId))
+	}
+
+	if (filters.userId) {
+		conditions.push(eq(auditLogs.userId, filters.userId))
 	}
 
 	return conditions
@@ -83,6 +107,8 @@ export async function getAuditLogsTableForOrganization({
 			id: auditLogs.id,
 			organizationId: auditLogs.organizationId,
 			userId: auditLogs.userId,
+			userName: sql<string>`coalesce(${users.name}, 'Sistema')`,
+			userEmail: sql<string>`coalesce(${users.email}, '—')`,
 			action: auditLogs.action,
 			entityType: auditLogs.entityType,
 			entityId: auditLogs.entityId,
@@ -93,6 +119,7 @@ export async function getAuditLogsTableForOrganization({
 			createdAt: auditLogs.createdAt,
 		})
 		.from(auditLogs)
+		.leftJoin(users, eq(auditLogs.userId, users.id))
 		.where(whereClause)
 		.orderBy(desc(auditLogs.createdAt))
 		.limit(pageSize)
@@ -107,4 +134,45 @@ export async function getAuditLogsTableForOrganization({
 		rows,
 		totalItems: total?.total ?? 0,
 	}
+}
+
+export async function searchAuditUsersForOrganization(
+	organizationId: string,
+	query: string,
+): Promise<AuditUserAutocompleteOption[]> {
+	const conditions: SQL<unknown>[] = [
+		eq(organizationMembers.organizationId, organizationId),
+	]
+
+	if (query) {
+		const searchTerm = `%${query}%`
+		conditions.push(
+			or(
+				ilike(users.name, searchTerm),
+				ilike(users.email, searchTerm),
+			) as SQL<unknown>,
+		)
+	}
+
+	const whereClause = and(...conditions)
+	if (!whereClause) return []
+
+	const rows = await db
+		.select({
+			value: users.id,
+			userName: users.name,
+			userEmail: users.email,
+		})
+		.from(organizationMembers)
+		.innerJoin(users, eq(organizationMembers.userId, users.id))
+		.where(whereClause)
+		.orderBy(users.name)
+		.limit(20)
+
+	return rows.map((row) => ({
+		value: row.value,
+		label: `${row.userName} (${row.userEmail})`,
+		userName: row.userName,
+		userEmail: row.userEmail,
+	}))
 }

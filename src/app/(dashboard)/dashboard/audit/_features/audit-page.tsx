@@ -6,13 +6,19 @@ import type { FC } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { sileo } from 'sileo'
 import DataTable from '@/components/data-table'
+import AutocompleteField, {
+	type AutocompleteOption,
+} from '@/components/forms/autocomplete-field'
 import DateField from '@/components/forms/date-field'
 import TextField from '@/components/forms/text-field'
 import TableFiltersBar from '@/components/table-filters-bar'
 import { Button } from '@/components/ui/button'
 import { useDataTable } from '@/hooks/use-data-table'
 import { formatDateTimeDisplay } from '@/lib/formatters'
-import { $getAuditLogsTableAction } from '@/modules/audit/actions'
+import {
+	$getAuditLogsTableAction,
+	$searchAuditUsersAction,
+} from '@/modules/audit/actions'
 import {
 	type AuditTableFilters,
 	createDefaultAuditTableFilters,
@@ -22,6 +28,9 @@ import type { AuditLogRow, AuditPageProps } from './types'
 
 export const AuditPage: FC<AuditPageProps> = ({ initialState }) => {
 	const [rows, setRows] = useState(initialState.rows)
+	const [selectedUser, setSelectedUser] = useState<AutocompleteOption | null>(
+		null,
+	)
 	const [filters, setFilters] = useState<AuditTableFilters>(() => ({
 		...initialState.filters,
 		createdAtStart: new Date(initialState.filters.createdAtStart),
@@ -82,6 +91,7 @@ export const AuditPage: FC<AuditPageProps> = ({ initialState }) => {
 			filters.action.trim() !== '' ||
 			filters.entityType.trim() !== '' ||
 			filters.entityId.trim() !== '' ||
+			filters.userId.trim() !== '' ||
 			filters.createdAtStart.getTime() !==
 				defaults.createdAtStart.getTime() ||
 			filters.createdAtEnd.getTime() !== defaults.createdAtEnd.getTime()
@@ -106,6 +116,7 @@ export const AuditPage: FC<AuditPageProps> = ({ initialState }) => {
 	}
 
 	const handleClear = () => {
+		setSelectedUser(null)
 		setFilters(createDefaultAuditTableFilters())
 
 		if (page !== 1) {
@@ -126,16 +137,21 @@ export const AuditPage: FC<AuditPageProps> = ({ initialState }) => {
 			cell: ({ row }) => row.entityType,
 		},
 		{
-			header: { render: () => 'ID entidad' },
-			cell: ({ row }) => row.entityId ?? '—',
-		},
-		{
 			header: { render: () => 'Fecha' },
 			cell: ({ row }) => formatDateTimeDisplay(row.createdAt),
 		},
 		{
 			header: { render: () => 'Usuario' },
-			cell: ({ row }) => row.userId ?? '—',
+			cell: ({ row }) => (
+				<div className='flex flex-col'>
+					<span className='text-sm font-medium'>{row.userName}</span>
+					{row.userEmail !== '—' && (
+						<span className='text-xs text-muted-foreground'>
+							{row.userEmail}
+						</span>
+					)}
+				</div>
+			),
 		},
 		{
 			header: { render: () => 'Acciones' },
@@ -215,6 +231,38 @@ export const AuditPage: FC<AuditPageProps> = ({ initialState }) => {
 										setFilters((previous) => ({
 											...previous,
 											entityId: value ?? '',
+										}))
+									}}
+								/>,
+								<AutocompleteField
+									key='user-filter'
+									label='Usuario'
+									placeholder='Selecciona un usuario'
+									searchPlaceholder='Buscar por nombre o correo'
+									emptyMessage='No se encontraron usuarios.'
+									value={selectedUser}
+									onSearch={async (query) => {
+										const result =
+											await $searchAuditUsersAction(query)
+
+										if (result.error) {
+											sileo.error({
+												title: 'Error al buscar usuarios',
+												description: result.error,
+											})
+											return []
+										}
+
+										return result.options.map((option) => ({
+											value: option.value,
+											label: option.label,
+										}))
+									}}
+									onValueChange={(value) => {
+										setSelectedUser(value ?? null)
+										setFilters((previous) => ({
+											...previous,
+											userId: value?.value ?? '',
 										}))
 									}}
 								/>,

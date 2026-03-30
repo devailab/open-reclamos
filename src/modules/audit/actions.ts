@@ -5,13 +5,16 @@ import { getSession } from '@/lib/auth-server'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
 	type AuditLogTableRow,
+	type AuditUserAutocompleteOption,
 	getAuditLogsTableForOrganization,
+	searchAuditUsersForOrganization,
 } from './queries'
 import {
 	type AuditTableFilters,
 	type AuditTableFiltersInput,
 	normalizeAuditTableFilters,
 	normalizeAuditTablePagination,
+	normalizeAuditUserSearchQuery,
 	validateAuditTableFilters,
 } from './validation'
 
@@ -27,6 +30,11 @@ export interface GetAuditLogsTableActionResult {
 	page: number
 	pageSize: number
 	filters: AuditTableFilters
+	error?: string
+}
+
+export interface SearchAuditUsersActionResult {
+	options: AuditUserAutocompleteOption[]
 	error?: string
 }
 
@@ -88,4 +96,22 @@ export async function $getAuditLogsTableAction(
 	})
 
 	return { rows, totalItems, page, pageSize, filters }
+}
+
+export async function $searchAuditUsersAction(
+	query?: string,
+): Promise<SearchAuditUsersActionResult> {
+	const access = await requireAccess('audit.view')
+
+	if ('error' in access) {
+		return { options: [], error: access.error }
+	}
+
+	const normalizedQuery = normalizeAuditUserSearchQuery(query)
+	const options = await searchAuditUsersForOrganization(
+		access.membership.organizationId,
+		normalizedQuery,
+	)
+
+	return { options }
 }
