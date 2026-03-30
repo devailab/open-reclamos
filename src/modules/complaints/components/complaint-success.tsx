@@ -113,7 +113,8 @@ export const ComplaintSuccess: FC<ComplaintSuccessProps> = ({
 				<div className='rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700'>
 					Recibirás una respuesta antes del{' '}
 					<strong>{deadlineFormatted}</strong>. Guarda tu código de
-					seguimiento para consultar el estado de tu reclamo.
+					seguimiento para consultar el estado de tu reclamo. También
+					enviamos una constancia en PDF al correo que registraste.
 				</div>
 
 				<p className='text-center text-xs text-muted-foreground'>

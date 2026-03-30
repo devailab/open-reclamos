@@ -7,6 +7,7 @@ import {
 	organizationSettings,
 	organizations,
 	stores,
+	ubigeos,
 } from '@/database/schema'
 import { DEFAULT_RESPONSE_DEADLINE_DAYS } from '@/lib/constants'
 
@@ -133,6 +134,156 @@ export async function getOrganizationById(id: string) {
 		formEnabled: org.formEnabled ?? true,
 		responseDeadlineDays:
 			org.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
+	}
+}
+
+export interface ComplaintReceiptContext {
+	organization: {
+		name: string
+		legalName: string
+		taxId: string
+		addressType: string
+		address: string
+		locationLabel: string | null
+		phoneCode: string | null
+		phone: string | null
+		website: string | null
+		primaryColor: string | null
+	}
+	store: {
+		name: string
+		type: string
+		addressType: string | null
+		address: string | null
+		url: string | null
+		locationLabel: string | null
+	}
+	reasonLabel: string | null
+	consumerLocationLabel: string | null
+}
+
+function formatUbigeoLabel(
+	ubigeo: {
+		district: string | null
+		province: string | null
+		department: string | null
+	} | null,
+) {
+	if (!ubigeo?.district || !ubigeo.province || !ubigeo.department) {
+		return null
+	}
+
+	return `${ubigeo.district}, ${ubigeo.province}, ${ubigeo.department}`
+}
+
+export async function getComplaintReceiptContext(params: {
+	organizationId: string
+	storeId: string
+	reasonId: string | null
+	consumerUbigeoId: string | null
+}): Promise<ComplaintReceiptContext | null> {
+	const [organization, store, reason, consumerUbigeo] = await Promise.all([
+		db
+			.select({
+				name: organizations.name,
+				legalName: organizations.legalName,
+				taxId: organizations.taxId,
+				addressType: organizations.addressType,
+				address: organizations.address,
+				phoneCode: organizations.phoneCode,
+				phone: organizations.phone,
+				website: organizations.website,
+				primaryColor: organizations.primaryColor,
+				district: ubigeos.district,
+				province: ubigeos.province,
+				department: ubigeos.department,
+			})
+			.from(organizations)
+			.leftJoin(ubigeos, eq(organizations.ubigeoId, ubigeos.id))
+			.where(eq(organizations.id, params.organizationId))
+			.limit(1),
+		db
+			.select({
+				name: stores.name,
+				type: stores.type,
+				addressType: stores.addressType,
+				address: stores.address,
+				url: stores.url,
+				district: ubigeos.district,
+				province: ubigeos.province,
+				department: ubigeos.department,
+			})
+			.from(stores)
+			.leftJoin(ubigeos, eq(stores.ubigeoId, ubigeos.id))
+			.where(
+				and(
+					eq(stores.id, params.storeId),
+					eq(stores.organizationId, params.organizationId),
+					isNull(stores.deletedAt),
+				),
+			)
+			.limit(1),
+		params.reasonId
+			? db
+					.select({
+						reason: complaintReasons.reason,
+					})
+					.from(complaintReasons)
+					.where(
+						and(
+							eq(complaintReasons.id, params.reasonId),
+							eq(
+								complaintReasons.organizationId,
+								params.organizationId,
+							),
+							isNull(complaintReasons.deletedAt),
+						),
+					)
+					.limit(1)
+			: Promise.resolve([]),
+		params.consumerUbigeoId
+			? db
+					.select({
+						district: ubigeos.district,
+						province: ubigeos.province,
+						department: ubigeos.department,
+					})
+					.from(ubigeos)
+					.where(eq(ubigeos.id, params.consumerUbigeoId))
+					.limit(1)
+			: Promise.resolve([]),
+	])
+
+	const orgRow = organization[0]
+	const storeRow = store[0]
+	const reasonRow = reason[0]
+	const consumerUbigeoRow = consumerUbigeo[0]
+
+	if (!orgRow || !storeRow) return null
+
+	return {
+		organization: {
+			name: orgRow.name,
+			legalName: orgRow.legalName,
+			taxId: orgRow.taxId,
+			addressType: orgRow.addressType,
+			address: orgRow.address,
+			locationLabel: formatUbigeoLabel(orgRow),
+			phoneCode: orgRow.phoneCode,
+			phone: orgRow.phone,
+			website: orgRow.website,
+			primaryColor: orgRow.primaryColor,
+		},
+		store: {
+			name: storeRow.name,
+			type: storeRow.type,
+			addressType: storeRow.addressType,
+			address: storeRow.address,
+			url: storeRow.url,
+			locationLabel: formatUbigeoLabel(storeRow),
+		},
+		reasonLabel: reasonRow?.reason ?? null,
+		consumerLocationLabel: formatUbigeoLabel(consumerUbigeoRow ?? null),
 	}
 }
 

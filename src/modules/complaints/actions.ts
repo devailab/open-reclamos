@@ -11,11 +11,17 @@ import {
 	storeCorrelatives,
 } from '@/database/schema'
 import { createAuditLog } from '@/lib/audit'
+import { sendEmail } from '@/lib/email'
 import { moveS3Object } from '@/lib/s3'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
+import { renderComplaintReceiptPdfBuffer } from './components/complaint-receipt-pdf'
 import { createComplaintHistoryEntry } from './history'
 import { generateTrackingCode } from './lib'
-import { getStoreForOrganization } from './queries'
+import { getComplaintReceiptContext, getStoreForOrganization } from './queries'
+import {
+	buildComplaintReceiptEmailMessage,
+	buildComplaintReceiptPdfInput,
+} from './receipt'
 
 const TMP_PREFIX = 'tmp/'
 // Formato esperado: tmp/complaints/<storeId>/<filename>
@@ -24,27 +30,93 @@ const TMP_KEY_STORE_SEGMENT = 2
 async function confirmUploadedFiles(
 	files: UploadedFileInput[],
 	expectedStoreId: string,
-): Promise<UploadedFileInput[]> {
-	return Promise.all(
-		files.map(async (file) => {
-			if (!file.key.startsWith(TMP_PREFIX)) {
-				throw new Error('Archivo no válido.')
-			}
-			const segments = file.key.split('/')
-			if (segments[TMP_KEY_STORE_SEGMENT] !== expectedStoreId) {
-				throw new Error('Archivo no pertenece a la tienda indicada.')
-			}
-			const permanentKey = file.key.slice(TMP_PREFIX.length)
-			await moveS3Object(file.key, permanentKey)
-			return { ...file, key: permanentKey }
-		}),
-	)
+	confirmedFiles: ConfirmedUploadedFile[],
+): Promise<ConfirmedUploadedFile[]> {
+	for (const file of files) {
+		if (!file.key.startsWith(TMP_PREFIX)) {
+			throw new Error('Archivo no válido.')
+		}
+
+		const segments = file.key.split('/')
+		if (segments[TMP_KEY_STORE_SEGMENT] !== expectedStoreId) {
+			throw new Error('Archivo no pertenece a la tienda indicada.')
+		}
+
+		const permanentKey = file.key.slice(TMP_PREFIX.length)
+		await moveS3Object(file.key, permanentKey)
+
+		confirmedFiles.push({
+			...file,
+			key: permanentKey,
+			originalKey: file.key,
+		})
+	}
+
+	return confirmedFiles
+}
+
+async function rollbackConfirmedFiles(
+	files: ConfirmedUploadedFile[],
+): Promise<void> {
+	for (const file of [...files].reverse()) {
+		try {
+			await moveS3Object(file.key, file.originalKey)
+		} catch (error) {
+			console.error(
+				'[complaints] No se pudo revertir archivo confirmado:',
+				error,
+			)
+		}
+	}
+}
+
+function getSubmitComplaintErrorMessage(error: unknown) {
+	if (!(error instanceof Error)) {
+		return 'Ocurrió un error inesperado. Intenta de nuevo.'
+	}
+
+	if (
+		error.message === 'Archivo no válido.' ||
+		error.message === 'Archivo no pertenece a la tienda indicada.'
+	) {
+		return error.message
+	}
+
+	const message = error.message.toLowerCase()
+
+	if (
+		message.includes('email_transport') ||
+		message.includes('email_smtp_') ||
+		message.includes('email_from_')
+	) {
+		return 'No pudimos confirmar tu reclamo porque el servicio de correo no está configurado correctamente.'
+	}
+
+	if (
+		message.includes('auth') ||
+		message.includes('invalid login') ||
+		message.includes('invalid credentials') ||
+		message.includes('enotfound') ||
+		message.includes('econnrefused') ||
+		message.includes('etimedout') ||
+		message.includes('certificate') ||
+		message.includes('tls') ||
+		message.includes('ssl')
+	) {
+		return 'No pudimos registrar tu reclamo porque ocurrió un problema al enviar la constancia por correo.'
+	}
+
+	return 'Ocurrió un error inesperado. Intenta de nuevo.'
 }
 
 export interface UploadedFileInput {
 	key: string
 	fileName: string
 	contentType: string
+}
+
+interface ConfirmedUploadedFile extends UploadedFileInput {
+	originalKey: string
 }
 
 export interface SubmitComplaintInput {
@@ -147,12 +219,22 @@ export async function $submitComplaintAction(
 		}
 	}
 
-	try {
-		const confirmedFiles =
-			input.files.length > 0
-				? await confirmUploadedFiles(input.files, input.storeId)
-				: input.files
+	const receiptContext = await getComplaintReceiptContext({
+		organizationId: input.organizationId,
+		storeId: input.storeId,
+		reasonId: input.reasonId,
+		consumerUbigeoId: input.ubigeoId,
+	})
+	if (!receiptContext) {
+		return {
+			success: false,
+			error: 'No se pudo preparar la constancia del reclamo.',
+		}
+	}
 
+	const confirmedFiles: ConfirmedUploadedFile[] = []
+
+	try {
 		const trackingCode = generateTrackingCode()
 		const now = new Date()
 		const responseDeadline = addDays(
@@ -163,6 +245,14 @@ export async function $submitComplaintAction(
 		const reqHeaders = await headers()
 		let correlative!: string
 		await db.transaction(async (tx) => {
+			if (input.files.length > 0) {
+				await confirmUploadedFiles(
+					input.files,
+					input.storeId,
+					confirmedFiles,
+				)
+			}
+
 			const [correlativeRow] = await tx
 				.insert(storeCorrelatives)
 				.values({ storeId: input.storeId, currentValue: 1 })
@@ -231,6 +321,7 @@ export async function $submitComplaintAction(
 						storageKey: f.key,
 						fileName: f.fileName,
 						contentType: f.contentType,
+						description: `Adjunto enviado por el consumidor: ${f.fileName}`,
 					})),
 				)
 			}
@@ -267,6 +358,63 @@ export async function $submitComplaintAction(
 				tx,
 			)
 
+			const pdfInput = buildComplaintReceiptPdfInput({
+				context: receiptContext,
+				attachments: confirmedFiles.map((file) => ({
+					fileName: file.fileName,
+					contentType: file.contentType,
+				})),
+				complaint: {
+					correlative,
+					trackingCode,
+					createdAt: now,
+					responseDeadline,
+					personType: input.personType,
+					documentType: input.documentType,
+					documentNumber: input.documentNumber,
+					firstName: input.firstName,
+					lastName: input.lastName,
+					legalName: input.legalName,
+					guardianFirstName: input.guardianFirstName,
+					guardianLastName: input.guardianLastName,
+					guardianDocumentType: input.guardianDocumentType,
+					guardianDocumentNumber: input.guardianDocumentNumber,
+					email: input.email,
+					dialCode: input.dialCode,
+					phone: input.phone,
+					address: input.address,
+					type: input.type,
+					itemType: input.itemType,
+					itemDescription: input.itemDescription,
+					currency: input.currency,
+					amount: input.amount,
+					hasProofOfPayment: input.hasProofOfPayment,
+					proofOfPaymentType: input.proofOfPaymentType,
+					proofOfPaymentNumber: input.proofOfPaymentNumber,
+					incidentDate: input.incidentDate,
+					description: input.description,
+					request: input.request,
+				},
+			})
+			const pdfBuffer = await renderComplaintReceiptPdfBuffer(pdfInput)
+			const emailMessage = buildComplaintReceiptEmailMessage({
+				pdf: pdfInput,
+			})
+
+			await sendEmail({
+				to: input.email,
+				subject: emailMessage.subject,
+				text: emailMessage.text,
+				html: emailMessage.html,
+				attachments: [
+					{
+						filename: emailMessage.fileName,
+						content: pdfBuffer,
+						contentType: 'application/pdf',
+					},
+				],
+			})
+
 			return inserted
 		})
 
@@ -274,10 +422,12 @@ export async function $submitComplaintAction(
 			success: true,
 			data: { trackingCode, correlative, responseDeadline },
 		}
-	} catch {
+	} catch (error) {
+		await rollbackConfirmedFiles(confirmedFiles)
+		console.error('[complaints] Error al registrar reclamo:', error)
 		return {
 			success: false,
-			error: 'Ocurrió un error inesperado. Intenta de nuevo.',
+			error: getSubmitComplaintErrorMessage(error),
 		}
 	}
 }
