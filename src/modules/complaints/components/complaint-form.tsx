@@ -9,7 +9,11 @@ import { Separator } from '@/components/ui/separator'
 import { ComplaintStepper } from './complaint-stepper'
 import { ComplaintSuccess } from './complaint-success'
 import type { FlatReason } from './reason-tree-field'
-import { type CountryOption, StepConsumer } from './step-consumer'
+import {
+	type CountryOption,
+	getDefaultDialCodeOption,
+	StepConsumer,
+} from './step-consumer'
 import { StepDetails } from './step-details'
 import { useComplaintForm } from './use-complaint-form'
 
@@ -40,9 +44,11 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 }) => {
 	const defaultStoreId =
 		preselectedStore?.id ?? (stores?.length === 1 ? stores[0]?.id : null)
+	const defaultDialCodeOption = getDefaultDialCodeOption(countries)
 	const form = useComplaintForm({
 		organizationId,
 		storeId: defaultStoreId,
+		defaultDialCodeOption,
 	})
 	const storeOptions: SelectOption[] =
 		stores?.map((store) => ({

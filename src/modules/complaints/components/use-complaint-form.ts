@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import type { ComboboxOption } from '@/components/forms/combobox-field'
 import { useForm } from '@/hooks/use-form'
 import { feedback } from '@/lib/feedback'
 import { $submitComplaintAction } from '../actions'
 import type { UploadedFile } from './file-upload-area'
-import { STEP1_INITIAL, type Step1Values } from './step-consumer'
+import { createStep1Initial, type Step1Values } from './step-consumer'
 import { STEP2_INITIAL, type Step2Values } from './step-details'
 
 type Step = 'consumer' | 'details'
@@ -19,11 +20,13 @@ interface SuccessData {
 interface UseComplaintFormParams {
 	organizationId: string
 	storeId: string | null // null = org mode, store not selected yet
+	defaultDialCodeOption: ComboboxOption | null
 }
 
 export function useComplaintForm({
 	organizationId,
 	storeId: initialStoreId,
+	defaultDialCodeOption,
 }: UseComplaintFormParams) {
 	const [currentStep, setCurrentStep] = useState<Step>('consumer')
 	const [selectedStoreId, setSelectedStoreId] = useState<string | null>(
@@ -32,13 +35,14 @@ export function useComplaintForm({
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [successData, setSuccessData] = useState<SuccessData | null>(null)
 	const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+	const step1Initial = createStep1Initial(defaultDialCodeOption)
 
 	// Step 1 form
-	const [step1Values, setStep1Values] = useState<Step1Values>(STEP1_INITIAL)
+	const [step1Values, setStep1Values] = useState<Step1Values>(step1Initial)
 	const step1Form = useForm({
 		values: step1Values,
 		setValues: setStep1Values,
-		initialValues: STEP1_INITIAL,
+		initialValues: step1Initial,
 	})
 
 	// Step 2 form

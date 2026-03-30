@@ -53,30 +53,59 @@ export interface Step1Values {
 	address: string | null
 }
 
-export const STEP1_INITIAL: Step1Values = {
-	personType: 'natural',
-	documentType: null,
-	documentNumber: null,
-	firstName: null,
-	lastName: null,
-	isMinor: false,
-	guardianDocumentType: null,
-	guardianDocumentNumber: null,
-	guardianFirstName: null,
-	guardianLastName: null,
-	legalName: null,
-	contactDocumentType: null,
-	contactDocumentNumber: null,
-	contactFirstName: null,
-	contactLastName: null,
-	email: null,
-	dialCodeOption: null,
-	phone: null,
-	ubigeoOption: null,
-	address: null,
+export function getPhoneCodeOptions(
+	countries: CountryOption[],
+): ComboboxOption[] {
+	return countries.map(mapCountryToDialCodeOption)
 }
 
 const RUC_OPTION: SelectOption = { value: 'RUC', label: 'RUC' }
+
+function mapCountryToDialCodeOption(country: CountryOption): ComboboxOption {
+	return {
+		value: country.iso2,
+		label: `+${country.phoneCode} — ${country.name}`,
+	}
+}
+
+export function getDefaultDialCodeOption(
+	countries: CountryOption[],
+): ComboboxOption | null {
+	const peruCountry =
+		countries.find((country) => country.iso2.toUpperCase() === 'PE') ??
+		countries.find((country) => country.phoneCode === '51')
+
+	return peruCountry ? mapCountryToDialCodeOption(peruCountry) : null
+}
+
+export function createStep1Initial(
+	defaultDialCodeOption: ComboboxOption | null = null,
+): Step1Values {
+	return {
+		personType: 'natural',
+		documentType: null,
+		documentNumber: null,
+		firstName: null,
+		lastName: null,
+		isMinor: false,
+		guardianDocumentType: null,
+		guardianDocumentNumber: null,
+		guardianFirstName: null,
+		guardianLastName: null,
+		legalName: null,
+		contactDocumentType: null,
+		contactDocumentNumber: null,
+		contactFirstName: null,
+		contactLastName: null,
+		email: null,
+		dialCodeOption: defaultDialCodeOption,
+		phone: null,
+		ubigeoOption: null,
+		address: null,
+	}
+}
+
+export const STEP1_INITIAL: Step1Values = createStep1Initial()
 
 interface StepConsumerProps {
 	register: ReturnType<typeof useForm<Step1Values>>['register']
@@ -91,10 +120,7 @@ export const StepConsumer: FC<StepConsumerProps> = ({
 	countries,
 	disabled,
 }) => {
-	const phoneCodeOptions: ComboboxOption[] = countries.map((c) => ({
-		value: c.iso2,
-		label: `+${c.phoneCode} — ${c.name}`,
-	}))
+	const phoneCodeOptions = getPhoneCodeOptions(countries)
 
 	const isNatural = values.personType === 'natural'
 	const isJuridical = values.personType === 'juridical'
