@@ -1,11 +1,11 @@
 'use client'
 
-import { ChevronLeft, Loader2, Send } from 'lucide-react'
+import { ArrowBigRight, ChevronLeft, Loader2, Send } from 'lucide-react'
 import type { FC } from 'react'
+import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
 import { ComplaintStepper } from './complaint-stepper'
 import { ComplaintSuccess } from './complaint-success'
 import type { FlatReason } from './reason-tree-field'
@@ -38,44 +38,39 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 	countries,
 	reasons,
 }) => {
+	const defaultStoreId =
+		preselectedStore?.id ?? (stores?.length === 1 ? stores[0]?.id : null)
 	const form = useComplaintForm({
 		organizationId,
-		storeId: preselectedStore?.id ?? null,
+		storeId: defaultStoreId,
 	})
+	const storeOptions: SelectOption[] =
+		stores?.map((store) => ({
+			value: store.id,
+			label: store.name,
+		})) ?? []
+	const selectedStoreOption =
+		storeOptions.find((option) => option.value === form.selectedStoreId) ??
+		null
 
-	const activeStoreId = preselectedStore?.id ?? form.selectedStoreId ?? null
+	const activeStoreId = defaultStoreId ?? form.selectedStoreId ?? null
 
 	return (
 		<div className='space-y-6'>
 			{/* Store selector (org mode only) */}
 			{stores && stores.length > 0 && !preselectedStore && (
 				<Card>
-					<CardHeader className='pb-3'>
-						<CardTitle className='text-sm font-medium text-muted-foreground'>
-							¿En cuál de nuestras tiendas ocurrió el incidente?
-						</CardTitle>
-					</CardHeader>
 					<CardContent>
-						<div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3'>
-							{stores.map((store) => (
-								<button
-									key={store.id}
-									type='button'
-									onClick={() =>
-										form.setSelectedStoreId(store.id)
-									}
-									className={cn(
-										'rounded-lg border px-4 py-3 text-left text-sm font-medium transition-all',
-										'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-										form.selectedStoreId === store.id
-											? 'border-primary bg-primary/5 ring-1 ring-primary'
-											: 'border-border hover:border-primary/40 hover:bg-muted/40',
-									)}
-								>
-									{store.name}
-								</button>
-							))}
-						</div>
+						<SelectField
+							label='Seleccione la tienda o sucursal'
+							value={selectedStoreOption}
+							onValueChange={(option) =>
+								form.setSelectedStoreId(option?.value ?? null)
+							}
+							options={storeOptions}
+							placeholder='Selecciona una tienda'
+							disabled={form.isSubmitting}
+						/>
 					</CardContent>
 				</Card>
 			)}
@@ -153,6 +148,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 							onClick={() => form.goToStep('details')}
 						>
 							Continuar
+							<ArrowBigRight />
 						</Button>
 					) : (
 						<Button
@@ -167,7 +163,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 								</>
 							) : (
 								<>
-									<Send className='mr-2 h-4 w-4' />
+									<Send />
 									Enviar reclamo
 								</>
 							)}

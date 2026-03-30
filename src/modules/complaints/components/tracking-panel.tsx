@@ -130,7 +130,7 @@ export function TrackingPanel({ organizationId }: TrackingPanelProps) {
 				<button
 					type='button'
 					onClick={() => setOpen(true)}
-					className='text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline'
+					className='text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline'
 				>
 					¿Ya presentaste un reclamo? Consulta su estado →
 				</button>

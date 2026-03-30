@@ -67,16 +67,6 @@ export function useComplaintForm({
 			return
 		}
 
-		// BooleanField ignores the validate prop — check confirmationCheck manually
-		if (!step2Values.confirmationCheck) {
-			feedback.alert.error({
-				title: 'Confirmación requerida',
-				description:
-					'Debes confirmar que la información ingresada es correcta antes de enviar.',
-			})
-			return
-		}
-
 		// Validate both steps (sets inline errors even on hidden step)
 		const step1Errors = step1Form.validate({ focus: false })
 		const step2Errors = step2Form.validate({ focus: false })
@@ -97,6 +87,15 @@ export function useComplaintForm({
 
 		if (step2Errors.length > 0) {
 			step2Form.validate({ focus: 'first' })
+			return
+		}
+
+		if (!step2Values.confirmationCheck) {
+			feedback.alert.error({
+				title: 'Confirmación requerida',
+				description:
+					'Debes confirmar que la información ingresada es correcta antes de enviar.',
+			})
 			return
 		}
 

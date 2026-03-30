@@ -2,6 +2,7 @@
 
 import type { FC } from 'react'
 import BooleanField from '@/components/forms/boolean-field'
+import ChoiceCardField from '@/components/forms/choice-card-field'
 import DateField from '@/components/forms/date-field'
 import NumberField from '@/components/forms/number-field'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
@@ -22,7 +23,6 @@ import {
 	validateItemDescription,
 } from '../validation'
 import { FileUploadArea, type UploadedFile } from './file-upload-area'
-import RadioCardField from './radio-card-field'
 import ReasonTreeField, { type FlatReason } from './reason-tree-field'
 
 export interface Step2Values {
@@ -84,10 +84,14 @@ export const StepDetails: FC<StepDetailsProps> = ({
 	return (
 		<div className='space-y-6'>
 			{/* Tipo de reclamo */}
-			<RadioCardField
+			<ChoiceCardField
 				{...register('complaintType')}
 				label='Tipo de reclamo *'
-				options={COMPLAINT_TYPE_OPTIONS}
+				options={COMPLAINT_TYPE_OPTIONS.map((option) => ({
+					value: option.value,
+					label: option.label,
+					description: option.description,
+				}))}
 				validate={validateComplaintType}
 				disabled={disabled}
 			/>
@@ -97,10 +101,13 @@ export const StepDetails: FC<StepDetailsProps> = ({
 				<>
 					<Separator />
 					<div className='space-y-4'>
-						<RadioCardField
+						<ChoiceCardField
 							{...register('itemType')}
 							label='Tipo del bien *'
-							options={ITEM_TYPE_OPTIONS}
+							options={ITEM_TYPE_OPTIONS.map((option) => ({
+								value: option.value,
+								label: option.label,
+							}))}
 							validate={required}
 							disabled={disabled}
 						/>

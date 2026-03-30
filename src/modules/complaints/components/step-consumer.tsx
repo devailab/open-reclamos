@@ -6,6 +6,7 @@ import AutocompleteField, {
 	type AutocompleteOption,
 } from '@/components/forms/autocomplete-field'
 import BooleanField from '@/components/forms/boolean-field'
+import ChoiceCardField from '@/components/forms/choice-card-field'
 import type { ComboboxOption } from '@/components/forms/combobox-field'
 import ComboboxField from '@/components/forms/combobox-field'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
@@ -102,31 +103,25 @@ export const StepConsumer: FC<StepConsumerProps> = ({
 		<div className='space-y-6'>
 			{/* Tipo de persona */}
 			<div>
-				<p className='text-sm font-medium mb-3'>Tipo de persona</p>
-				<div className='grid grid-cols-2 gap-3'>
-					{(
-						[
-							{ id: 'natural', label: 'Persona natural' },
-							{ id: 'juridical', label: 'Persona jurídica' },
-						] as const
-					).map((opt) => (
-						<button
-							key={opt.id}
-							type='button'
-							disabled={disabled}
-							onClick={() => {
-								register('personType').onValueChange?.(opt.id)
-							}}
-							className={`rounded-lg border px-4 py-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-								values.personType === opt.id
-									? 'border-primary bg-primary/5 ring-1 ring-primary'
-									: 'border-border hover:border-primary/40 hover:bg-muted/40'
-							} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
-						>
-							{opt.label}
-						</button>
-					))}
-				</div>
+				<ChoiceCardField
+					{...register('personType')}
+					label='Tipo de persona'
+					value={values.personType}
+					options={[
+						{
+							value: 'natural',
+							label: 'Persona natural',
+							description: 'Para reclamos a título personal.',
+						},
+						{
+							value: 'juridical',
+							label: 'Persona jurídica',
+							description: 'Para empresas o instituciones.',
+						},
+					]}
+					disabled={disabled}
+					columns={2}
+				/>
 			</div>
 
 			{/* Datos de persona natural */}
