@@ -10,19 +10,17 @@ import {
 	complaints,
 	storeCorrelatives,
 } from '@/database/schema'
-import { createAuditLog } from '@/lib/audit'
-import { sendEmail } from '@/lib/email'
+import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { moveS3Object } from '@/lib/s3'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
-import { renderComplaintReceiptPdfBuffer } from './components/complaint-receipt-pdf'
+import {
+	enqueueComplaintReceiptDelivery,
+	getComplaintDeliveryFailure,
+	setComplaintDeliveryStatus,
+} from './delivery'
 import { createComplaintHistoryEntry } from './history'
 import { generateTrackingCode } from './lib'
-import { getComplaintReceiptContext, getStoreForOrganization } from './queries'
-import {
-	buildComplaintReceiptEmailMessage,
-	buildComplaintReceiptPdfInput,
-	getComplaintEmailErrorMessage,
-} from './receipt'
+import { getStoreForOrganization } from './queries'
 
 const TMP_PREFIX = 'tmp/'
 // Formato esperado: tmp/complaints/<storeId>/<filename>
@@ -181,31 +179,18 @@ export async function $submitComplaintAction(
 		}
 	}
 
-	const receiptContext = await getComplaintReceiptContext({
-		organizationId: input.organizationId,
-		storeId: input.storeId,
-		reasonId: input.reasonId,
-		consumerUbigeoId: input.ubigeoId,
-	})
-	if (!receiptContext) {
-		return {
-			success: false,
-			error: 'No se pudo preparar la constancia del reclamo.',
-		}
-	}
-
 	const confirmedFiles: ConfirmedUploadedFile[] = []
+	let complaintId: string | null = null
+	const trackingCode = generateTrackingCode()
+	const now = new Date()
+	const responseDeadline = addDays(
+		now,
+		organizationSettings.responseDeadlineDays,
+	)
+	let correlative!: string
 
 	try {
-		const trackingCode = generateTrackingCode()
-		const now = new Date()
-		const responseDeadline = addDays(
-			now,
-			organizationSettings.responseDeadlineDays,
-		)
-
 		const reqHeaders = await headers()
-		let correlative!: string
 		await db.transaction(async (tx) => {
 			if (input.files.length > 0) {
 				await confirmUploadedFiles(
@@ -291,7 +276,7 @@ export async function $submitComplaintAction(
 			await createAuditLog(
 				{
 					organizationId: input.organizationId,
-					action: 'complaint.created',
+					action: AUDIT_LOG.COMPLAINT_SUBMITTED,
 					entityType: 'complaint',
 					entityId: inserted.id,
 					newData: {
@@ -319,74 +304,27 @@ export async function $submitComplaintAction(
 				},
 				tx,
 			)
-
-			const pdfInput = buildComplaintReceiptPdfInput({
-				context: receiptContext,
-				attachments: confirmedFiles.map((file) => ({
-					fileName: file.fileName,
-					contentType: file.contentType,
-				})),
-				complaint: {
-					correlative,
-					trackingCode,
-					createdAt: now,
-					responseDeadline,
-					personType: input.personType,
-					documentType: input.documentType,
-					documentNumber: input.documentNumber,
-					firstName: input.firstName,
-					lastName: input.lastName,
-					legalName: input.legalName,
-					guardianFirstName: input.guardianFirstName,
-					guardianLastName: input.guardianLastName,
-					guardianDocumentType: input.guardianDocumentType,
-					guardianDocumentNumber: input.guardianDocumentNumber,
-					email: input.email,
-					dialCode: input.dialCode,
-					phone: input.phone,
-					address: input.address,
-					type: input.type,
-					itemType: input.itemType,
-					itemDescription: input.itemDescription,
-					currency: input.currency,
-					amount: input.amount,
-					hasProofOfPayment: input.hasProofOfPayment,
-					proofOfPaymentType: input.proofOfPaymentType,
-					proofOfPaymentNumber: input.proofOfPaymentNumber,
-					incidentDate: input.incidentDate,
-					description: input.description,
-					request: input.request,
+			await setComplaintDeliveryStatus(
+				{
+					complaintId: inserted.id,
+					organizationId: input.organizationId,
+					workflow: 'receipt',
+					status: 'queued',
 				},
-			})
-			const pdfBuffer = await renderComplaintReceiptPdfBuffer(pdfInput)
-			const emailMessage = buildComplaintReceiptEmailMessage({
-				pdf: pdfInput,
-			})
+				tx,
+			)
 
-			await sendEmail({
-				to: input.email,
-				subject: emailMessage.subject,
-				text: emailMessage.text,
-				html: emailMessage.html,
-				attachments: [
-					{
-						filename: emailMessage.fileName,
-						content: pdfBuffer,
-						contentType: 'application/pdf',
-					},
-				],
-			})
+			complaintId = inserted.id
 
 			return inserted
 		})
-
-		return {
-			success: true,
-			data: { trackingCode, correlative, responseDeadline },
-		}
 	} catch (error) {
-		await rollbackConfirmedFiles(confirmedFiles)
 		console.error('[complaints] Error al registrar reclamo:', error)
+
+		if (!complaintId) {
+			await rollbackConfirmedFiles(confirmedFiles)
+		}
+
 		return {
 			success: false,
 			error:
@@ -395,7 +333,39 @@ export async function $submitComplaintAction(
 					error.message ===
 						'Archivo no pertenece a la tienda indicada.')
 					? error.message
-					: getComplaintEmailErrorMessage(error, 'submission'),
+					: 'Ocurrió un error inesperado. Intenta de nuevo.',
 		}
+	}
+
+	if (complaintId) {
+		try {
+			await enqueueComplaintReceiptDelivery({
+				complaintId,
+				organizationId: input.organizationId,
+			})
+		} catch (error) {
+			console.error(
+				'[complaints] No se pudo encolar el envío de constancia:',
+				error,
+			)
+
+			const failure = getComplaintDeliveryFailure({
+				workflow: 'receipt',
+				error,
+			})
+
+			await setComplaintDeliveryStatus({
+				complaintId,
+				organizationId: input.organizationId,
+				workflow: 'receipt',
+				status: 'failed',
+				failureMessage: failure.technicalMessage,
+			})
+		}
+	}
+
+	return {
+		success: true,
+		data: { trackingCode, correlative, responseDeadline },
 	}
 }

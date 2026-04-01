@@ -11,7 +11,7 @@ import {
 	organizationMembers,
 	users,
 } from '@/database/schema'
-import { createAuditLog } from '@/lib/audit'
+import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { getSession } from '@/lib/auth-server'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
@@ -282,7 +282,7 @@ export async function $createUserInvitationAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'user.invited',
+					action: AUDIT_LOG.USER_INVITED,
 					entityType: 'invitation',
 					entityId: invitation.id,
 					newData: {
@@ -436,7 +436,7 @@ export async function $updateUserAccessAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'user.access_updated',
+					action: AUDIT_LOG.USER_ACCESS_UPDATED,
 					entityType: 'user',
 					entityId: normalizedInput.userId,
 					oldData: {
@@ -515,7 +515,7 @@ export async function $revokeInvitationAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'invitation.revoked',
+					action: AUDIT_LOG.INVITATION_REVOKED,
 					entityType: 'invitation',
 					entityId: invitation.id,
 					oldData: {
@@ -585,7 +585,7 @@ export async function $removeUserFromOrganizationAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'user.removed',
+					action: AUDIT_LOG.USER_REMOVED,
 					entityType: 'user',
 					entityId: userId,
 					oldData: {
@@ -710,13 +710,29 @@ export async function $acceptInvitationAction(
 				{
 					organizationId: invitation.organizationId,
 					userId,
-					action: 'invitation.accepted',
+					action: AUDIT_LOG.INVITATION_ACCEPTED,
 					entityType: 'invitation',
 					entityId: invitation.id,
 					newData: {
 						email: invitation.email,
 						roleId: invitation.roleId,
 						userId,
+					},
+				},
+				tx,
+			)
+
+			await createAuditLog(
+				{
+					organizationId: invitation.organizationId,
+					userId,
+					action: AUDIT_LOG.USER_JOINED_ORGANIZATION,
+					entityType: 'organization_member',
+					entityId: userId,
+					newData: {
+						invitationId: invitation.id,
+						email: invitation.email,
+						roleId: invitation.roleId,
 					},
 				},
 				tx,

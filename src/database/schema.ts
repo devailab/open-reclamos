@@ -618,6 +618,44 @@ export const complaintReasons = pgTable('complaint_reasons', {
 	}),
 })
 
+export const complaintTags = pgTable(
+	'complaint_tags',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		description: text('description'),
+		color: text('color'),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+		updatedAt: timestamp('updated_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		updatedBy: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		index('complaint_tags_organization_id_idx').on(table.organizationId),
+		uniqueIndex('complaint_tags_organization_id_name_uidx').on(
+			table.organizationId,
+			table.name,
+		),
+	],
+)
+
 export const complaints = pgTable(
 	'complaints',
 	{
@@ -639,6 +677,8 @@ export const complaints = pgTable(
 		}),
 		// estado de la queja como abierta, en proceso, cerrada, etc
 		status: text('status').notNull().default('open'),
+		// prioridad operativa del reclamo: low | medium | high | urgent
+		priority: text('priority').notNull().default('medium'),
 		trackingCode: text('tracking_code').notNull(),
 		correlative: text('correlative').notNull(),
 		firstName: text('first_name').notNull(),
@@ -694,6 +734,13 @@ export const complaints = pgTable(
 		description: text('description'),
 		// pedido realizado al proveedor o empresa
 		request: text('request'),
+		// estado del procesamiento asincrono de la constancia inicial
+		receiptDeliveryStatus: text('receipt_delivery_status'),
+		receiptDeliverySentAt: timestamp('receipt_delivery_sent_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		receiptDeliveryError: text('receipt_delivery_error'),
 		// borrador de respuesta (autoguardado mientras el operador escribe)
 		draftResponse: text('draft_response'),
 		draftUpdatedAt: timestamp('draft_updated_at', {
@@ -714,6 +761,13 @@ export const complaints = pgTable(
 		respondedBy: uuid('responded_by').references(() => users.id, {
 			onDelete: 'set null',
 		}),
+		// estado del procesamiento asincrono del correo de respuesta
+		responseDeliveryStatus: text('response_delivery_status'),
+		responseDeliverySentAt: timestamp('response_delivery_sent_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		responseDeliveryError: text('response_delivery_error'),
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 			.defaultNow()
 			.notNull(),
@@ -734,6 +788,31 @@ export const complaints = pgTable(
 			table.storeId,
 			table.correlative,
 		),
+	],
+)
+
+export const complaintTagAssignments = pgTable(
+	'complaint_tag_assignments',
+	{
+		complaintId: uuid('complaint_id')
+			.notNull()
+			.references(() => complaints.id, { onDelete: 'cascade' }),
+		tagId: uuid('tag_id')
+			.notNull()
+			.references(() => complaintTags.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		primaryKey({ columns: [table.complaintId, table.tagId] }),
+		index('complaint_tag_assignments_tag_id_idx').on(table.tagId),
 	],
 )
 
@@ -836,6 +915,7 @@ export const auditLogs = pgTable(
 		entityId: uuid('entity_id'),
 		oldData: jsonb('old_data'),
 		newData: jsonb('new_data'),
+		description: text('description'),
 		ipAddress: text('ip_address'),
 		userAgent: text('user_agent'),
 		createdAt: timestamp('created_at', {
@@ -855,5 +935,102 @@ export const auditLogs = pgTable(
 			table.organizationId,
 			table.createdAt,
 		),
+	],
+)
+
+export const webhookEndpoints = pgTable(
+	'webhook_endpoints',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		slug: text('slug').notNull(),
+		targetUrl: text('target_url').notNull(),
+		status: text('status').notNull().default('active'),
+		secretEncrypted: text('secret_encrypted'),
+		customHeaders: jsonb('custom_headers'),
+		timeoutMs: integer('timeout_ms').notNull().default(15000),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+		updatedAt: timestamp('updated_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		updatedBy: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		index('webhook_endpoints_organization_id_idx').on(table.organizationId),
+		index('webhook_endpoints_status_idx').on(table.status),
+		uniqueIndex('webhook_endpoints_org_slug_uidx').on(
+			table.organizationId,
+			table.slug,
+		),
+	],
+)
+
+export const webhookDeliveries = pgTable(
+	'webhook_deliveries',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		endpointId: uuid('endpoint_id').references(() => webhookEndpoints.id, {
+			onDelete: 'set null',
+		}),
+		eventKey: text('event_key').notNull(),
+		entityType: text('entity_type').notNull(),
+		entityId: uuid('entity_id'),
+		status: text('status').notNull().default('pending'),
+		attemptCount: integer('attempt_count').notNull().default(0),
+		requestBody: jsonb('request_body'),
+		responseStatus: integer('response_status'),
+		responseBody: text('response_body'),
+		errorMessage: text('error_message'),
+		nextAttemptAt: timestamp('next_attempt_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		sentAt: timestamp('sent_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp('updated_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+	},
+	(table) => [
+		index('webhook_deliveries_organization_id_created_at_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+		index('webhook_deliveries_endpoint_id_idx').on(table.endpointId),
+		index('webhook_deliveries_status_created_at_idx').on(
+			table.status,
+			table.createdAt,
+		),
+		index('webhook_deliveries_event_key_idx').on(table.eventKey),
 	],
 )

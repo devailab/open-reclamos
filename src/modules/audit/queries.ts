@@ -25,6 +25,7 @@ export interface AuditLogTableRow {
 	entityId: string | null
 	oldData: unknown
 	newData: unknown
+	description: string | null
 	ipAddress: string | null
 	userAgent: string | null
 	createdAt: Date
@@ -114,6 +115,7 @@ export async function getAuditLogsTableForOrganization({
 			entityId: auditLogs.entityId,
 			oldData: auditLogs.oldData,
 			newData: auditLogs.newData,
+			description: auditLogs.description,
 			ipAddress: auditLogs.ipAddress,
 			userAgent: auditLogs.userAgent,
 			createdAt: auditLogs.createdAt,

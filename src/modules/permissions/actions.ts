@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { permissions, rolePermissions } from '@/database/schema'
-import { createAuditLog } from '@/lib/audit'
+import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
@@ -130,7 +130,7 @@ export async function $createPermissionAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'permission.created',
+					action: AUDIT_LOG.PERMISSION_CREATED,
 					entityType: 'permission',
 					entityId: permission.id,
 					newData: {
@@ -217,7 +217,7 @@ export async function $updatePermissionAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'permission.updated',
+					action: AUDIT_LOG.PERMISSION_UPDATED,
 					entityType: 'permission',
 					entityId: permission.id,
 					oldData: {
@@ -301,7 +301,7 @@ export async function $deletePermissionAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'permission.deleted',
+					action: AUDIT_LOG.PERMISSION_DELETED,
 					entityType: 'permission',
 					entityId: permission.id,
 					oldData: {

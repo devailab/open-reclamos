@@ -12,7 +12,7 @@ import {
 	stores,
 	users,
 } from '@/database/schema'
-import { createAuditLog } from '@/lib/audit'
+import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { DOCUMENT_LOOKUP_PROVIDER } from '@/lib/config'
 import {
@@ -229,7 +229,7 @@ export async function $setupOrganizationAction(
 				{
 					organizationId: org.id,
 					userId: session.user.id,
-					action: 'organization.created',
+					action: AUDIT_LOG.ORGANIZATION_CREATED,
 					entityType: 'organization',
 					entityId: org.id,
 					newData: {
@@ -303,7 +303,7 @@ export async function $setupStoreAction(
 				{
 					organizationId: org.id,
 					userId: session.user.id,
-					action: 'store.created',
+					action: AUDIT_LOG.STORE_CREATED,
 					entityType: 'store',
 					entityId: store.id,
 					newData: {

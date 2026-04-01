@@ -114,7 +114,8 @@ export const ComplaintSuccess: FC<ComplaintSuccessProps> = ({
 					Recibirás una respuesta antes del{' '}
 					<strong>{deadlineFormatted}</strong>. Guarda tu código de
 					seguimiento para consultar el estado de tu reclamo. También
-					enviamos una constancia en PDF al correo que registraste.
+					procesaremos el envío de una constancia en PDF al correo que
+					registraste.
 				</div>
 
 				<p className='text-center text-xs text-muted-foreground'>

@@ -77,6 +77,36 @@ const HISTORY_EVENT_CONFIG: Record<
 		icon: MessageSquareIcon,
 		color: 'text-green-600 bg-green-50 ring-green-200',
 	},
+	receipt_delivery_queued: {
+		label: 'Constancia en proceso',
+		icon: ClockIcon,
+		color: 'text-sky-600 bg-sky-50 ring-sky-200',
+	},
+	receipt_delivery_sent: {
+		label: 'Constancia enviada',
+		icon: CheckCircle2Icon,
+		color: 'text-green-600 bg-green-50 ring-green-200',
+	},
+	receipt_delivery_failed: {
+		label: 'Constancia pendiente',
+		icon: AlertCircleIcon,
+		color: 'text-red-600 bg-red-50 ring-red-200',
+	},
+	response_delivery_queued: {
+		label: 'Envío de respuesta en proceso',
+		icon: ClockIcon,
+		color: 'text-sky-600 bg-sky-50 ring-sky-200',
+	},
+	response_delivery_sent: {
+		label: 'Respuesta enviada',
+		icon: CheckCircle2Icon,
+		color: 'text-green-600 bg-green-50 ring-green-200',
+	},
+	response_delivery_failed: {
+		label: 'Envío de respuesta pendiente',
+		icon: AlertCircleIcon,
+		color: 'text-red-600 bg-red-50 ring-red-200',
+	},
 }
 
 const STATUS_LABEL: Record<string, string> = {

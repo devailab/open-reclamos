@@ -2,7 +2,10 @@
 
 import {
 	CheckCircle2,
+	CircleAlert,
+	Clock3,
 	FileText,
+	Mail,
 	MessageSquare,
 	PenLine,
 	Shield,
@@ -39,6 +42,36 @@ const EVENT_CONFIG: Record<
 		label: 'Respuesta registrada',
 		icon: MessageSquare,
 		color: 'text-green-600 bg-green-50 ring-green-200',
+	},
+	receipt_delivery_queued: {
+		label: 'Constancia en cola',
+		icon: Clock3,
+		color: 'text-sky-600 bg-sky-50 ring-sky-200',
+	},
+	receipt_delivery_sent: {
+		label: 'Constancia enviada',
+		icon: Mail,
+		color: 'text-green-600 bg-green-50 ring-green-200',
+	},
+	receipt_delivery_failed: {
+		label: 'Constancia pendiente de envío',
+		icon: CircleAlert,
+		color: 'text-red-600 bg-red-50 ring-red-200',
+	},
+	response_delivery_queued: {
+		label: 'Correo de respuesta en cola',
+		icon: Clock3,
+		color: 'text-sky-600 bg-sky-50 ring-sky-200',
+	},
+	response_delivery_sent: {
+		label: 'Respuesta enviada por correo',
+		icon: Mail,
+		color: 'text-green-600 bg-green-50 ring-green-200',
+	},
+	response_delivery_failed: {
+		label: 'Respuesta pendiente de envío',
+		icon: CircleAlert,
+		color: 'text-red-600 bg-red-50 ring-red-200',
 	},
 	note_added: {
 		label: 'Nota agregada',
@@ -181,6 +214,14 @@ export const ComplaintAuditCard: FC<ComplaintHistoryCardProps> = ({
 											{AUDIT_ACTION_LABEL[entry.action] ??
 												entry.action}
 										</p>
+										{entry.description && (
+											<p className='text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-1'>
+												<span className='font-medium'>
+													Detalle:
+												</span>{' '}
+												{entry.description}
+											</p>
+										)}
 										<div className='flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground/70'>
 											<span>
 												{formatDateTimeDisplay(

@@ -5,7 +5,8 @@ import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
-import { users } from '@/database/schema'
+import { organizationMembers, users } from '@/database/schema'
+import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 
 export type AuthActionResult = {
@@ -37,36 +38,119 @@ function getAuthErrorMessage(error: unknown, fallbackMessage: string): string {
 	}
 }
 
+async function getLoginAuditContextByEmail(email: string) {
+	const normalizedEmail = email.trim().toLowerCase()
+
+	const [user] = await db
+		.select({
+			userId: users.id,
+			email: users.email,
+			organizationId: organizationMembers.organizationId,
+		})
+		.from(users)
+		.leftJoin(organizationMembers, eq(organizationMembers.userId, users.id))
+		.where(eq(users.email, normalizedEmail))
+		.limit(1)
+
+	return user ?? null
+}
+
+async function getLoginAuditContextByUserId(userId: string) {
+	const [user] = await db
+		.select({
+			userId: users.id,
+			email: users.email,
+			organizationId: organizationMembers.organizationId,
+			setupStatus: users.setupStatus,
+		})
+		.from(users)
+		.leftJoin(organizationMembers, eq(organizationMembers.userId, users.id))
+		.where(eq(users.id, userId))
+		.limit(1)
+
+	return user ?? null
+}
+
 export async function $loginAction(
 	email: string,
 	password: string,
 ): Promise<AuthActionResult> {
+	const reqHeaders = await headers()
+	const ipAddress =
+		reqHeaders.get('x-forwarded-for') ?? reqHeaders.get('x-real-ip')
+	const userAgent = reqHeaders.get('user-agent')
+	const normalizedEmail = email.trim().toLowerCase()
 	let result: Awaited<ReturnType<typeof auth.api.signInEmail>>
 
 	try {
 		result = await auth.api.signInEmail({
-			body: { email, password },
+			body: { email: normalizedEmail, password },
 		})
 	} catch (error) {
+		const description = getAuthErrorMessage(
+			error,
+			'No se pudo iniciar sesión. Inténtalo nuevamente.',
+		)
+		const auditContext = await getLoginAuditContextByEmail(normalizedEmail)
+
+		await createAuditLog({
+			organizationId: auditContext?.organizationId ?? null,
+			userId: auditContext?.userId ?? null,
+			action: AUDIT_LOG.USER_LOGIN_FAILED,
+			entityType: 'auth',
+			entityId: auditContext?.userId ?? undefined,
+			description,
+			newData: {
+				email: normalizedEmail,
+			},
+			ipAddress,
+			userAgent,
+		})
+
 		return {
-			error: getAuthErrorMessage(
-				error,
-				'No se pudo iniciar sesión. Inténtalo nuevamente.',
-			),
+			error: description,
 		}
 	}
 
 	if (!result || result.user === null) {
+		const auditContext = await getLoginAuditContextByEmail(normalizedEmail)
+		const description =
+			'Credenciales inválidas. Verifica tu correo y contraseña.'
+
+		await createAuditLog({
+			organizationId: auditContext?.organizationId ?? null,
+			userId: auditContext?.userId ?? null,
+			action: AUDIT_LOG.USER_LOGIN_FAILED,
+			entityType: 'auth',
+			entityId: auditContext?.userId ?? undefined,
+			description,
+			newData: {
+				email: normalizedEmail,
+			},
+			ipAddress,
+			userAgent,
+		})
+
 		return {
-			error: 'Credenciales inválidas. Verifica tu correo y contraseña.',
+			error: description,
 		}
 	}
 
-	const [userData] = await db
-		.select({ setupStatus: users.setupStatus })
-		.from(users)
-		.where(eq(users.id, result.user.id))
-		.limit(1)
+	const userData = await getLoginAuditContextByUserId(result.user.id)
+
+	await createAuditLog({
+		organizationId: userData?.organizationId ?? null,
+		userId: result.user.id,
+		action: AUDIT_LOG.USER_LOGIN_SUCCESS,
+		entityType: 'auth',
+		entityId: result.user.id,
+		newData: {
+			email: userData?.email ?? normalizedEmail,
+			setupStatus: userData?.setupStatus ?? null,
+		},
+		ipAddress,
+		userAgent,
+	})
 
 	if (userData?.setupStatus !== 'complete') {
 		redirect('/setup')

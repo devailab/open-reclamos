@@ -80,6 +80,12 @@ export function AuditLogDetailsDialog({
 							/>
 							<div className='sm:col-span-2'>
 								<DetailItem
+									label='Descripción'
+									value={formatOptionalText(log.description)}
+								/>
+							</div>
+							<div className='sm:col-span-2'>
+								<DetailItem
 									label='User Agent'
 									value={formatOptionalText(log.userAgent)}
 								/>

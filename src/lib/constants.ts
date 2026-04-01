@@ -76,3 +76,29 @@ export const REASON_PARENT_FILTER_ALL: OptionItem = {
 	value: 'all',
 	label: 'Todos los motivos padre',
 }
+
+// Webhook Events - these are hardcoded instead of stored in the database
+export const WEBHOOK_EVENTS = [
+	{
+		key: 'complaint.created',
+		label: 'Queja creada',
+		description: 'Se crea una nueva queja o reclamo',
+	},
+	{
+		key: 'complaint.status_changed',
+		label: 'Estado cambiado',
+		description: 'El estado de la queja cambió',
+	},
+	{
+		key: 'complaint.response_added',
+		label: 'Respuesta registrada',
+		description: 'Se registró una respuesta oficial',
+	},
+	{
+		key: 'complaint.updated',
+		label: 'Queja actualizada',
+		description: 'Los datos de la queja fueron actualizados',
+	},
+] as const
+
+export type WebhookEventKey = (typeof WEBHOOK_EVENTS)[number]['key']

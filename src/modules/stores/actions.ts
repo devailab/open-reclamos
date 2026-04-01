@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { stores } from '@/database/schema'
-import { createAuditLog } from '@/lib/audit'
+import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
@@ -175,7 +175,7 @@ export async function $createStoreAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'store.created',
+					action: AUDIT_LOG.STORE_CREATED,
 					entityType: 'store',
 					entityId: store.id,
 					newData: persistenceInput,
@@ -245,7 +245,7 @@ export async function $updateStoreAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'store.updated',
+					action: AUDIT_LOG.STORE_UPDATED,
 					entityType: 'store',
 					entityId: input.id,
 					oldData: {
@@ -325,7 +325,7 @@ export async function $deactivateStoreAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'store.deactivated',
+					action: AUDIT_LOG.STORE_DEACTIVATED,
 					entityType: 'store',
 					entityId: id,
 					oldData: { deletedAt: null },
@@ -404,8 +404,8 @@ export async function $setStoreFormEnabledAction(
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
 					action: formEnabled
-						? 'store.form.enabled'
-						: 'store.form.disabled',
+						? AUDIT_LOG.STORE_FORM_ENABLED
+						: AUDIT_LOG.STORE_FORM_DISABLED,
 					entityType: 'store_form',
 					entityId: id,
 					oldData: { formEnabled: currentStore.formEnabled },

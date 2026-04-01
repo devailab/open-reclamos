@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { rolePermissions, roles } from '@/database/schema'
-import { createAuditLog } from '@/lib/audit'
+import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import {
 	getMembershipContext,
@@ -184,7 +184,7 @@ export async function $createRoleAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'role.created',
+					action: AUDIT_LOG.ROLE_CREATED,
 					entityType: 'role',
 					entityId: role.id,
 					newData: {
@@ -288,7 +288,7 @@ export async function $updateRoleAction(
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'role.updated',
+					action: AUDIT_LOG.ROLE_UPDATED,
 					entityType: 'role',
 					entityId: role.id,
 					oldData: {
@@ -371,7 +371,7 @@ export async function $deleteRoleAction(id: string): Promise<RoleActionResult> {
 				{
 					organizationId: access.membership.organizationId,
 					userId: access.session.user.id,
-					action: 'role.deleted',
+					action: AUDIT_LOG.ROLE_DELETED,
 					entityType: 'role',
 					entityId: role.id,
 					oldData: {

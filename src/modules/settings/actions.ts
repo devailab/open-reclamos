@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { type DbTransaction, db } from '@/database/database'
 import { organizationSettings, organizations } from '@/database/schema'
-import { createAuditLog } from '@/lib/audit'
+import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import {
 	getConfiguredEmailTransport,
@@ -70,8 +70,8 @@ async function createOrganizationFormAvailabilityAuditLog(
 			organizationId: params.organizationId,
 			userId: params.userId,
 			action: params.nextValue
-				? 'organization.form.enabled'
-				: 'organization.form.disabled',
+				? AUDIT_LOG.ORGANIZATION_FORM_ENABLED
+				: AUDIT_LOG.ORGANIZATION_FORM_DISABLED,
 			entityType: 'organization_form',
 			entityId: params.organizationId,
 			oldData: { formEnabled: params.previousValue },
@@ -195,7 +195,7 @@ export async function $updateOrganizationSettingsAction(
 				{
 					organizationId: org.id,
 					userId: session.user.id,
-					action: 'organization.updated',
+					action: AUDIT_LOG.ORGANIZATION_UPDATED,
 					entityType: 'organization',
 					entityId: org.id,
 					oldData: {
@@ -322,7 +322,7 @@ export async function $sendOrganizationTestEmailAction(
 		await createAuditLog({
 			organizationId: org.id,
 			userId: session.user.id,
-			action: 'organization.test_email.sent',
+			action: AUDIT_LOG.ORGANIZATION_TEST_EMAIL_SENT,
 			entityType: 'organization_email_test',
 			entityId: org.id,
 			newData: {

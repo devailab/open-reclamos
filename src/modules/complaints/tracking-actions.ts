@@ -1,5 +1,6 @@
 'use server'
 
+import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import {
 	getComplaintByTrackingCode,
 	getPublicComplaintHistory,
@@ -36,6 +37,16 @@ export async function lookupComplaintByTrackingCodeAction(
 	}
 
 	const history = await getPublicComplaintHistory(complaint.id)
+
+	await createAuditLog({
+		organizationId,
+		action: AUDIT_LOG.COMPLAINT_TRACKING_VIEWED,
+		entityType: 'complaint_tracking',
+		entityId: complaint.id,
+		newData: {
+			trackingCode: complaint.trackingCode,
+		},
+	})
 
 	return { success: true, data: { ...complaint, history } }
 }

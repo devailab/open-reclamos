@@ -112,7 +112,7 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 			sileo.success({
 				title: 'Respuesta registrada exitosamente',
 				description:
-					'El reclamo pasó a Resuelto y se envió el PDF de respuesta al correo del consumidor.',
+					'El reclamo pasó a Resuelto y el envío del PDF de respuesta quedó en cola para procesarse.',
 			})
 			if (result.data) {
 				onSuccess(result.data)

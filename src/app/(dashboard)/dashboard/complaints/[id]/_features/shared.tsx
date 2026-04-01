@@ -1,5 +1,6 @@
 import { differenceInCalendarDays } from 'date-fns'
 import type { FC } from 'react'
+import { AUDIT_LOG } from '@/lib/audit'
 import { cn } from '@/lib/utils'
 
 // ── Labels ────────────────────────────────────────────────────────────────────
@@ -41,9 +42,12 @@ export const STATUS_BADGE_VARIANT: Record<
 }
 
 export const AUDIT_ACTION_LABEL: Record<string, string> = {
-	'complaint.responded': 'Respuesta registrada',
-	'complaint.created': 'Reclamo creado',
-	'complaint.status_changed': 'Estado actualizado',
+	[AUDIT_LOG.COMPLAINT_RESPONDED]: 'Respuesta registrada',
+	[AUDIT_LOG.COMPLAINT_SUBMITTED]: 'Reclamo creado',
+	[AUDIT_LOG.COMPLAINT_STATUS_CHANGED]: 'Estado actualizado',
+	[AUDIT_LOG.COMPLAINT_TRACKING_VIEWED]: 'Seguimiento consultado',
+	[AUDIT_LOG.COMPLAINT_RECEIPT_DELIVERY_FAILED]: 'Error al enviar constancia',
+	[AUDIT_LOG.COMPLAINT_RESPONSE_DELIVERY_FAILED]: 'Error al enviar respuesta',
 	'complaint.updated': 'Información actualizada',
 }
 

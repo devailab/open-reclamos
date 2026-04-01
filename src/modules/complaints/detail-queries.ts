@@ -56,6 +56,12 @@ export interface ComplaintDetail {
 	officialResponse: string | null
 	respondedAt: Date | null
 	respondedByName: string | null
+	receiptDeliveryStatus: string | null
+	receiptDeliverySentAt: Date | null
+	receiptDeliveryError: string | null
+	responseDeliveryStatus: string | null
+	responseDeliverySentAt: Date | null
+	responseDeliveryError: string | null
 	// plazos
 	responseDeadline: Date | null
 	responseDeadlineDays: number | null
@@ -110,6 +116,12 @@ export async function getComplaintDetailById(
 			officialResponse: complaints.officialResponse,
 			respondedAt: complaints.respondedAt,
 			respondedByName: users.name,
+			receiptDeliveryStatus: complaints.receiptDeliveryStatus,
+			receiptDeliverySentAt: complaints.receiptDeliverySentAt,
+			receiptDeliveryError: complaints.receiptDeliveryError,
+			responseDeliveryStatus: complaints.responseDeliveryStatus,
+			responseDeliverySentAt: complaints.responseDeliverySentAt,
+			responseDeliveryError: complaints.responseDeliveryError,
 			responseDeadline: complaints.responseDeadline,
 			responseDeadlineDays: complaints.responseDeadlineDays,
 			createdAt: complaints.createdAt,
@@ -182,6 +194,7 @@ export interface ComplaintAuditEntry {
 	userName: string | null
 	oldData: unknown
 	newData: unknown
+	description: string | null
 	createdAt: Date
 }
 
@@ -197,6 +210,7 @@ export async function getComplaintAuditHistory(
 			userName: users.name,
 			oldData: auditLogs.oldData,
 			newData: auditLogs.newData,
+			description: auditLogs.description,
 			createdAt: auditLogs.createdAt,
 		})
 		.from(auditLogs)
