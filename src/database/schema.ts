@@ -571,6 +571,9 @@ export const organizationSettings = pgTable('organization_settings', {
 		.notNull()
 		.default(15),
 	formEnabled: boolean('form_enabled').notNull().default(true),
+	aiClassificationEnabled: boolean('ai_classification_enabled')
+		.notNull()
+		.default(false),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),

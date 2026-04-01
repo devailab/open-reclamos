@@ -175,6 +175,8 @@ export async function $updateOrganizationSettingsAction(
 				.values({
 					organizationId: org.id,
 					formEnabled: normalizedInput.formEnabled,
+					aiClassificationEnabled:
+						normalizedInput.aiClassificationEnabled,
 					responseDeadlineDays: normalizedInput.responseDeadlineDays,
 					createdBy: session.user.id,
 					updatedAt: now,
@@ -184,6 +186,8 @@ export async function $updateOrganizationSettingsAction(
 					target: organizationSettings.organizationId,
 					set: {
 						formEnabled: normalizedInput.formEnabled,
+						aiClassificationEnabled:
+							normalizedInput.aiClassificationEnabled,
 						responseDeadlineDays:
 							normalizedInput.responseDeadlineDays,
 						updatedAt: now,
@@ -208,6 +212,7 @@ export async function $updateOrganizationSettingsAction(
 						phone: org.phone,
 						website: org.website,
 						formEnabled: org.formEnabled,
+						aiClassificationEnabled: org.aiClassificationEnabled,
 						responseDeadlineDays: org.responseDeadlineDays,
 					},
 					newData: {
@@ -220,6 +225,8 @@ export async function $updateOrganizationSettingsAction(
 						phone: normalizedInput.phone,
 						website: normalizedInput.website,
 						formEnabled: normalizedInput.formEnabled,
+						aiClassificationEnabled:
+							normalizedInput.aiClassificationEnabled,
 						responseDeadlineDays:
 							normalizedInput.responseDeadlineDays,
 					},

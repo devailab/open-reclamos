@@ -15,6 +15,13 @@
             "when": 1775019400477,
             "tag": "0001_hesitant_shiva",
             "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1775045252779,
+            "tag": "0002_famous_chamber",
+            "breakpoints": true
         }
     ]
 }

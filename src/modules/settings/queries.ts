@@ -22,6 +22,7 @@ export interface OrganizationSettings {
 	phone: string | null
 	website: string | null
 	formEnabled: boolean
+	aiClassificationEnabled: boolean
 	responseDeadlineDays: number
 	role: string
 }
@@ -33,6 +34,7 @@ export interface UbigeoOption {
 
 export interface OrganizationComplaintSettings {
 	formEnabled: boolean
+	aiClassificationEnabled: boolean
 	responseDeadlineDays: number
 }
 
@@ -53,6 +55,8 @@ export async function getOrganizationSettingsForUser(
 			phone: organizations.phone,
 			website: organizations.website,
 			formEnabled: organizationSettings.formEnabled,
+			aiClassificationEnabled:
+				organizationSettings.aiClassificationEnabled,
 			responseDeadlineDays: organizationSettings.responseDeadlineDays,
 			role: roles.slug,
 		})
@@ -74,6 +78,7 @@ export async function getOrganizationSettingsForUser(
 	return {
 		...result,
 		formEnabled: result.formEnabled ?? true,
+		aiClassificationEnabled: result.aiClassificationEnabled ?? false,
 		responseDeadlineDays:
 			result.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
 	}
@@ -85,6 +90,8 @@ export async function getOrganizationComplaintSettingsForOrganization(
 	const [result] = await db
 		.select({
 			formEnabled: organizationSettings.formEnabled,
+			aiClassificationEnabled:
+				organizationSettings.aiClassificationEnabled,
 			responseDeadlineDays: organizationSettings.responseDeadlineDays,
 		})
 		.from(organizationSettings)
@@ -93,6 +100,7 @@ export async function getOrganizationComplaintSettingsForOrganization(
 
 	return {
 		formEnabled: result?.formEnabled ?? true,
+		aiClassificationEnabled: result?.aiClassificationEnabled ?? false,
 		responseDeadlineDays:
 			result?.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
 	}

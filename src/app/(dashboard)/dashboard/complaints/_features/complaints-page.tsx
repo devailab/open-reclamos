@@ -35,6 +35,13 @@ const COMPLAINT_STATUS_LABEL: Record<string, string> = {
 	closed: 'Cerrado',
 }
 
+const COMPLAINT_PRIORITY_LABEL: Record<string, string> = {
+	low: 'Baja',
+	medium: 'Media',
+	high: 'Alta',
+	urgent: 'Urgente',
+}
+
 // ── Filter options ─────────────────────────────────────────────────────────────
 
 const TYPE_FILTER_OPTIONS: SelectOption[] = [
@@ -60,6 +67,13 @@ const STATUS_BADGE_VARIANT: Record<string, BadgeVariant> = {
 	in_progress: 'outline',
 	resolved: 'secondary',
 	closed: 'secondary',
+}
+
+const PRIORITY_BADGE_CLASS: Record<string, string> = {
+	low: 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-300',
+	medium: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300',
+	high: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300',
+	urgent: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300',
 }
 
 const ACTIVE_STATUSES = new Set(['open', 'in_progress'])
@@ -260,6 +274,52 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 								{deadline.label}
 							</span>
 						)}
+					</div>
+				)
+			},
+		},
+		{
+			header: { render: () => 'Prioridad' },
+			cell: ({ row }) => (
+				<Badge
+					variant='outline'
+					className={cn(
+						PRIORITY_BADGE_CLASS[row.priority] ??
+							PRIORITY_BADGE_CLASS.medium,
+					)}
+				>
+					{COMPLAINT_PRIORITY_LABEL[row.priority] ?? row.priority}
+				</Badge>
+			),
+		},
+		{
+			header: { render: () => 'Tags' },
+			cell: ({ row }) => {
+				if (row.tags.length === 0) {
+					return (
+						<span className='text-sm text-muted-foreground'>—</span>
+					)
+				}
+
+				return (
+					<div className='flex flex-wrap gap-1'>
+						{row.tags.slice(0, 3).map((tag) => (
+							<Badge
+								key={tag.id}
+								variant='outline'
+								className='max-w-[9rem] truncate'
+								style={
+									tag.color
+										? {
+												borderColor: tag.color,
+												color: tag.color,
+											}
+										: undefined
+								}
+							>
+								{tag.name}
+							</Badge>
+						))}
 					</div>
 				)
 			},
