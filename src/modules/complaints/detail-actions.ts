@@ -340,9 +340,7 @@ export async function $respondToComplaintAction(
 }
 
 const STATUS_CHANGE_NOTE: Record<ChangeableStatus, string> = {
-	in_progress: 'Tu reclamo está siendo procesado por nuestro equipo.',
 	in_review: 'Tu reclamo está siendo revisado por nuestro equipo.',
-	closed: 'Tu reclamo ha sido cerrado.',
 }
 
 export interface ChangeComplaintStatusInput {

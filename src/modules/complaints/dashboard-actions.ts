@@ -117,7 +117,7 @@ export async function $getComplaintsDashboardMetricsAction(
 	if (!hasPermission(membership, 'complaints.view')) {
 		return {
 			days,
-			kpis: { total: 0, open: 0, inProgress: 0, resolved: 0, overdue: 0 },
+			kpis: { total: 0, open: 0, inReview: 0, resolved: 0, overdue: 0 },
 			trend: [],
 		}
 	}

@@ -73,7 +73,7 @@ function buildWhere(
  * Parámetros de búsqueda (query params):
  *   page        number  (default 1)
  *   pageSize    number  (default 20, max 100)
- *   status      string  open | in_progress | resolved | closed
+ *   status      string  open | in_review | resolved
  *   type        string  reclamo | queja
  *   storeId     string  UUID de la tienda
  *   search      string  Búsqueda por correlativo, nombre o código de seguimiento

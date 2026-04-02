@@ -30,9 +30,9 @@ const COMPLAINT_TYPE_LABEL: Record<string, string> = {
 
 const COMPLAINT_STATUS_LABEL: Record<string, string> = {
 	open: 'Abierto',
-	in_progress: 'En proceso',
+	in_progress: 'En revisión',
+	in_review: 'En revisión',
 	resolved: 'Resuelto',
-	closed: 'Cerrado',
 }
 
 const COMPLAINT_PRIORITY_LABEL: Record<string, string> = {
@@ -53,9 +53,8 @@ const TYPE_FILTER_OPTIONS: SelectOption[] = [
 const STATUS_FILTER_OPTIONS: SelectOption[] = [
 	{ value: 'all', label: 'Todos los estados' },
 	{ value: 'open', label: 'Abierto' },
-	{ value: 'in_progress', label: 'En proceso' },
+	{ value: 'in_review', label: 'En revisión' },
 	{ value: 'resolved', label: 'Resuelto' },
-	{ value: 'closed', label: 'Cerrado' },
 ]
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -65,8 +64,8 @@ type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline'
 const STATUS_BADGE_VARIANT: Record<string, BadgeVariant> = {
 	open: 'default',
 	in_progress: 'outline',
+	in_review: 'outline',
 	resolved: 'secondary',
-	closed: 'secondary',
 }
 
 const PRIORITY_BADGE_CLASS: Record<string, string> = {
@@ -76,7 +75,7 @@ const PRIORITY_BADGE_CLASS: Record<string, string> = {
 	urgent: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300',
 }
 
-const ACTIVE_STATUSES = new Set(['open', 'in_progress'])
+const ACTIVE_STATUSES = new Set(['open', 'in_progress', 'in_review'])
 
 interface DeadlineInfo {
 	label: string
@@ -307,7 +306,7 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 							<Badge
 								key={tag.id}
 								variant='outline'
-								className='max-w-[9rem] truncate'
+								className='max-w-36 truncate'
 								style={
 									tag.color
 										? {
@@ -337,7 +336,9 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 			cell: ({ row }) => {
 				const isRespondable =
 					!row.hasResponse &&
-					(row.status === 'open' || row.status === 'in_progress')
+					(row.status === 'open' ||
+						row.status === 'in_progress' ||
+						row.status === 'in_review')
 				return (
 					<div className='flex items-center justify-end gap-1'>
 						{isRespondable && (

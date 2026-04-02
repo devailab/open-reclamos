@@ -48,14 +48,14 @@ const KPI_DEFINITIONS: readonly KpiDefinition[] = [
 		description: 'Pendientes de atención',
 	},
 	{
-		key: 'inProgress',
+		key: 'inReview',
 		title: 'En revisión',
-		description: 'Actualmente en proceso',
+		description: 'Casos en evaluación',
 	},
 	{
 		key: 'resolved',
 		title: 'Resueltos',
-		description: 'Cerrados con respuesta',
+		description: 'Casos con respuesta registrada',
 	},
 	{
 		key: 'overdue',

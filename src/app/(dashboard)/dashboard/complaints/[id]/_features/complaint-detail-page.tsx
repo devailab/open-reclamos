@@ -1,16 +1,10 @@
 'use client'
 
-import { ArrowLeft, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { type FC, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import { Button } from '@/components/ui/button'
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import type { ChangeableStatus } from '@/modules/complaints/dashboard-validation'
 import { $changeComplaintStatusAction } from '@/modules/complaints/detail-actions'
 import { ComplaintAuditCard } from './complaint-audit-card'
@@ -22,9 +16,7 @@ import { COMPLAINT_STATUS_LABEL, getDeadlineStatus } from './shared'
 import type { ComplaintDetailPageProps } from './types'
 
 const STATUS_CHANGE_OPTIONS: { value: ChangeableStatus; label: string }[] = [
-	{ value: 'in_progress', label: COMPLAINT_STATUS_LABEL.in_progress },
 	{ value: 'in_review', label: COMPLAINT_STATUS_LABEL.in_review },
-	{ value: 'closed', label: COMPLAINT_STATUS_LABEL.closed },
 ]
 
 export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
@@ -115,8 +107,10 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 		})
 	}
 
-	const canChangeStatus =
-		currentStatus !== 'resolved' && currentStatus !== 'closed'
+	const canChangeStatus = currentStatus !== 'resolved'
+	const nextStatusOption = STATUS_CHANGE_OPTIONS.find(
+		(option) => option.value !== currentStatus,
+	)
 
 	return (
 		<div className='space-y-4 pb-10'>
@@ -128,38 +122,6 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 					<ArrowLeft className='size-4' />
 					Volver a reclamos
 				</Link>
-
-				{canChangeStatus && (
-					<DropdownMenu>
-						<DropdownMenuTrigger
-							render={
-								<Button
-									variant='outline'
-									size='sm'
-									disabled={isPending}
-									className='gap-1.5'
-								>
-									Cambiar estado
-									<ChevronDown className='size-3.5' />
-								</Button>
-							}
-						/>
-						<DropdownMenuContent align='end'>
-							{STATUS_CHANGE_OPTIONS.filter(
-								(opt) => opt.value !== currentStatus,
-							).map((opt) => (
-								<DropdownMenuItem
-									key={opt.value}
-									onClick={() =>
-										handleStatusChange(opt.value)
-									}
-								>
-									{opt.label}
-								</DropdownMenuItem>
-							))}
-						</DropdownMenuContent>
-					</DropdownMenu>
-				)}
 			</div>
 
 			<ComplaintHeader
@@ -179,6 +141,18 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 				</div>
 
 				<div className='space-y-4 lg:sticky lg:top-4'>
+					{canChangeStatus && nextStatusOption && (
+						<Button
+							disabled={isPending}
+							className='w-full'
+							onClick={() =>
+								handleStatusChange(nextStatusOption.value)
+							}
+						>
+							<Eye />
+							Marcar como {nextStatusOption.label.toLowerCase()}
+						</Button>
+					)}
 					<ComplaintSolutionCard
 						complaint={{ ...complaint, status: currentStatus }}
 						resolvedResponse={resolvedResponse}

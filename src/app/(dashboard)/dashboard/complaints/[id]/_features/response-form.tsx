@@ -138,7 +138,7 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 				<Button
 					onClick={handleSubmit}
 					disabled={isSubmitting}
-					className='gap-2 shrink-0'
+					className='gap-2 shrink-0 bg-green-600 text-white hover:bg-green-700'
 				>
 					<Send className='size-4' />
 					{isSubmitting ? 'Enviando...' : 'Registrar respuesta'}

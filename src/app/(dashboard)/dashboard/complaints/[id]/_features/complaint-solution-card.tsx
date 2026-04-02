@@ -52,9 +52,7 @@ export const ComplaintSolutionCard: FC<ComplaintSolutionCardProps> = ({
 				/>
 			) : (
 				<p className='text-sm text-muted-foreground'>
-					{complaint.status === 'closed'
-						? 'Este reclamo está cerrado y no requiere respuesta.'
-						: 'Aún no se ha registrado una respuesta.'}
+					Aún no se ha registrado una respuesta.
 				</p>
 			)}
 		</Section>

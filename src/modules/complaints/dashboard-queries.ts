@@ -60,7 +60,7 @@ export interface StoreOption {
 export interface ComplaintsDashboardKpis {
 	total: number
 	open: number
-	inProgress: number
+	inReview: number
 	resolved: number
 	overdue: number
 }
@@ -260,10 +260,10 @@ export async function getComplaintsDashboardKpisForOrganization(
 		.select({
 			total: count(),
 			open: sql<number>`count(*) filter (where ${complaints.status} = 'open')`,
-			inProgress: sql<number>`count(*) filter (where ${complaints.status} = 'in_progress')`,
+			inReview: sql<number>`count(*) filter (where ${complaints.status} = 'in_review')`,
 			resolved: sql<number>`count(*) filter (where ${complaints.status} = 'resolved')`,
 			overdue: sql<number>`count(*) filter (
-				where ${complaints.status} in ('open', 'in_progress')
+				where ${complaints.status} in ('open', 'in_review', 'in_progress')
 				and ${complaints.responseDeadline} is not null
 				and ${complaints.responseDeadline} < now()
 			)`,
@@ -276,7 +276,7 @@ export async function getComplaintsDashboardKpisForOrganization(
 	return {
 		total: Number(summary?.total ?? 0),
 		open: Number(summary?.open ?? 0),
-		inProgress: Number(summary?.inProgress ?? 0),
+		inReview: Number(summary?.inReview ?? 0),
 		resolved: Number(summary?.resolved ?? 0),
 		overdue: Number(summary?.overdue ?? 0),
 	}

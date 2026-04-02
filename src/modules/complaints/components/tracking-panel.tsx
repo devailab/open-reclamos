@@ -10,7 +10,6 @@ import {
 	MessageSquareIcon,
 	PenLineIcon,
 	SearchIcon,
-	XCircleIcon,
 } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
@@ -32,7 +31,7 @@ const STATUS_CONFIG: Record<
 		icon: ClockIcon,
 	},
 	in_progress: {
-		label: 'En proceso',
+		label: 'En revisión',
 		colorClass: 'text-amber-700 bg-amber-50 ring-amber-200',
 		icon: AlertCircleIcon,
 	},
@@ -45,11 +44,6 @@ const STATUS_CONFIG: Record<
 		label: 'Resuelto',
 		colorClass: 'text-green-700 bg-green-50 ring-green-200',
 		icon: CheckCircle2Icon,
-	},
-	closed: {
-		label: 'Cerrado',
-		colorClass: 'text-gray-600 bg-gray-100 ring-gray-200',
-		icon: XCircleIcon,
 	},
 }
 
@@ -111,10 +105,9 @@ const HISTORY_EVENT_CONFIG: Record<
 
 const STATUS_LABEL: Record<string, string> = {
 	open: 'Abierto',
-	in_progress: 'En proceso',
+	in_progress: 'En revisión',
 	in_review: 'En revisión',
 	resolved: 'Resuelto',
-	closed: 'Cerrado',
 }
 
 interface TrackingPanelProps {

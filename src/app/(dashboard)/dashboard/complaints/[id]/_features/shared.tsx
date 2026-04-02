@@ -12,10 +12,9 @@ export const COMPLAINT_TYPE_LABEL: Record<string, string> = {
 
 export const COMPLAINT_STATUS_LABEL: Record<string, string> = {
 	open: 'Abierto',
-	in_progress: 'En proceso',
+	in_progress: 'En revisión',
 	in_review: 'En revisión',
 	resolved: 'Resuelto',
-	closed: 'Cerrado',
 }
 
 export const ITEM_TYPE_LABEL: Record<string, string> = {
@@ -38,7 +37,6 @@ export const STATUS_BADGE_VARIANT: Record<
 	in_progress: 'outline',
 	in_review: 'outline',
 	resolved: 'secondary',
-	closed: 'secondary',
 }
 
 export const AUDIT_ACTION_LABEL: Record<string, string> = {
