@@ -49,6 +49,11 @@ export const users = pgTable('users', {
 	// estado del onboarding: 'organization' | 'store' | 'complete'
 	// default 'complete' para que usuarios existentes no sean redirigidos
 	setupStatus: text('setup_status').notNull().default('complete'),
+	apiKey: text('api_key').unique(),
+	apiKeyCreatedAt: timestamp('api_key_created_at', {
+		withTimezone: true,
+		mode: 'date',
+	}),
 	createdAt: timestamp('created_at', {
 		withTimezone: true,
 		mode: 'date',

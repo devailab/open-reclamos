@@ -29,6 +29,13 @@
             "when": 1775107246748,
             "tag": "0003_dashing_pete_wisdom",
             "breakpoints": true
+        },
+        {
+            "idx": 4,
+            "version": "7",
+            "when": 1775110430949,
+            "tag": "0004_fixed_strong_guy",
+            "breakpoints": true
         }
     ]
 }

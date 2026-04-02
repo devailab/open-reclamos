@@ -34,6 +34,8 @@ export const AUDIT_LOG = {
 	WEBHOOK_CREATED: 'webhook.created',
 	WEBHOOK_UPDATED: 'webhook.updated',
 	WEBHOOK_DELETED: 'webhook.deleted',
+	API_KEY_GENERATED: 'api_key.generated',
+	API_KEY_REGENERATED: 'api_key.regenerated',
 } as const
 
 export type AuditLogAction = (typeof AUDIT_LOG)[keyof typeof AUDIT_LOG]
