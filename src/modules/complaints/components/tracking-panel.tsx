@@ -10,6 +10,7 @@ import {
 	MessageSquareIcon,
 	PenLineIcon,
 	SearchIcon,
+	XCircleIcon,
 } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
