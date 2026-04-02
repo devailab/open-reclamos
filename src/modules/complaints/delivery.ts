@@ -77,11 +77,7 @@ function getComplaintDeliveryHistoryEntry(params: {
 
 	if (workflow === 'receipt') {
 		if (status === 'queued') {
-			return {
-				eventType: 'receipt_delivery_queued',
-				publicNote:
-					'Estamos preparando la constancia de tu reclamo para enviarla al correo registrado.',
-			}
+			return null
 		}
 
 		if (status === 'sent') {
@@ -105,11 +101,7 @@ function getComplaintDeliveryHistoryEntry(params: {
 	}
 
 	if (status === 'queued') {
-		return {
-			eventType: 'response_delivery_queued',
-			publicNote:
-				'Estamos preparando el envío de la respuesta oficial al correo registrado.',
-		}
+		return null
 	}
 
 	if (status === 'sent') {
