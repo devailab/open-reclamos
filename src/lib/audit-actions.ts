@@ -31,6 +31,9 @@ export const AUDIT_LOG = {
 	ORGANIZATION_FORM_ENABLED: 'organization.form_enabled',
 	ORGANIZATION_FORM_DISABLED: 'organization.form_disabled',
 	ORGANIZATION_TEST_EMAIL_SENT: 'organization.test_email.sent',
+	WEBHOOK_CREATED: 'webhook.created',
+	WEBHOOK_UPDATED: 'webhook.updated',
+	WEBHOOK_DELETED: 'webhook.deleted',
 } as const
 
 export type AuditLogAction = (typeof AUDIT_LOG)[keyof typeof AUDIT_LOG]

@@ -125,6 +125,20 @@
             "module": "permissions",
             "name": "Gestionar permisos",
             "description": "Permite crear, editar y eliminar permisos personalizados."
+        },
+        {
+            "key": "webhooks.view",
+            "slug": "webhooks-view",
+            "module": "webhooks",
+            "name": "Ver webhooks",
+            "description": "Permite consultar los webhooks y el historial de envios."
+        },
+        {
+            "key": "webhooks.manage",
+            "slug": "webhooks-manage",
+            "module": "webhooks",
+            "name": "Gestionar webhooks",
+            "description": "Permite crear, editar y eliminar webhooks."
         }
     ],
     "roles": [
@@ -151,7 +165,9 @@
                 "roles.view",
                 "roles.manage",
                 "permissions.view",
-                "permissions.manage"
+                "permissions.manage",
+                "webhooks.view",
+                "webhooks.manage"
             ]
         },
         {

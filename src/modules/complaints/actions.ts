@@ -13,7 +13,9 @@ import {
 import { isAiClassificationConfigured } from '@/lib/ai'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { moveS3Object } from '@/lib/s3'
+import { WEBHOOK_EVENT } from '@/lib/webhook-events'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
+import { dispatchWebhookEvent } from '../webhooks/dispatch'
 import { enqueueComplaintAiClassification } from './ai-classification'
 import {
 	enqueueComplaintReceiptDelivery,
@@ -380,6 +382,26 @@ export async function $submitComplaintAction(
 				status: 'failed',
 				failureMessage: failure.technicalMessage,
 			})
+		}
+
+		try {
+			await dispatchWebhookEvent({
+				organizationId: input.organizationId,
+				eventKey: WEBHOOK_EVENT.COMPLAINT_SUBMITTED,
+				entityType: 'complaint',
+				entityId: complaintId,
+				payload: {
+					trackingCode,
+					correlative,
+					type: input.type,
+					status: 'open',
+				},
+			})
+		} catch (error) {
+			console.error(
+				'[webhooks] No se pudo disparar complaint.submitted:',
+				error,
+			)
 		}
 	}
 

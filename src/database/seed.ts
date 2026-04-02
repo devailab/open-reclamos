@@ -1,11 +1,17 @@
-import { sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import countriesData from './base/countries.json'
 import rbacData from './base/rbac.json'
 
 import ubigeosData from './base/ubigeos.json'
-import { countries, permissions, ubigeos } from './schema'
+import {
+	countries,
+	permissions,
+	rolePermissions,
+	roles,
+	ubigeos,
+} from './schema'
 
 const BATCH_SIZE = 500
 
@@ -100,8 +106,8 @@ async function seedCountries(db: ReturnType<typeof drizzle>) {
 	console.log(`[seed] countries: done.`)
 }
 
-// Solo sincroniza los permisos del sistema (globales, isSystem = true).
-// Los roles y role_permissions se crean por organización durante el setup.
+// Sincroniza permisos del sistema y asigna los nuevos permisos a los roles
+// existentes de cada organización según la definición en rbac.json.
 async function seedRbac(db: ReturnType<typeof drizzle>) {
 	const permissionDefs = (rbacData.permissions as PermissionSeedRow[]).map(
 		(row) => ({
@@ -117,10 +123,79 @@ async function seedRbac(db: ReturnType<typeof drizzle>) {
 	await db
 		.insert(permissions)
 		.values(permissionDefs)
-		.onConflictDoNothing({ target: permissions.key })
+		.onConflictDoUpdate({
+			target: permissions.key,
+			set: {
+				name: sql`excluded.name`,
+				description: sql`excluded.description`,
+				module: sql`excluded.module`,
+				slug: sql`excluded.slug`,
+			},
+		})
 
 	console.log(
-		`[seed] permissions: ensured ${permissionDefs.length} system permissions.`,
+		`[seed] permissions: synced ${permissionDefs.length} system permissions.`,
+	)
+
+	const allPermissions = await db
+		.select({ id: permissions.id, key: permissions.key })
+		.from(permissions)
+		.where(isNull(permissions.deletedAt))
+
+	const permissionIdByKey = Object.fromEntries(
+		allPermissions.map((p) => [p.key, p.id]),
+	)
+
+	// Para cada rol definido en rbac.json, buscar todos los roles de organización
+	// con ese key y asignar los permisos faltantes.
+	for (const roleDef of rbacData.roles) {
+		const expectedPermissionIds = roleDef.permissionKeys
+			.map((k) => permissionIdByKey[k])
+			.filter(Boolean) as string[]
+
+		if (expectedPermissionIds.length === 0) continue
+
+		// Todos los roles de organización con este key (no soft-deleted).
+		const matchingRoles = await db
+			.select({ id: roles.id })
+			.from(roles)
+			.where(and(eq(roles.key, roleDef.key), isNull(roles.deletedAt)))
+
+		if (matchingRoles.length === 0) continue
+
+		const roleIds = matchingRoles.map((r) => r.id)
+
+		for (const roleId of roleIds) {
+			const existing = await db
+				.select({ permissionId: rolePermissions.permissionId })
+				.from(rolePermissions)
+				.where(
+					and(
+						eq(rolePermissions.roleId, roleId),
+						inArray(
+							rolePermissions.permissionId,
+							expectedPermissionIds,
+						),
+					),
+				)
+
+			const existingIds = new Set(existing.map((r) => r.permissionId))
+			const missing = expectedPermissionIds.filter(
+				(id) => !existingIds.has(id),
+			)
+
+			if (missing.length === 0) continue
+
+			await db
+				.insert(rolePermissions)
+				.values(
+					missing.map((permissionId) => ({ roleId, permissionId })),
+				)
+		}
+	}
+
+	console.log(
+		'[seed] role_permissions: synced missing assignments for all orgs.',
 	)
 }
 

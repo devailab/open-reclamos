@@ -5,6 +5,7 @@ import {
 	processComplaintReceiptDelivery,
 	processComplaintResponseDelivery,
 } from '@/modules/complaints/workers'
+import { deliverWebhook } from '@/modules/webhooks/workers'
 
 export const { GET, POST, PUT } = serve({
 	client: inngest,
@@ -12,5 +13,6 @@ export const { GET, POST, PUT } = serve({
 		processComplaintAiClassification,
 		processComplaintReceiptDelivery,
 		processComplaintResponseDelivery,
+		deliverWebhook,
 	],
 })

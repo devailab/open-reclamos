@@ -8,7 +8,9 @@ import { complaints } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import { getPresignedDownloadUrl } from '@/lib/s3'
+import { WEBHOOK_EVENT } from '@/lib/webhook-events'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { dispatchWebhookEvent } from '@/modules/webhooks/dispatch'
 import type { ChangeableStatus } from './dashboard-validation'
 import {
 	enqueueComplaintResponseDelivery,
@@ -311,6 +313,21 @@ export async function $respondToComplaintAction(
 		})
 	}
 
+	try {
+		await dispatchWebhookEvent({
+			organizationId: access.membership.organizationId,
+			eventKey: WEBHOOK_EVENT.COMPLAINT_RESPONDED,
+			entityType: 'complaint',
+			entityId: input.id,
+			payload: { status: 'resolved', respondedAt: now.toISOString() },
+		})
+	} catch (error) {
+		console.error(
+			'[webhooks] No se pudo disparar complaint.responded:',
+			error,
+		)
+	}
+
 	return {
 		success: true,
 		data: {
@@ -433,6 +450,21 @@ export async function $changeComplaintStatusAction(
 			success: false,
 			error: 'Error al cambiar el estado. Intenta de nuevo.',
 		}
+	}
+
+	try {
+		await dispatchWebhookEvent({
+			organizationId: access.membership.organizationId,
+			eventKey: WEBHOOK_EVENT.COMPLAINT_STATUS_CHANGED,
+			entityType: 'complaint',
+			entityId: input.id,
+			payload: { fromStatus: existing.status, toStatus: input.status },
+		})
+	} catch (error) {
+		console.error(
+			'[webhooks] No se pudo disparar complaint.status_changed:',
+			error,
+		)
 	}
 
 	return { success: true }

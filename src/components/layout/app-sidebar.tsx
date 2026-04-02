@@ -14,6 +14,7 @@ import {
 	Store,
 	UserRound,
 	Users,
+	Webhook,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -84,6 +85,13 @@ const navItems = [
 		icon: BookOpen,
 		exact: false,
 		permission: 'reasons.view',
+	},
+	{
+		label: 'Webhooks',
+		href: '/dashboard/webhooks',
+		icon: Webhook,
+		exact: false,
+		permission: 'webhooks.view',
 	},
 	{
 		label: 'Configuración',

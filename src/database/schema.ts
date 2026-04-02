@@ -953,10 +953,19 @@ export const webhookEndpoints = pgTable(
 		name: text('name').notNull(),
 		slug: text('slug').notNull(),
 		targetUrl: text('target_url').notNull(),
+		// lista de event keys suscritos, e.g. ["complaint.submitted", "complaint.responded"]
+		events: jsonb('events').notNull().$type<string[]>().default([]),
 		status: text('status').notNull().default('active'),
 		secretEncrypted: text('secret_encrypted'),
 		customHeaders: jsonb('custom_headers'),
 		timeoutMs: integer('timeout_ms').notNull().default(15000),
+		deletedAt: timestamp('deleted_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		deletedBy: uuid('deleted_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
 		createdAt: timestamp('created_at', {
 			withTimezone: true,
 			mode: 'date',
