@@ -1,5 +1,11 @@
 import { Download, FileText } from 'lucide-react'
 import type { FC } from 'react'
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { formatDateDisplay } from '@/lib/formatters'
@@ -96,32 +102,38 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 				{(complaint.aiSummary || complaint.aiPriorityReason) && (
 					<>
 						<Separator />
-						<div className='space-y-3 rounded-lg border border-sky-200/70 bg-sky-50/70 px-3 py-3 dark:border-sky-900/40 dark:bg-sky-950/20'>
-							<div className='space-y-1'>
-								<p className='text-xs font-medium text-sky-800 dark:text-sky-300'>
-									Resumen IA
-								</p>
-								<p className='text-[11px] text-sky-700/80 dark:text-sky-300/80'>
-									Apoyo interno para revisar el caso más
-									rápido.
-								</p>
-							</div>
-							{complaint.aiSummary && (
-								<p className='text-sm whitespace-pre-wrap text-foreground'>
-									{complaint.aiSummary}
-								</p>
-							)}
-							{complaint.aiPriorityReason && (
-								<div className='space-y-1'>
-									<p className='text-xs text-muted-foreground'>
-										Motivo de prioridad sugerido por IA
+						<Accordion>
+							<AccordionItem
+								value='ai-summary'
+								className='border-none'
+							>
+								<AccordionTrigger className='rounded-lg border border-sky-200/70 bg-sky-50/70 px-3 py-2.5 hover:no-underline dark:border-sky-900/40 dark:bg-sky-950/20'>
+									<p className='text-xs font-medium text-sky-800 dark:text-sky-300'>
+										Resumen IA
 									</p>
-									<p className='text-sm whitespace-pre-wrap text-foreground'>
-										{complaint.aiPriorityReason}
-									</p>
-								</div>
-							)}
-						</div>
+								</AccordionTrigger>
+								<AccordionContent className='px-3 pt-3'>
+									<div className='space-y-3'>
+										{complaint.aiSummary && (
+											<p className='text-sm whitespace-pre-wrap text-foreground'>
+												{complaint.aiSummary}
+											</p>
+										)}
+										{complaint.aiPriorityReason && (
+											<div className='space-y-1'>
+												<p className='text-xs text-muted-foreground'>
+													Motivo de prioridad sugerido
+													por IA
+												</p>
+												<p className='text-sm whitespace-pre-wrap text-foreground'>
+													{complaint.aiPriorityReason}
+												</p>
+											</div>
+										)}
+									</div>
+								</AccordionContent>
+							</AccordionItem>
+						</Accordion>
 					</>
 				)}
 			</div>
