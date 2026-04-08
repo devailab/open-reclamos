@@ -21,6 +21,7 @@ export interface UpdateOrganizationInput {
 	website: string | null
 	formEnabled: boolean
 	aiClassificationEnabled: boolean
+	aiOrganizationContext: string | null
 	responseDeadlineDays: number | null
 }
 
@@ -38,6 +39,7 @@ export function normalizeUpdateOrganizationInput(
 		website: input.website?.trim() || null,
 		formEnabled: input.formEnabled,
 		aiClassificationEnabled: input.aiClassificationEnabled,
+		aiOrganizationContext: input.aiOrganizationContext?.trim() || null,
 		responseDeadlineDays: Number.isFinite(input.responseDeadlineDays)
 			? Math.trunc(input.responseDeadlineDays as number)
 			: null,

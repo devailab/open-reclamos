@@ -177,6 +177,8 @@ export async function $updateOrganizationSettingsAction(
 					formEnabled: normalizedInput.formEnabled,
 					aiClassificationEnabled:
 						normalizedInput.aiClassificationEnabled,
+					aiOrganizationContext:
+						normalizedInput.aiOrganizationContext,
 					responseDeadlineDays: normalizedInput.responseDeadlineDays,
 					createdBy: session.user.id,
 					updatedAt: now,
@@ -188,6 +190,8 @@ export async function $updateOrganizationSettingsAction(
 						formEnabled: normalizedInput.formEnabled,
 						aiClassificationEnabled:
 							normalizedInput.aiClassificationEnabled,
+						aiOrganizationContext:
+							normalizedInput.aiOrganizationContext,
 						responseDeadlineDays:
 							normalizedInput.responseDeadlineDays,
 						updatedAt: now,
@@ -213,6 +217,7 @@ export async function $updateOrganizationSettingsAction(
 						website: org.website,
 						formEnabled: org.formEnabled,
 						aiClassificationEnabled: org.aiClassificationEnabled,
+						aiOrganizationContext: org.aiOrganizationContext,
 						responseDeadlineDays: org.responseDeadlineDays,
 					},
 					newData: {
@@ -227,6 +232,8 @@ export async function $updateOrganizationSettingsAction(
 						formEnabled: normalizedInput.formEnabled,
 						aiClassificationEnabled:
 							normalizedInput.aiClassificationEnabled,
+						aiOrganizationContext:
+							normalizedInput.aiOrganizationContext,
 						responseDeadlineDays:
 							normalizedInput.responseDeadlineDays,
 					},

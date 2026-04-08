@@ -21,6 +21,7 @@ import BooleanField from '@/components/forms/boolean-field'
 import NumberField from '@/components/forms/number-field'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import TextField from '@/components/forms/text-field'
+import TextAreaField from '@/components/forms/textarea-field'
 import { PublicFormLink } from '@/components/public-form-link'
 import { Button } from '@/components/ui/button'
 import {
@@ -53,6 +54,7 @@ interface OrgFormValues {
 	website: string | null
 	formEnabled: boolean
 	aiClassificationEnabled: boolean
+	aiOrganizationContext: string | null
 	responseDeadlineDays: number | null
 }
 
@@ -85,6 +87,7 @@ export function OrganizationSettingsForm({
 		website: org.website,
 		formEnabled: org.formEnabled,
 		aiClassificationEnabled: org.aiClassificationEnabled,
+		aiOrganizationContext: org.aiOrganizationContext,
 		responseDeadlineDays: org.responseDeadlineDays,
 	}
 
@@ -125,6 +128,7 @@ export function OrganizationSettingsForm({
 				website: values.website,
 				formEnabled: values.formEnabled,
 				aiClassificationEnabled: values.aiClassificationEnabled,
+				aiOrganizationContext: values.aiOrganizationContext,
 				responseDeadlineDays: values.responseDeadlineDays,
 			})
 
@@ -319,6 +323,21 @@ export function OrganizationSettingsForm({
 						description='La IA se ejecuta en segundo plano después de registrar el reclamo. Si falla, el reclamo sigue creado normalmente.'
 						disabled={disabled}
 					/>
+
+					<TextAreaField
+						{...register('aiOrganizationContext')}
+						label='Contexto de la organización para la IA'
+						placeholder='Ej. Somos una clínica privada, priorizamos casos de salud, menores de edad y posibles riesgos regulatorios.'
+						rows={6}
+						emptyAsNull
+						disabled={disabled}
+					/>
+
+					<p className='text-sm text-muted-foreground'>
+						Este contexto ayuda a la IA a entender mejor tu negocio,
+						criterios de atención y señales que deberían influir en
+						la clasificación.
+					</p>
 
 					{values.aiClassificationEnabled && (
 						<div className='rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800'>
