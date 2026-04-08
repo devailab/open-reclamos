@@ -52,6 +52,21 @@ function createModel(output: unknown) {
 	})
 }
 
+function getUserPromptText(model: MockLanguageModelV3) {
+	const userMessage = model.doGenerateCalls[0]?.prompt.find(
+		(message) => message.role === 'user',
+	)
+
+	if (!userMessage || userMessage.role !== 'user') {
+		return ''
+	}
+
+	return userMessage.content
+		.filter((part) => part.type === 'text')
+		.map((part) => part.text)
+		.join('\n')
+}
+
 describe('classifyComplaintCore', () => {
 	it('reuses existing tags when the model suggests equivalent names', async () => {
 		const existingTags: ComplaintExistingTag[] = [
@@ -197,6 +212,52 @@ describe('classifyComplaintCore', () => {
 				color: null,
 			},
 		])
+	})
+
+	it('includes organization context in the prompt only when it exists', async () => {
+		const modelWithContext = createModel({
+			priority: 'medium',
+			summary: 'Resumen operativo.',
+			priorityReason: 'Motivo.',
+			tags: [],
+		})
+
+		await classifyComplaintCore(
+			{
+				complaint: BASE_COMPLAINT,
+				existingTags: [],
+				aiOrganizationContext:
+					'Somos una clinica privada y priorizamos riesgos regulatorios y casos de menores.',
+			},
+			{
+				model: modelWithContext,
+			},
+		)
+
+		expect(getUserPromptText(modelWithContext)).toContain(
+			'Organization context:',
+		)
+
+		const modelWithoutContext = createModel({
+			priority: 'medium',
+			summary: 'Resumen operativo.',
+			priorityReason: 'Motivo.',
+			tags: [],
+		})
+
+		await classifyComplaintCore(
+			{
+				complaint: BASE_COMPLAINT,
+				existingTags: [],
+			},
+			{
+				model: modelWithoutContext,
+			},
+		)
+
+		expect(getUserPromptText(modelWithoutContext)).not.toContain(
+			'Organization context:',
+		)
 	})
 
 	it('fails when the model returns an invalid structured output', async () => {

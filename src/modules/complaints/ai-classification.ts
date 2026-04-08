@@ -225,13 +225,24 @@ function dedupeClassificationTags(
 function buildComplaintClassificationPrompt(params: {
 	complaint: ComplaintClassificationContext
 	existingTags: ComplaintExistingTag[]
+	aiOrganizationContext?: string | null
 }) {
 	const { complaint, existingTags } = params
 	const classificationSignal = getComplaintClassificationSignal(complaint)
+	const organizationContext = params.aiOrganizationContext?.trim() || null
 	const existingTagsLabel =
 		existingTags.length > 0
 			? existingTags.map((tag) => `- ${tag.name}`).join('\n')
-			: '- No existen tags previos en esta organización.'
+			: '- There are no existing tags in this organization.'
+	const organizationContextSection = organizationContext
+		? `
+
+Organization context:
+- Use this additional business context only when it helps interpret the complaint more accurately.
+- Do not override the complaint facts with this context.
+- Context: ${organizationContext}
+`
+		: ''
 
 	return `
 Classify the following consumer complaint for a company in Peru.
@@ -282,6 +293,7 @@ Tag count policy for this complaint:
 
 Existing organization tags:
 ${existingTagsLabel}
+${organizationContextSection}
 
 Complaint data:
 - Type: ${formatComplaintType(complaint.type)}
@@ -303,6 +315,7 @@ export async function classifyComplaintCore(
 	params: {
 		complaint: ComplaintClassificationContext
 		existingTags: ComplaintExistingTag[]
+		aiOrganizationContext?: string | null
 	},
 	deps: {
 		model: LanguageModel
@@ -315,11 +328,11 @@ export async function classifyComplaintCore(
 		schema: COMPLAINT_AI_CLASSIFICATION_SCHEMA,
 		name: 'complaint_classification',
 		description:
-			'Clasificacion estructurada de prioridad y tags para un reclamo.',
+			'Structured classification of priority and tags for a complaint.',
 	})
 	const result = await generateText({
 		model: deps.model,
-		system: 'Eres un analista senior de operaciones especializado en reclamos de consumidores. Responde solo con datos estructurados y prioriza consistencia, cautela y utilidad operativa.',
+		system: 'You are a senior operations analyst specialized in consumer complaints. Respond only with structured data and prioritize consistency, caution, and operational usefulness.',
 		prompt: buildComplaintClassificationPrompt(params),
 		temperature: 0,
 		maxOutputTokens: 400,

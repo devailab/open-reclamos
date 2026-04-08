@@ -55,9 +55,20 @@ export const processComplaintAiClassification = inngest.createFunction(
 
 		try {
 			const classification = await step.run('classify-complaint', () =>
-				classifyComplaintCore(payload, {
-					model: getComplaintClassificationModel(),
-				}),
+				classifyComplaintCore(
+					{
+						...payload,
+						...(settings.aiOrganizationContext
+							? {
+									aiOrganizationContext:
+										settings.aiOrganizationContext,
+								}
+							: {}),
+					},
+					{
+						model: getComplaintClassificationModel(),
+					},
+				),
 			)
 
 			const appliedTags = await step.run('apply-classification', () =>
