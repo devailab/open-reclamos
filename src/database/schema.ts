@@ -579,6 +579,7 @@ export const organizationSettings = pgTable('organization_settings', {
 	aiClassificationEnabled: boolean('ai_classification_enabled')
 		.notNull()
 		.default(false),
+	aiOrganizationContext: text('ai_organization_context'),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),
@@ -742,13 +743,66 @@ export const complaints = pgTable(
 		description: text('description'),
 		// pedido realizado al proveedor o empresa
 		request: text('request'),
-		// estado del procesamiento asincrono de la constancia inicial
-		receiptDeliveryStatus: text('receipt_delivery_status'),
-		receiptDeliverySentAt: timestamp('receipt_delivery_sent_at', {
+		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp('updated_at', {
 			withTimezone: true,
 			mode: 'date',
 		}),
-		receiptDeliveryError: text('receipt_delivery_error'),
+		updatedBy: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		index('complaints_organization_id_idx').on(table.organizationId),
+		index('complaints_store_id_idx').on(table.storeId),
+		index('complaints_reason_id_idx').on(table.reasonId),
+		index('complaints_status_idx').on(table.status),
+		index('complaints_created_at_idx').on(table.createdAt),
+		index('complaints_response_deadline_idx').on(table.responseDeadline),
+		index('complaints_organization_created_at_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+		index('complaints_organization_status_created_at_idx').on(
+			table.organizationId,
+			table.status,
+			table.createdAt,
+		),
+		index('complaints_organization_store_created_at_idx').on(
+			table.organizationId,
+			table.storeId,
+			table.createdAt,
+		),
+		index('complaints_organization_deadline_idx').on(
+			table.organizationId,
+			table.responseDeadline,
+		),
+		uniqueIndex('complaints_store_id_tracking_code_uidx').on(
+			table.storeId,
+			table.trackingCode,
+		),
+		uniqueIndex('complaints_store_id_correlative_uidx').on(
+			table.storeId,
+			table.correlative,
+		),
+	],
+)
+
+export const complaintDetails = pgTable(
+	'complaint_details',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		complaintId: uuid('complaint_id')
+			.notNull()
+			.unique()
+			.references(() => complaints.id, { onDelete: 'cascade' }),
 		// borrador de respuesta (autoguardado mientras el operador escribe)
 		draftResponse: text('draft_response'),
 		draftUpdatedAt: timestamp('draft_updated_at', {
@@ -769,6 +823,55 @@ export const complaints = pgTable(
 		respondedBy: uuid('responded_by').references(() => users.id, {
 			onDelete: 'set null',
 		}),
+		// resumen interno generado por IA para ayudar a la revisión operativa
+		aiSummary: text('ai_summary'),
+		// justificación de la prioridad asignada por IA
+		aiPriorityReason: text('ai_priority_reason'),
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp('updated_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
+			.defaultNow()
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('complaint_details_organization_id_idx').on(table.organizationId),
+		index('complaint_details_complaint_id_idx').on(table.complaintId),
+		index('complaint_details_organization_complaint_id_idx').on(
+			table.organizationId,
+			table.complaintId,
+		),
+		index('complaint_details_responded_by_idx').on(table.respondedBy),
+	],
+)
+
+export const complaintDeliveries = pgTable(
+	'complaint_deliveries',
+	{
+		id: uuid('id')
+			.primaryKey()
+			.$defaultFn(() => uuidv7()),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		complaintId: uuid('complaint_id')
+			.notNull()
+			.unique()
+			.references(() => complaints.id, { onDelete: 'cascade' }),
+		// estado del procesamiento asincrono de la constancia inicial
+		receiptDeliveryStatus: text('receipt_delivery_status'),
+		receiptDeliverySentAt: timestamp('receipt_delivery_sent_at', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		receiptDeliveryError: text('receipt_delivery_error'),
 		// estado del procesamiento asincrono del correo de respuesta
 		responseDeliveryStatus: text('response_delivery_status'),
 		responseDeliverySentAt: timestamp('response_delivery_sent_at', {
@@ -776,25 +879,34 @@ export const complaints = pgTable(
 			mode: 'date',
 		}),
 		responseDeliveryError: text('response_delivery_error'),
-		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+		createdAt: timestamp('created_at', {
+			withTimezone: true,
+			mode: 'date',
+		})
 			.defaultNow()
 			.notNull(),
 		updatedAt: timestamp('updated_at', {
 			withTimezone: true,
 			mode: 'date',
-		}),
-		updatedBy: uuid('updated_by').references(() => users.id, {
-			onDelete: 'set null',
-		}),
+		})
+			.defaultNow()
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
 	},
 	(table) => [
-		uniqueIndex('complaints_store_id_tracking_code_uidx').on(
-			table.storeId,
-			table.trackingCode,
+		index('complaint_deliveries_organization_id_idx').on(
+			table.organizationId,
 		),
-		uniqueIndex('complaints_store_id_correlative_uidx').on(
-			table.storeId,
-			table.correlative,
+		index('complaint_deliveries_complaint_id_idx').on(table.complaintId),
+		index('complaint_deliveries_organization_complaint_id_idx').on(
+			table.organizationId,
+			table.complaintId,
+		),
+		index('complaint_deliveries_receipt_status_idx').on(
+			table.receiptDeliveryStatus,
+		),
+		index('complaint_deliveries_response_status_idx').on(
+			table.responseDeliveryStatus,
 		),
 	],
 )

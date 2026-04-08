@@ -3,6 +3,8 @@ import { db } from '@/database/database'
 import {
 	auditLogs,
 	complaintAttachments,
+	complaintDeliveries,
+	complaintDetails,
 	complaintHistory,
 	complaintReasons,
 	complaints,
@@ -52,6 +54,8 @@ export interface ComplaintDetail {
 	reasonLabel: string | null
 	// borrador de respuesta
 	draftResponse: string | null
+	aiSummary: string | null
+	aiPriorityReason: string | null
 	// respuesta oficial
 	officialResponse: string | null
 	respondedAt: Date | null
@@ -112,16 +116,18 @@ export async function getComplaintDetailById(
 			description: complaints.description,
 			request: complaints.request,
 			reasonLabel: complaintReasons.reason,
-			draftResponse: complaints.draftResponse,
-			officialResponse: complaints.officialResponse,
-			respondedAt: complaints.respondedAt,
+			draftResponse: complaintDetails.draftResponse,
+			aiSummary: complaintDetails.aiSummary,
+			aiPriorityReason: complaintDetails.aiPriorityReason,
+			officialResponse: complaintDetails.officialResponse,
+			respondedAt: complaintDetails.respondedAt,
 			respondedByName: users.name,
-			receiptDeliveryStatus: complaints.receiptDeliveryStatus,
-			receiptDeliverySentAt: complaints.receiptDeliverySentAt,
-			receiptDeliveryError: complaints.receiptDeliveryError,
-			responseDeliveryStatus: complaints.responseDeliveryStatus,
-			responseDeliverySentAt: complaints.responseDeliverySentAt,
-			responseDeliveryError: complaints.responseDeliveryError,
+			receiptDeliveryStatus: complaintDeliveries.receiptDeliveryStatus,
+			receiptDeliverySentAt: complaintDeliveries.receiptDeliverySentAt,
+			receiptDeliveryError: complaintDeliveries.receiptDeliveryError,
+			responseDeliveryStatus: complaintDeliveries.responseDeliveryStatus,
+			responseDeliverySentAt: complaintDeliveries.responseDeliverySentAt,
+			responseDeliveryError: complaintDeliveries.responseDeliveryError,
 			responseDeadline: complaints.responseDeadline,
 			responseDeadlineDays: complaints.responseDeadlineDays,
 			createdAt: complaints.createdAt,
@@ -133,7 +139,15 @@ export async function getComplaintDetailById(
 			complaintReasons,
 			eq(complaints.reasonId, complaintReasons.id),
 		)
-		.leftJoin(users, eq(complaints.respondedBy, users.id))
+		.leftJoin(
+			complaintDetails,
+			eq(complaintDetails.complaintId, complaints.id),
+		)
+		.leftJoin(
+			complaintDeliveries,
+			eq(complaintDeliveries.complaintId, complaints.id),
+		)
+		.leftJoin(users, eq(complaintDetails.respondedBy, users.id))
 		.where(
 			and(
 				eq(complaints.id, id),

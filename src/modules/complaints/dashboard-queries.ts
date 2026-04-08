@@ -19,6 +19,7 @@ import {
 } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
+	complaintDetails,
 	complaints,
 	complaintTagAssignments,
 	complaintTags,
@@ -199,11 +200,15 @@ export async function getComplaintsTableForOrganization({
 				coalesce(${complaintTagsAggregate.tags}, '[]'::json)
 			`.mapWith(parseComplaintTags),
 			responseDeadline: complaints.responseDeadline,
-			hasResponse: sql<boolean>`${complaints.officialResponse} IS NOT NULL`,
+			hasResponse: sql<boolean>`${complaintDetails.officialResponse} IS NOT NULL`,
 			createdAt: complaints.createdAt,
 		})
 		.from(complaints)
 		.innerJoin(stores, eq(complaints.storeId, stores.id))
+		.leftJoin(
+			complaintDetails,
+			eq(complaintDetails.complaintId, complaints.id),
+		)
 		.leftJoin(
 			complaintTagsAggregate,
 			eq(complaintTagsAggregate.complaintId, complaints.id),

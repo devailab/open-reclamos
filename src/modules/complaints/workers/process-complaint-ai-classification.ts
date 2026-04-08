@@ -78,6 +78,8 @@ export const processComplaintAiClassification = inngest.createFunction(
 					newData: {
 						model: getAiClassificationModelId(),
 						priority: classification.priority,
+						summary: classification.summary,
+						priorityReason: classification.priorityReason,
 						tags: appliedTags.map((tag) => ({
 							id: tag.id,
 							name: tag.name,

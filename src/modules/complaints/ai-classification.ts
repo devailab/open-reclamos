@@ -4,11 +4,11 @@ import { and, eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/database/database'
 import {
+	complaintDetails,
 	complaintReasons,
 	complaints,
 	complaintTagAssignments,
 	complaintTags,
-	stores,
 } from '@/database/schema'
 import { inngest } from '@/lib/inngest'
 
@@ -22,16 +22,10 @@ export interface ComplaintClassificationEventData {
 }
 
 export interface ComplaintClassificationContext {
-	id: string
-	organizationId: string
-	storeId: string
-	storeName: string
 	reasonLabel: string | null
 	type: string
 	personType: string
-	firstName: string
-	lastName: string
-	legalName: string | null
+	isMinor: boolean
 	itemType: string | null
 	itemDescription: string | null
 	amount: string | null
@@ -56,6 +50,7 @@ export interface ComplaintClassificationTag {
 
 export interface ComplaintClassificationResult {
 	priority: ComplaintPriority
+	summary: string
 	priorityReason: string
 	tags: ComplaintClassificationTag[]
 }
@@ -65,6 +60,14 @@ const COMPLAINT_AI_CLASSIFICATION_SCHEMA = z.object({
 		.enum(['low', 'medium', 'high', 'urgent'])
 		.describe(
 			'Operational priority for the complaint. Use medium when there is not enough evidence to raise or lower priority.',
+		),
+	summary: z
+		.string()
+		.trim()
+		.min(1)
+		.max(600)
+		.describe(
+			'Internal Spanish summary for operators. Explain what happened, the main impact, and what the consumer is requesting in 2 to 4 concise sentences.',
 		),
 	priorityReason: z
 		.string()
@@ -110,6 +113,16 @@ function formatComplaintType(type: string) {
 function formatItemType(itemType: string | null) {
 	if (itemType === 'product') return 'Producto'
 	if (itemType === 'service') return 'Servicio'
+	return 'No especificado'
+}
+
+function formatConsumerProfile(params: {
+	personType: string
+	isMinor: boolean
+}) {
+	if (params.isMinor) return 'Menor de edad'
+	if (params.personType === 'legal') return 'Persona jurídica'
+	if (params.personType === 'natural') return 'Persona natural'
 	return 'No especificado'
 }
 
@@ -225,13 +238,26 @@ Classify the following consumer complaint for a company in Peru.
 
 Goals:
 1. Set the operational priority: low | medium | high | urgent.
-2. Suggest only the most relevant tags in Spanish.
+2. Write a concise internal summary in Spanish for operators.
+3. Suggest only the most relevant tags in Spanish.
 
 Priority rules:
 - Default to medium when evidence is not strong enough.
 - Use low only for simple, contained, low-impact cases.
 - Use high for meaningful consumer impact, reputational risk, likely escalation, vulnerable consumers, or relevant financial impact.
 - Use urgent only for severe situations such as safety, fraud, critical charges, minors, serious legal exposure, or cases requiring immediate attention.
+
+Summary rules:
+- Write the summary in Spanish.
+- Keep it practical and internal-facing.
+- Mention the core incident, the main effect on the consumer, and the requested resolution.
+- Do not invent facts that are not present in the complaint.
+- Keep it concise: usually 2 to 4 sentences, maximum 600 characters.
+
+Privacy rules:
+- Personal identifiers are intentionally omitted.
+- Do not infer, reconstruct, or mention names, document numbers, emails, phone numbers, or addresses.
+- Base the classification only on the operational facts provided below.
 
 Tag rules:
 - Tags must be written in Spanish, but the prompt instructions are in English.
@@ -259,11 +285,11 @@ ${existingTagsLabel}
 
 Complaint data:
 - Type: ${formatComplaintType(complaint.type)}
-- Store: ${complaint.storeName}
 - Reason: ${cleanText(complaint.reasonLabel)}
-- Person type: ${cleanText(complaint.personType)}
-- Consumer: ${cleanText(`${complaint.firstName} ${complaint.lastName}`)}
-- Legal name: ${cleanText(complaint.legalName)}
+- Consumer profile: ${formatConsumerProfile({
+		personType: complaint.personType,
+		isMinor: complaint.isMinor,
+	})}
 - Item description: ${cleanText(complaint.itemDescription)}
 - Item type: ${formatItemType(complaint.itemType)}
 - Amount: ${complaint.amount ? `${complaint.currency ?? ''} ${complaint.amount}`.trim() : 'No especificado'}
@@ -315,6 +341,7 @@ export async function classifyComplaintCore(
 
 	return {
 		priority: structuredOutput.priority,
+		summary: structuredOutput.summary.trim(),
 		priorityReason: structuredOutput.priorityReason.trim(),
 		tags: dedupeClassificationTags(
 			structuredOutput.tags,
@@ -331,16 +358,10 @@ export async function getComplaintClassificationContext(params: {
 	const [complaintRows, existingTags] = await Promise.all([
 		db
 			.select({
-				id: complaints.id,
-				organizationId: complaints.organizationId,
-				storeId: complaints.storeId,
-				storeName: stores.name,
 				reasonLabel: complaintReasons.reason,
 				type: complaints.type,
 				personType: complaints.personType,
-				firstName: complaints.firstName,
-				lastName: complaints.lastName,
-				legalName: complaints.legalName,
+				isMinor: complaints.isMinor,
 				itemType: complaints.itemType,
 				itemDescription: complaints.itemDescription,
 				amount: complaints.amount,
@@ -350,7 +371,6 @@ export async function getComplaintClassificationContext(params: {
 				request: complaints.request,
 			})
 			.from(complaints)
-			.innerJoin(stores, eq(complaints.storeId, stores.id))
 			.leftJoin(
 				complaintReasons,
 				eq(complaints.reasonId, complaintReasons.id),
@@ -401,6 +421,24 @@ export async function applyComplaintClassificationResult(
 ) {
 	const executor = tx ?? db
 	const now = new Date()
+
+	await executor
+		.insert(complaintDetails)
+		.values({
+			organizationId: params.organizationId,
+			complaintId: params.complaintId,
+			aiSummary: params.classification.summary,
+			aiPriorityReason: params.classification.priorityReason,
+		})
+		.onConflictDoUpdate({
+			target: complaintDetails.complaintId,
+			set: {
+				organizationId: params.organizationId,
+				aiSummary: params.classification.summary,
+				aiPriorityReason: params.classification.priorityReason,
+				updatedAt: now,
+			},
+		})
 
 	const [updatedComplaint] = await executor
 		.update(complaints)

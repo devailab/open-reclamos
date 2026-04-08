@@ -1,1 +1,0 @@
-ALTER TABLE "organization_settings" ADD COLUMN "ai_classification_enabled" boolean DEFAULT false NOT NULL;

@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from '@/database/database'
-import { complaints } from '@/database/schema'
+import { complaintDeliveries, complaints } from '@/database/schema'
 import { sendEmail } from '@/lib/email'
 import { inngest } from '@/lib/inngest'
 import { renderComplaintReceiptPdfBuffer } from './components/complaint-receipt-pdf'
@@ -180,21 +180,30 @@ export async function setComplaintDeliveryStatus(
 	const now = new Date()
 
 	await executor
-		.update(complaints)
-		.set(
-			getComplaintDeliveryUpdate({
+		.insert(complaintDeliveries)
+		.values({
+			organizationId: params.organizationId,
+			complaintId: params.complaintId,
+			...getComplaintDeliveryUpdate({
 				workflow: params.workflow,
 				status: params.status,
 				failureMessage: params.failureMessage,
 				at: now,
 			}),
-		)
-		.where(
-			and(
-				eq(complaints.id, params.complaintId),
-				eq(complaints.organizationId, params.organizationId),
-			),
-		)
+		})
+		.onConflictDoUpdate({
+			target: complaintDeliveries.complaintId,
+			set: {
+				organizationId: params.organizationId,
+				...getComplaintDeliveryUpdate({
+					workflow: params.workflow,
+					status: params.status,
+					failureMessage: params.failureMessage,
+					at: now,
+				}),
+				updatedAt: now,
+			},
+		})
 
 	if (params.recordHistory === false) return
 
@@ -225,10 +234,14 @@ export async function getComplaintDeliveryState(params: {
 	const [row] = await db
 		.select({
 			id: complaints.id,
-			receiptDeliveryStatus: complaints.receiptDeliveryStatus,
-			responseDeliveryStatus: complaints.responseDeliveryStatus,
+			receiptDeliveryStatus: complaintDeliveries.receiptDeliveryStatus,
+			responseDeliveryStatus: complaintDeliveries.responseDeliveryStatus,
 		})
 		.from(complaints)
+		.leftJoin(
+			complaintDeliveries,
+			eq(complaintDeliveries.complaintId, complaints.id),
+		)
 		.where(
 			and(
 				eq(complaints.id, params.complaintId),

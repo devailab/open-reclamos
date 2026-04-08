@@ -8,16 +8,10 @@ import {
 } from './ai-classification'
 
 const BASE_COMPLAINT: ComplaintClassificationContext = {
-	id: 'complaint-1',
-	organizationId: 'org-1',
-	storeId: 'store-1',
-	storeName: 'Tienda Centro',
 	reasonLabel: 'Cobro indebido',
 	type: 'claim',
 	personType: 'natural',
-	firstName: 'Ana',
-	lastName: 'Paredes',
-	legalName: null,
+	isMinor: false,
 	itemType: 'service',
 	itemDescription: 'Plan de internet hogar',
 	amount: '199.90',
@@ -73,6 +67,8 @@ describe('classifyComplaintCore', () => {
 			{
 				model: createModel({
 					priority: 'high',
+					summary:
+						'La consumidora reporta un cobro mayor al informado en su plan de internet y no obtuvo respuesta del soporte. Solicita devolución y regularización del cobro.',
 					priorityReason:
 						'Existe afectacion economica y falta de respuesta del canal.',
 					tags: [
@@ -90,6 +86,9 @@ describe('classifyComplaintCore', () => {
 		)
 
 		expect(result.priority).toBe('high')
+		expect(result.summary).toBe(
+			'La consumidora reporta un cobro mayor al informado en su plan de internet y no obtuvo respuesta del soporte. Solicita devolución y regularización del cobro.',
+		)
 		expect(result.tags).toEqual([
 			{
 				name: 'Reembolso',
@@ -115,6 +114,8 @@ describe('classifyComplaintCore', () => {
 			{
 				model: createModel({
 					priority: 'urgent',
+					summary:
+						'El reclamo muestra indicios de cobro crítico e irregular. La consumidora necesita atención inmediata y revisión del posible fraude.',
 					priorityReason: 'Hay riesgo de cobro critico y fraude.',
 					tags: [
 						{
@@ -170,6 +171,8 @@ describe('classifyComplaintCore', () => {
 			{
 				model: createModel({
 					priority: 'medium',
+					summary:
+						'La consumidora reporta un doble cobro en un caso acotado. Solicita devolución sin señales claras de urgencia mayor.',
 					priorityReason:
 						'Hay un cobro incorrecto pero sin senales de urgencia.',
 					tags: [
@@ -206,6 +209,7 @@ describe('classifyComplaintCore', () => {
 				{
 					model: createModel({
 						priority: 'critical',
+						summary: '',
 						priorityReason: '',
 						tags: [],
 					}),

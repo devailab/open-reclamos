@@ -1,5 +1,5 @@
 {
-    "id": "b9680933-75b2-4a43-bf81-2cd9d66e6e4e",
+    "id": "f00332ee-c617-486d-9009-d6b060a86fa1",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -171,6 +171,12 @@
                 "new_data": {
                     "name": "new_data",
                     "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
                     "primaryKey": false,
                     "notNull": false
                 },
@@ -363,6 +369,397 @@
             "foreignKeys": {},
             "compositePrimaryKeys": {},
             "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.complaint_deliveries": {
+            "name": "complaint_deliveries",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "complaint_id": {
+                    "name": "complaint_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "receipt_delivery_status": {
+                    "name": "receipt_delivery_status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "receipt_delivery_sent_at": {
+                    "name": "receipt_delivery_sent_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "receipt_delivery_error": {
+                    "name": "receipt_delivery_error",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "response_delivery_status": {
+                    "name": "response_delivery_status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "response_delivery_sent_at": {
+                    "name": "response_delivery_sent_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "response_delivery_error": {
+                    "name": "response_delivery_error",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "complaint_deliveries_organization_id_idx": {
+                    "name": "complaint_deliveries_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_deliveries_complaint_id_idx": {
+                    "name": "complaint_deliveries_complaint_id_idx",
+                    "columns": [
+                        {
+                            "expression": "complaint_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_deliveries_organization_complaint_id_idx": {
+                    "name": "complaint_deliveries_organization_complaint_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "complaint_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_deliveries_receipt_status_idx": {
+                    "name": "complaint_deliveries_receipt_status_idx",
+                    "columns": [
+                        {
+                            "expression": "receipt_delivery_status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_deliveries_response_status_idx": {
+                    "name": "complaint_deliveries_response_status_idx",
+                    "columns": [
+                        {
+                            "expression": "response_delivery_status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "complaint_deliveries_organization_id_organizations_id_fk": {
+                    "name": "complaint_deliveries_organization_id_organizations_id_fk",
+                    "tableFrom": "complaint_deliveries",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "complaint_deliveries_complaint_id_complaints_id_fk": {
+                    "name": "complaint_deliveries_complaint_id_complaints_id_fk",
+                    "tableFrom": "complaint_deliveries",
+                    "tableTo": "complaints",
+                    "columnsFrom": ["complaint_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "complaint_deliveries_complaint_id_unique": {
+                    "name": "complaint_deliveries_complaint_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["complaint_id"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.complaint_details": {
+            "name": "complaint_details",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "complaint_id": {
+                    "name": "complaint_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "draft_response": {
+                    "name": "draft_response",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "draft_updated_at": {
+                    "name": "draft_updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "draft_saved_by": {
+                    "name": "draft_saved_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "official_response": {
+                    "name": "official_response",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "responded_at": {
+                    "name": "responded_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "responded_by": {
+                    "name": "responded_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "ai_summary": {
+                    "name": "ai_summary",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "ai_priority_reason": {
+                    "name": "ai_priority_reason",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "complaint_details_organization_id_idx": {
+                    "name": "complaint_details_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_details_complaint_id_idx": {
+                    "name": "complaint_details_complaint_id_idx",
+                    "columns": [
+                        {
+                            "expression": "complaint_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_details_organization_complaint_id_idx": {
+                    "name": "complaint_details_organization_complaint_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "complaint_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_details_responded_by_idx": {
+                    "name": "complaint_details_responded_by_idx",
+                    "columns": [
+                        {
+                            "expression": "responded_by",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "complaint_details_organization_id_organizations_id_fk": {
+                    "name": "complaint_details_organization_id_organizations_id_fk",
+                    "tableFrom": "complaint_details",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "complaint_details_complaint_id_complaints_id_fk": {
+                    "name": "complaint_details_complaint_id_complaints_id_fk",
+                    "tableFrom": "complaint_details",
+                    "tableTo": "complaints",
+                    "columnsFrom": ["complaint_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "complaint_details_draft_saved_by_users_id_fk": {
+                    "name": "complaint_details_draft_saved_by_users_id_fk",
+                    "tableFrom": "complaint_details",
+                    "tableTo": "users",
+                    "columnsFrom": ["draft_saved_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "complaint_details_responded_by_users_id_fk": {
+                    "name": "complaint_details_responded_by_users_id_fk",
+                    "tableFrom": "complaint_details",
+                    "tableTo": "users",
+                    "columnsFrom": ["responded_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "complaint_details_complaint_id_unique": {
+                    "name": "complaint_details_complaint_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["complaint_id"]
+                }
+            },
             "policies": {},
             "checkConstraints": {},
             "isRLSEnabled": false
@@ -624,6 +1021,226 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
+        "public.complaint_tag_assignments": {
+            "name": "complaint_tag_assignments",
+            "schema": "",
+            "columns": {
+                "complaint_id": {
+                    "name": "complaint_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "tag_id": {
+                    "name": "tag_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "complaint_tag_assignments_tag_id_idx": {
+                    "name": "complaint_tag_assignments_tag_id_idx",
+                    "columns": [
+                        {
+                            "expression": "tag_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "complaint_tag_assignments_complaint_id_complaints_id_fk": {
+                    "name": "complaint_tag_assignments_complaint_id_complaints_id_fk",
+                    "tableFrom": "complaint_tag_assignments",
+                    "tableTo": "complaints",
+                    "columnsFrom": ["complaint_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "complaint_tag_assignments_tag_id_complaint_tags_id_fk": {
+                    "name": "complaint_tag_assignments_tag_id_complaint_tags_id_fk",
+                    "tableFrom": "complaint_tag_assignments",
+                    "tableTo": "complaint_tags",
+                    "columnsFrom": ["tag_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "complaint_tag_assignments_created_by_users_id_fk": {
+                    "name": "complaint_tag_assignments_created_by_users_id_fk",
+                    "tableFrom": "complaint_tag_assignments",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "complaint_tag_assignments_complaint_id_tag_id_pk": {
+                    "name": "complaint_tag_assignments_complaint_id_tag_id_pk",
+                    "columns": ["complaint_id", "tag_id"]
+                }
+            },
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.complaint_tags": {
+            "name": "complaint_tags",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "color": {
+                    "name": "color",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_by": {
+                    "name": "updated_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "complaint_tags_organization_id_idx": {
+                    "name": "complaint_tags_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_tags_organization_id_name_uidx": {
+                    "name": "complaint_tags_organization_id_name_uidx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "name",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "complaint_tags_organization_id_organizations_id_fk": {
+                    "name": "complaint_tags_organization_id_organizations_id_fk",
+                    "tableFrom": "complaint_tags",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "complaint_tags_created_by_users_id_fk": {
+                    "name": "complaint_tags_created_by_users_id_fk",
+                    "tableFrom": "complaint_tags",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "complaint_tags_updated_by_users_id_fk": {
+                    "name": "complaint_tags_updated_by_users_id_fk",
+                    "tableFrom": "complaint_tags",
+                    "tableTo": "users",
+                    "columnsFrom": ["updated_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
         "public.complaints": {
             "name": "complaints",
             "schema": "",
@@ -664,6 +1281,13 @@
                     "primaryKey": false,
                     "notNull": true,
                     "default": "'open'"
+                },
+                "priority": {
+                    "name": "priority",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'medium'"
                 },
                 "tracking_code": {
                     "name": "tracking_code",
@@ -849,42 +1473,6 @@
                     "primaryKey": false,
                     "notNull": false
                 },
-                "draft_response": {
-                    "name": "draft_response",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "draft_updated_at": {
-                    "name": "draft_updated_at",
-                    "type": "timestamp with time zone",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "draft_saved_by": {
-                    "name": "draft_saved_by",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "official_response": {
-                    "name": "official_response",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "responded_at": {
-                    "name": "responded_at",
-                    "type": "timestamp with time zone",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "responded_by": {
-                    "name": "responded_by",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": false
-                },
                 "created_at": {
                     "name": "created_at",
                     "type": "timestamp with time zone",
@@ -906,6 +1494,192 @@
                 }
             },
             "indexes": {
+                "complaints_organization_id_idx": {
+                    "name": "complaints_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaints_store_id_idx": {
+                    "name": "complaints_store_id_idx",
+                    "columns": [
+                        {
+                            "expression": "store_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaints_reason_id_idx": {
+                    "name": "complaints_reason_id_idx",
+                    "columns": [
+                        {
+                            "expression": "reason_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaints_status_idx": {
+                    "name": "complaints_status_idx",
+                    "columns": [
+                        {
+                            "expression": "status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaints_created_at_idx": {
+                    "name": "complaints_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaints_response_deadline_idx": {
+                    "name": "complaints_response_deadline_idx",
+                    "columns": [
+                        {
+                            "expression": "response_deadline",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaints_organization_created_at_idx": {
+                    "name": "complaints_organization_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaints_organization_status_created_at_idx": {
+                    "name": "complaints_organization_status_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaints_organization_store_created_at_idx": {
+                    "name": "complaints_organization_store_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "store_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaints_organization_deadline_idx": {
+                    "name": "complaints_organization_deadline_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "response_deadline",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
                 "complaints_store_id_tracking_code_uidx": {
                     "name": "complaints_store_id_tracking_code_uidx",
                     "columns": [
@@ -982,24 +1756,6 @@
                     "tableFrom": "complaints",
                     "tableTo": "ubigeos",
                     "columnsFrom": ["ubigeo_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "set null",
-                    "onUpdate": "no action"
-                },
-                "complaints_draft_saved_by_users_id_fk": {
-                    "name": "complaints_draft_saved_by_users_id_fk",
-                    "tableFrom": "complaints",
-                    "tableTo": "users",
-                    "columnsFrom": ["draft_saved_by"],
-                    "columnsTo": ["id"],
-                    "onDelete": "set null",
-                    "onUpdate": "no action"
-                },
-                "complaints_responded_by_users_id_fk": {
-                    "name": "complaints_responded_by_users_id_fk",
-                    "tableFrom": "complaints",
-                    "tableTo": "users",
-                    "columnsFrom": ["responded_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
                     "onUpdate": "no action"
@@ -1695,6 +2451,19 @@
                     "primaryKey": false,
                     "notNull": true,
                     "default": true
+                },
+                "ai_classification_enabled": {
+                    "name": "ai_classification_enabled",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "ai_organization_context": {
+                    "name": "ai_organization_context",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
                 },
                 "created_at": {
                     "name": "created_at",
@@ -2817,6 +3586,18 @@
                     "notNull": true,
                     "default": "'complete'"
                 },
+                "api_key": {
+                    "name": "api_key",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "api_key_created_at": {
+                    "name": "api_key_created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
                 "created_at": {
                     "name": "created_at",
                     "type": "timestamp with time zone",
@@ -2840,6 +3621,11 @@
                     "name": "users_email_unique",
                     "nullsNotDistinct": false,
                     "columns": ["email"]
+                },
+                "users_api_key_unique": {
+                    "name": "users_api_key_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["api_key"]
                 }
             },
             "policies": {},
@@ -2907,6 +3693,412 @@
                 }
             },
             "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.webhook_deliveries": {
+            "name": "webhook_deliveries",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "endpoint_id": {
+                    "name": "endpoint_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "event_key": {
+                    "name": "event_key",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "entity_type": {
+                    "name": "entity_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "entity_id": {
+                    "name": "entity_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'pending'"
+                },
+                "attempt_count": {
+                    "name": "attempt_count",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "request_body": {
+                    "name": "request_body",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "response_status": {
+                    "name": "response_status",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "response_body": {
+                    "name": "response_body",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "error_message": {
+                    "name": "error_message",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "next_attempt_at": {
+                    "name": "next_attempt_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "sent_at": {
+                    "name": "sent_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "webhook_deliveries_organization_id_created_at_idx": {
+                    "name": "webhook_deliveries_organization_id_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "webhook_deliveries_endpoint_id_idx": {
+                    "name": "webhook_deliveries_endpoint_id_idx",
+                    "columns": [
+                        {
+                            "expression": "endpoint_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "webhook_deliveries_status_created_at_idx": {
+                    "name": "webhook_deliveries_status_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "webhook_deliveries_event_key_idx": {
+                    "name": "webhook_deliveries_event_key_idx",
+                    "columns": [
+                        {
+                            "expression": "event_key",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "webhook_deliveries_organization_id_organizations_id_fk": {
+                    "name": "webhook_deliveries_organization_id_organizations_id_fk",
+                    "tableFrom": "webhook_deliveries",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "webhook_deliveries_endpoint_id_webhook_endpoints_id_fk": {
+                    "name": "webhook_deliveries_endpoint_id_webhook_endpoints_id_fk",
+                    "tableFrom": "webhook_deliveries",
+                    "tableTo": "webhook_endpoints",
+                    "columnsFrom": ["endpoint_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.webhook_endpoints": {
+            "name": "webhook_endpoints",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "slug": {
+                    "name": "slug",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "target_url": {
+                    "name": "target_url",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "events": {
+                    "name": "events",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'[]'::jsonb"
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'active'"
+                },
+                "secret_encrypted": {
+                    "name": "secret_encrypted",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "custom_headers": {
+                    "name": "custom_headers",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "timeout_ms": {
+                    "name": "timeout_ms",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 15000
+                },
+                "deleted_at": {
+                    "name": "deleted_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "deleted_by": {
+                    "name": "deleted_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_by": {
+                    "name": "updated_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "webhook_endpoints_organization_id_idx": {
+                    "name": "webhook_endpoints_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "webhook_endpoints_status_idx": {
+                    "name": "webhook_endpoints_status_idx",
+                    "columns": [
+                        {
+                            "expression": "status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "webhook_endpoints_org_slug_uidx": {
+                    "name": "webhook_endpoints_org_slug_uidx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "slug",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "webhook_endpoints_organization_id_organizations_id_fk": {
+                    "name": "webhook_endpoints_organization_id_organizations_id_fk",
+                    "tableFrom": "webhook_endpoints",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "webhook_endpoints_deleted_by_users_id_fk": {
+                    "name": "webhook_endpoints_deleted_by_users_id_fk",
+                    "tableFrom": "webhook_endpoints",
+                    "tableTo": "users",
+                    "columnsFrom": ["deleted_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "webhook_endpoints_created_by_users_id_fk": {
+                    "name": "webhook_endpoints_created_by_users_id_fk",
+                    "tableFrom": "webhook_endpoints",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "webhook_endpoints_updated_by_users_id_fk": {
+                    "name": "webhook_endpoints_updated_by_users_id_fk",
+                    "tableFrom": "webhook_endpoints",
+                    "tableTo": "users",
+                    "columnsFrom": ["updated_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
             "compositePrimaryKeys": {},
             "uniqueConstraints": {},
             "policies": {},

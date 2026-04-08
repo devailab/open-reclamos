@@ -12,7 +12,13 @@ import {
 } from 'drizzle-orm'
 import type { NextRequest } from 'next/server'
 import { db } from '@/database/database'
-import { complaintReasons, complaints, stores } from '@/database/schema'
+import {
+	complaintDeliveries,
+	complaintDetails,
+	complaintReasons,
+	complaints,
+	stores,
+} from '@/database/schema'
 import { resolveApiKey, unauthorizedResponse } from '@/lib/api-auth'
 
 const PAGE_SIZE_DEFAULT = 20
@@ -118,18 +124,28 @@ export async function GET(request: NextRequest) {
 				itemType: complaints.itemType,
 				incidentDate: complaints.incidentDate,
 				// respuesta
-				hasResponse: isNotNull(complaints.officialResponse),
-				respondedAt: complaints.respondedAt,
+				hasResponse: isNotNull(complaintDetails.officialResponse),
+				respondedAt: complaintDetails.respondedAt,
 				responseDeadline: complaints.responseDeadline,
 				// entrega
-				receiptDeliveryStatus: complaints.receiptDeliveryStatus,
-				responseDeliveryStatus: complaints.responseDeliveryStatus,
+				receiptDeliveryStatus:
+					complaintDeliveries.receiptDeliveryStatus,
+				responseDeliveryStatus:
+					complaintDeliveries.responseDeliveryStatus,
 				// fechas
 				createdAt: complaints.createdAt,
 				updatedAt: complaints.updatedAt,
 			})
 			.from(complaints)
 			.innerJoin(stores, eq(complaints.storeId, stores.id))
+			.leftJoin(
+				complaintDetails,
+				eq(complaintDetails.complaintId, complaints.id),
+			)
+			.leftJoin(
+				complaintDeliveries,
+				eq(complaintDeliveries.complaintId, complaints.id),
+			)
 			.leftJoin(
 				complaintReasons,
 				eq(complaints.reasonId, complaintReasons.id),

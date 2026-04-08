@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
-import { complaints } from '@/database/schema'
+import { complaintDetails, complaints } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import { getPresignedDownloadUrl } from '@/lib/s3'
@@ -133,18 +133,24 @@ export async function $saveDraftResponseAction(
 
 	const now = new Date()
 	await db
-		.update(complaints)
-		.set({
+		.insert(complaintDetails)
+		.values({
+			organizationId: access.membership.organizationId,
+			complaintId: id,
 			draftResponse: draft || null,
 			draftUpdatedAt: now,
 			draftSavedBy: access.session.user.id,
 		})
-		.where(
-			and(
-				eq(complaints.id, id),
-				eq(complaints.organizationId, access.membership.organizationId),
-			),
-		)
+		.onConflictDoUpdate({
+			target: complaintDetails.complaintId,
+			set: {
+				organizationId: access.membership.organizationId,
+				draftResponse: draft || null,
+				draftUpdatedAt: now,
+				draftSavedBy: access.session.user.id,
+				updatedAt: now,
+			},
+		})
 
 	return { success: true }
 }
@@ -212,18 +218,37 @@ export async function $respondToComplaintAction(
 	try {
 		await db.transaction(async (tx) => {
 			await tx
-				.update(complaints)
-				.set({
+				.insert(complaintDetails)
+				.values({
+					organizationId: access.membership.organizationId,
+					complaintId: input.id,
 					officialResponse: response,
 					respondedAt: now,
 					respondedBy: access.session.user.id,
-					status: 'resolved',
-					updatedAt: now,
-					updatedBy: access.session.user.id,
-					// limpiar borrador al registrar respuesta oficial
 					draftResponse: null,
 					draftUpdatedAt: null,
 					draftSavedBy: null,
+				})
+				.onConflictDoUpdate({
+					target: complaintDetails.complaintId,
+					set: {
+						organizationId: access.membership.organizationId,
+						officialResponse: response,
+						respondedAt: now,
+						respondedBy: access.session.user.id,
+						draftResponse: null,
+						draftUpdatedAt: null,
+						draftSavedBy: null,
+						updatedAt: now,
+					},
+				})
+
+			await tx
+				.update(complaints)
+				.set({
+					status: 'resolved',
+					updatedAt: now,
+					updatedBy: access.session.user.id,
 				})
 				.where(
 					and(

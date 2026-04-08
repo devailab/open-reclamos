@@ -5,36 +5,8 @@
         {
             "idx": 0,
             "version": "7",
-            "when": 1774805259333,
-            "tag": "0000_noisy_carmella_unuscione",
-            "breakpoints": true
-        },
-        {
-            "idx": 1,
-            "version": "7",
-            "when": 1775019400477,
-            "tag": "0001_hesitant_shiva",
-            "breakpoints": true
-        },
-        {
-            "idx": 2,
-            "version": "7",
-            "when": 1775045252779,
-            "tag": "0002_famous_chamber",
-            "breakpoints": true
-        },
-        {
-            "idx": 3,
-            "version": "7",
-            "when": 1775107246748,
-            "tag": "0003_dashing_pete_wisdom",
-            "breakpoints": true
-        },
-        {
-            "idx": 4,
-            "version": "7",
-            "when": 1775110430949,
-            "tag": "0004_fixed_strong_guy",
+            "when": 1775645141240,
+            "tag": "0000_natural_wallflower",
             "breakpoints": true
         }
     ]
