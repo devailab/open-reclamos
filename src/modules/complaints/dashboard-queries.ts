@@ -13,6 +13,7 @@ import {
 	eq,
 	ilike,
 	inArray,
+	isNull,
 	or,
 	type SQL,
 	sql,
@@ -333,4 +334,96 @@ export async function getComplaintsDailyTrendForOrganization(
 			count: countsByDay.get(key) ?? 0,
 		}
 	})
+}
+
+// ── Featured complaints ───────────────────────────────────────────────────────
+
+export interface FeaturedComplaint {
+	id: string
+	correlative: string
+	type: string
+	firstName: string
+	lastName: string
+	storeName: string
+	status: string
+	priority: string
+	responseDeadline: Date | null
+	responseDeadlineDays: number | null
+	createdAt: Date
+}
+
+/**
+ * Devuelve los 6 reclamos más urgentes activos para el dashboard.
+ *
+ * El score combina días restantes al vencimiento (peso mayor) con la prioridad:
+ *   score = days_remaining * 4 + priority_order   (ASC → más urgente primero)
+ *
+ * Reclamos sin responseDeadline van al final, ordenados solo por prioridad.
+ */
+export async function getFeaturedComplaintsForOrganization(
+	organizationId: string,
+	allowedStoreIds?: string[],
+): Promise<FeaturedComplaint[]> {
+	const storeCondition =
+		allowedStoreIds !== undefined
+			? allowedStoreIds.length === 0
+				? sql`false`
+				: inArray(complaints.storeId, allowedStoreIds)
+			: undefined
+
+	// Reclamos CON deadline: score basado en días restantes + prioridad.
+	// Reclamos SIN deadline: score muy alto (van al final), solo ordenados por prioridad.
+	const urgencyScore = sql<number>`
+		CASE
+			WHEN ${complaints.responseDeadline} IS NOT NULL THEN
+				EXTRACT(epoch FROM (${complaints.responseDeadline} - NOW())) / 86400.0 * 4 +
+				CASE ${complaints.priority}
+					WHEN 'urgent' THEN 0
+					WHEN 'high'   THEN 1
+					WHEN 'medium' THEN 2
+					WHEN 'low'    THEN 3
+					ELSE 2
+				END
+			ELSE
+				9999 +
+				CASE ${complaints.priority}
+					WHEN 'urgent' THEN 0
+					WHEN 'high'   THEN 1
+					WHEN 'medium' THEN 2
+					WHEN 'low'    THEN 3
+					ELSE 2
+				END
+		END
+	`
+
+	return db
+		.select({
+			id: complaints.id,
+			correlative: complaints.correlative,
+			type: complaints.type,
+			firstName: complaints.firstName,
+			lastName: complaints.lastName,
+			storeName: stores.name,
+			status: complaints.status,
+			priority: complaints.priority,
+			responseDeadline: complaints.responseDeadline,
+			responseDeadlineDays: complaints.responseDeadlineDays,
+			createdAt: complaints.createdAt,
+		})
+		.from(complaints)
+		.innerJoin(stores, eq(complaints.storeId, stores.id))
+		.where(
+			and(
+				eq(complaints.organizationId, organizationId),
+				inArray(complaints.status, [
+					'open',
+					'in_review',
+					'in_progress',
+				]),
+				isNull(stores.deletedAt),
+				storeCondition,
+			),
+		)
+		.orderBy(asc(urgencyScore))
+		.limit(6)
 }

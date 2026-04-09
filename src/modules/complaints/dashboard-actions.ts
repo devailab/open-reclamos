@@ -6,9 +6,11 @@ import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
 	type ComplaintsDashboardKpis,
 	type ComplaintTableRow,
+	type FeaturedComplaint,
 	getComplaintsDailyTrendForOrganization,
 	getComplaintsDashboardKpisForOrganization,
 	getComplaintsTableForOrganization,
+	getFeaturedComplaintsForOrganization,
 } from './dashboard-queries'
 import {
 	type ComplaintsTableFilters,
@@ -140,4 +142,28 @@ export async function $getComplaintsDashboardMetricsAction(
 	])
 
 	return { days, kpis, trend }
+}
+
+export async function $getFeaturedComplaintsAction(): Promise<
+	FeaturedComplaint[]
+> {
+	const session = await getSession()
+	if (!session) redirect('/login')
+
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
+
+	if (!hasPermission(membership, 'complaints.view')) {
+		return []
+	}
+
+	const allowedStoreIds = resolveAllowedStoreIds(
+		membership.storeAccessMode,
+		membership.storeIds,
+	)
+
+	return getFeaturedComplaintsForOrganization(
+		membership.organizationId,
+		allowedStoreIds,
+	)
 }

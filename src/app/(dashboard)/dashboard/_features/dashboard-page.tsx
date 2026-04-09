@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { $getComplaintsDashboardMetricsAction } from '@/modules/complaints/dashboard-actions'
 import type { ComplaintsDashboardKpis } from '@/modules/complaints/dashboard-queries'
 import type { DashboardTrendDays } from '@/modules/complaints/dashboard-validation'
+import { FeaturedComplaints } from './featured-complaints'
 import type { DashboardPageProps } from './types'
 
 const RANGE_OPTIONS: DashboardTrendDays[] = [7, 15, 30]
@@ -72,6 +73,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 	const [days, setDays] = useState<DashboardTrendDays>(initialState.days)
 	const [kpis, setKpis] = useState(initialState.kpis)
 	const [trend, setTrend] = useState(initialState.trend)
+	const featuredComplaints = initialState.featuredComplaints
 	const [isPending, startTransition] = useTransition()
 
 	const chartData = useMemo(
@@ -144,6 +146,8 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 					</Card>
 				))}
 			</div>
+
+			<FeaturedComplaints complaints={featuredComplaints} />
 
 			<Card>
 				<CardHeader className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>

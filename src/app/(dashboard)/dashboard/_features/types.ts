@@ -1,4 +1,7 @@
-import type { ComplaintsDashboardKpis } from '@/modules/complaints/dashboard-queries'
+import type {
+	ComplaintsDashboardKpis,
+	FeaturedComplaint,
+} from '@/modules/complaints/dashboard-queries'
 import type {
 	DashboardTrendDays,
 	DashboardTrendPoint,
@@ -8,6 +11,7 @@ export interface DashboardInitialState {
 	days: DashboardTrendDays
 	kpis: ComplaintsDashboardKpis
 	trend: DashboardTrendPoint[]
+	featuredComplaints: FeaturedComplaint[]
 }
 
 export interface DashboardPageProps {
