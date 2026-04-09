@@ -23,6 +23,8 @@
         "@base-ui/react": "^1.2.0",
         "@better-auth/drizzle-adapter": "^1.5.4",
         "@floating-ui/react": "^0.27.19",
+        "@react-email/components": "^1.0.11",
+        "@react-email/render": "^2.0.5",
         "@react-pdf/renderer": "^4.3.2",
         "ai": "^6.0.142",
         "argon2": "^0.44.0",

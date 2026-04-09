@@ -1,6 +1,6 @@
 'use client'
 
-import { Copy, Link2 } from 'lucide-react'
+import { Copy, Link2, Mail } from 'lucide-react'
 import { useMemo, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
@@ -14,7 +14,10 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog'
 import type { RoleOption, StoreOption } from '@/modules/rbac/queries'
-import { $createUserInvitationAction } from '@/modules/users/actions'
+import {
+	$createUserInvitationAction,
+	$sendInvitationEmailAction,
+} from '@/modules/users/actions'
 import {
 	normalizeInvitationInput,
 	type UserInvitationInput,
@@ -55,7 +58,9 @@ export function CreateInvitationDialog({
 	const [lastInvitationUrl, setLastInvitationUrl] = useState<string | null>(
 		null,
 	)
+	const [emailSent, setEmailSent] = useState(false)
 	const [isPending, startTransition] = useTransition()
+	const [isSendingEmail, startEmailTransition] = useTransition()
 
 	const roleOptions = useMemo<SelectOption[]>(
 		() =>
@@ -69,6 +74,7 @@ export function CreateInvitationDialog({
 	const resetForm = () => {
 		setValues(INITIAL_VALUES)
 		setLastInvitationUrl(null)
+		setEmailSent(false)
 	}
 
 	const handleSubmit = () => {
@@ -111,6 +117,28 @@ export function CreateInvitationDialog({
 		if (!lastInvitationUrl) return
 		await navigator.clipboard.writeText(lastInvitationUrl)
 		sileo.success({ title: 'Enlace copiado' })
+	}
+
+	const handleSendEmail = () => {
+		if (!lastInvitationUrl || !values.email) return
+		startEmailTransition(async () => {
+			const result = await $sendInvitationEmailAction({
+				email: values.email ?? '',
+				inviteUrl: lastInvitationUrl,
+			})
+			if ('error' in result) {
+				sileo.error({
+					title: 'Error al enviar correo',
+					description: result.error,
+				})
+				return
+			}
+			setEmailSent(true)
+			sileo.success({
+				title: 'Correo enviado',
+				description: `El enlace fue enviado a ${values.email}`,
+			})
+		})
 	}
 
 	return (
@@ -178,7 +206,7 @@ export function CreateInvitationDialog({
 					{lastInvitationUrl && (
 						<div className='rounded-xl border border-dashed bg-muted/25 p-4'>
 							<div className='flex items-start justify-between gap-3'>
-								<div className='space-y-1'>
+								<div className='min-w-0 space-y-1'>
 									<p className='text-sm font-medium'>
 										Enlace listo para compartir
 									</p>
@@ -186,15 +214,32 @@ export function CreateInvitationDialog({
 										{lastInvitationUrl}
 									</p>
 								</div>
-								<Button
-									type='button'
-									variant='outline'
-									size='sm'
-									onClick={handleCopy}
-								>
-									<Copy />
-									Copiar
-								</Button>
+								<div className='flex shrink-0 gap-2'>
+									<Button
+										type='button'
+										variant='outline'
+										size='sm'
+										onClick={handleCopy}
+										disabled={isSendingEmail}
+									>
+										<Copy />
+										Copiar
+									</Button>
+									<Button
+										type='button'
+										variant='outline'
+										size='sm'
+										onClick={handleSendEmail}
+										disabled={isSendingEmail || emailSent}
+									>
+										<Mail />
+										{isSendingEmail
+											? 'Enviando...'
+											: emailSent
+												? 'Enviado'
+												: 'Enviar correo'}
+									</Button>
+								</div>
 							</div>
 						</div>
 					)}

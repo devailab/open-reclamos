@@ -9,11 +9,13 @@ import {
 	organizationInvitations,
 	organizationMemberStores,
 	organizationMembers,
+	organizations,
 	users,
 } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { getSession } from '@/lib/auth-server'
+import { sendEmail } from '@/lib/email'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { getRoleByIdForOrganization } from '@/modules/roles/queries'
 import { createInvitationToken, hashInvitationToken } from './lib'
@@ -29,6 +31,7 @@ import {
 	syncMemberPermissions,
 	type UserTableRow,
 } from './queries'
+import { renderInvitationEmail } from './render-invitation-email'
 import {
 	type AcceptInvitationInput,
 	normalizeInvitationInput,
@@ -751,4 +754,62 @@ export async function $acceptInvitationAction(
 
 	revalidatePath('/dashboard/users')
 	redirect('/dashboard')
+}
+
+export interface SendInvitationEmailInput {
+	email: string
+	inviteUrl: string
+}
+
+export async function $sendInvitationEmailAction(
+	input: SendInvitationEmailInput,
+): Promise<UserActionResult> {
+	const access = await requireUsersAccess('users.invite')
+	if ('error' in access) {
+		return {
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
+	}
+
+	if (!input.email?.trim() || !input.inviteUrl?.trim()) {
+		return { error: 'Datos de invitación inválidos.' }
+	}
+
+	const [org] = await db
+		.select({ name: organizations.name })
+		.from(organizations)
+		.where(eq(organizations.id, access.membership.organizationId))
+		.limit(1)
+
+	const organizationName = org?.name ?? 'tu organización'
+
+	const html = await renderInvitationEmail({
+		organizationName,
+		inviteUrl: input.inviteUrl,
+	})
+
+	const text = [
+		`Has sido invitado a unirte a ${organizationName} en Open Reclamos.`,
+		'',
+		'Acepta tu invitación en el siguiente enlace:',
+		input.inviteUrl,
+		'',
+		'El enlace es válido por 7 días.',
+	].join('\n')
+
+	try {
+		await sendEmail({
+			to: input.email,
+			subject: `Invitación para unirte a ${organizationName}`,
+			text,
+			html,
+		})
+	} catch {
+		return {
+			error: 'No se pudo enviar el correo. Verifica la configuración de email.',
+		}
+	}
+
+	return { success: true }
 }
