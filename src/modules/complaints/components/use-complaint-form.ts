@@ -35,6 +35,7 @@ export function useComplaintForm({
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [successData, setSuccessData] = useState<SuccessData | null>(null)
 	const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+	const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 	const step1Initial = createStep1Initial(defaultDialCodeOption)
 
 	// Step 1 form
@@ -103,6 +104,15 @@ export function useComplaintForm({
 			return
 		}
 
+		if (!turnstileToken) {
+			feedback.alert.error({
+				title: 'Verificación de seguridad pendiente',
+				description:
+					'Completa el desafío de seguridad antes de enviar.',
+			})
+			return
+		}
+
 		setIsSubmitting(true)
 
 		try {
@@ -115,6 +125,7 @@ export function useComplaintForm({
 			const result = await $submitComplaintAction({
 				organizationId,
 				storeId: selectedStoreId,
+				turnstileToken,
 				personType: step1Values.personType,
 				// Para jurídica: documentType = RUC (empresa), documentNumber = RUC empresa
 				// Para natural: documentType = tipo doc persona, documentNumber = número doc persona
@@ -206,6 +217,8 @@ export function useComplaintForm({
 		successData,
 		uploadedFiles,
 		setUploadedFiles,
+		turnstileToken,
+		setTurnstileToken,
 		step1Values,
 		step1Register: step1Form.register,
 		step2Values,

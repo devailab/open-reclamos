@@ -2,6 +2,7 @@
 
 import { ArrowBigRight, ChevronLeft, Loader2, Send } from 'lucide-react'
 import type { FC } from 'react'
+import Turnstile from 'react-turnstile'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -133,48 +134,63 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 				<Separator />
 
 				{/* Footer navigation */}
-				<div className='flex items-center justify-between gap-4 p-4'>
-					{form.currentStep === 'details' ? (
-						<Button
-							type='button'
-							variant='outline'
-							onClick={() => form.goToStep('consumer')}
-							disabled={form.isSubmitting}
-						>
-							<ChevronLeft className='h-4 w-4' />
-							Atrás
-						</Button>
-					) : (
-						<div />
+				<div className='flex flex-col gap-3 px-4'>
+					{form.currentStep === 'details' && (
+						<Turnstile
+							sitekey={
+								process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ''
+							}
+							size='flexible'
+							theme='auto'
+							onVerify={(token) => form.setTurnstileToken(token)}
+							onExpire={() => form.setTurnstileToken(null)}
+							onError={() => form.setTurnstileToken(null)}
+						/>
 					)}
 
-					{form.currentStep === 'consumer' ? (
-						<Button
-							type='button'
-							onClick={() => form.goToStep('details')}
-						>
-							Continuar
-							<ArrowBigRight />
-						</Button>
-					) : (
-						<Button
-							type='button'
-							onClick={form.handleSubmit}
-							disabled={form.isSubmitting || !activeStoreId}
-						>
-							{form.isSubmitting ? (
-								<>
-									<Loader2 className='mr-2 h-4 w-4 animate-spin' />
-									Enviando...
-								</>
-							) : (
-								<>
-									<Send />
-									Enviar reclamo
-								</>
-							)}
-						</Button>
-					)}
+					<div className='flex items-center justify-between gap-4'>
+						{form.currentStep === 'details' ? (
+							<Button
+								type='button'
+								variant='outline'
+								onClick={() => form.goToStep('consumer')}
+								disabled={form.isSubmitting}
+							>
+								<ChevronLeft className='h-4 w-4' />
+								Atrás
+							</Button>
+						) : (
+							<div />
+						)}
+
+						{form.currentStep === 'consumer' ? (
+							<Button
+								type='button'
+								onClick={() => form.goToStep('details')}
+							>
+								Continuar
+								<ArrowBigRight />
+							</Button>
+						) : (
+							<Button
+								type='button'
+								onClick={form.handleSubmit}
+								disabled={form.isSubmitting || !activeStoreId}
+							>
+								{form.isSubmitting ? (
+									<>
+										<Loader2 className='mr-2 h-4 w-4 animate-spin' />
+										Enviando...
+									</>
+								) : (
+									<>
+										<Send />
+										Enviar reclamo
+									</>
+								)}
+							</Button>
+						)}
+					</div>
 				</div>
 			</Card>
 

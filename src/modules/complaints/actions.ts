@@ -13,6 +13,7 @@ import {
 import { isAiClassificationConfigured } from '@/lib/ai'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { moveS3Object } from '@/lib/s3'
+import { verifyTurnstileToken } from '@/lib/turnstile'
 import { WEBHOOK_EVENT } from '@/lib/webhook-events'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
 import { dispatchWebhookEvent } from '../webhooks/dispatch'
@@ -118,6 +119,8 @@ export interface SubmitComplaintInput {
 	request: string | null
 	// Files
 	files: UploadedFileInput[]
+	// Bot protection
+	turnstileToken: string
 }
 
 export interface SubmitComplaintResult {
@@ -133,6 +136,23 @@ export interface SubmitComplaintResult {
 export async function $submitComplaintAction(
 	input: SubmitComplaintInput,
 ): Promise<SubmitComplaintResult> {
+	// Verificar token de Turnstile
+	const reqHeaders = await headers()
+	const remoteip =
+		reqHeaders.get('x-forwarded-for') ??
+		reqHeaders.get('x-real-ip') ??
+		undefined
+	const isTurnstileValid = await verifyTurnstileToken(
+		input.turnstileToken,
+		remoteip,
+	)
+	if (!isTurnstileValid) {
+		return {
+			success: false,
+			error: 'Verificación de seguridad fallida. Recarga la página e intenta nuevamente.',
+		}
+	}
+
 	// Basic server-side validation
 	if (!input.storeId || !input.organizationId) {
 		return { success: false, error: 'Datos de tienda inválidos.' }
@@ -194,7 +214,6 @@ export async function $submitComplaintAction(
 	let correlative!: string
 
 	try {
-		const reqHeaders = await headers()
 		await db.transaction(async (tx) => {
 			if (input.files.length > 0) {
 				await confirmUploadedFiles(
