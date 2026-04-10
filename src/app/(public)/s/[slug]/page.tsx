@@ -76,6 +76,7 @@ const StoreComplaintPage: NextPage<PageProps> = async ({ params }) => {
 						preselectedStore={store}
 						countries={countries}
 						reasons={reasons}
+						turnstileSiteKey={process.env.TURNSTILE_SITE_KEY ?? ''}
 					/>
 				)}
 

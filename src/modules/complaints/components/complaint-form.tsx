@@ -33,6 +33,7 @@ interface ComplaintFormProps {
 	preselectedStore?: StoreOption
 	countries: CountryOption[]
 	reasons: FlatReason[]
+	turnstileSiteKey: string
 }
 
 export const ComplaintForm: FC<ComplaintFormProps> = ({
@@ -42,6 +43,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 	preselectedStore,
 	countries,
 	reasons,
+	turnstileSiteKey,
 }) => {
 	const defaultStoreId =
 		preselectedStore?.id ?? (stores?.length === 1 ? stores[0]?.id : null)
@@ -137,9 +139,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 				<div className='flex flex-col gap-3 px-4'>
 					{form.currentStep === 'details' && (
 						<Turnstile
-							sitekey={
-								process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ''
-							}
+							sitekey={turnstileSiteKey}
 							size='flexible'
 							theme='auto'
 							onVerify={(token) => form.setTurnstileToken(token)}

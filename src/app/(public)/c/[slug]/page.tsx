@@ -67,6 +67,7 @@ const OrgComplaintPage: NextPage<PageProps> = async ({ params }) => {
 						stores={stores}
 						countries={countries}
 						reasons={reasons}
+						turnstileSiteKey={process.env.TURNSTILE_SITE_KEY ?? ''}
 					/>
 				) : (
 					<FormUnavailableCard
