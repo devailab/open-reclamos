@@ -2,62 +2,72 @@
 
 Sistema open source para crear y gestionar **Libros de Reclamaciones Virtual** alineado con las regulaciones de INDECOPI (Perú).
 
-## ¿Qué es Open Reclamos?
-
 Open Reclamos permite a cualquier empresa implementar un Libro de Reclamaciones Virtual en su sitio web de forma sencilla, cumplir con la normativa del Código de Protección y Defensa del Consumidor, y gestionar los reclamos de sus clientes desde un panel administrativo.
 
-## Tech Stack
-
-- **Framework**: Next.js
-- **Base de datos**: PostgreSQL
-- **ORM**: Drizzle ORM
-
-## Cómo ejecutar el proyecto
+## Desarrollo
 
 ### Prerrequisitos
 
-- [Bun](https://bun.sh/) (runtime de JavaScript)
-- PostgreSQL (base de datos)
+- [Bun](https://bun.sh)
+- PostgreSQL
+- Servicio de correo SMTP
+- Servicio compatible con la API S3 (por ejemplo, MinIO)
+- Cuenta en [ApiPeruDev](https://apiperu.dev) con su token de acceso
 
 ### Configuración
 
-1. Clona el repositorio
-2. Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
+1. Copia el archivo de variables de entorno y completa los valores:
 
-```env
-DB_HOST=
-DB_PORT=
-DB_USER=
-DB_PASSWORD=
-DB_NAME=
+```bash
+cp examples/.env.example .env
 ```
 
-3. Instala las dependencias:
+2. Instala las dependencias y aplica las migraciones:
 
 ```bash
 bun install
-```
-
-4. Genera las migraciones de la base de datos:
-
-```bash
-bun run db:generate
-```
-
-5. Aplica las migraciones:
-
-```bash
 bun run db:migrate
 ```
 
-### Comandos disponibles
+3. Levanta el servidor de desarrollo y el worker de Inngest en terminales separadas:
 
-| Comando | Descripción |
-|---------|-------------|
-| `bun run dev` | Iniciar el servidor de desarrollo |
-| `bun run build` | Construir para producción |
-| `bun run start` | Iniciar el servidor de producción |
-| `bun run lint` | Verificar código (Biome) |
-| `bun run format` | Formatear código |
-| `bun run vitest` | Ejecutar pruebas |
-| `bun run db:studio` | Abrir Drizzle Studio (GUI de base de datos) |
+```bash
+bun run dev
+bun run inngest:dev
+```
+
+Y listo la app estará corriendo en [http://localhost:3000](http://localhost:3000).
+
+## Self-hosted
+
+Para facilitar la implementación, Open Reclamos ofrece una configuración _self-hosted_ que incluye todo lo necesario para ejecutar la aplicación. Se recomienda crear una carpeta dedicada antes de ejecutar los indicado en los siguientes pasos.
+
+> Puede ver los archivos de configuración que se usarán, en la carpeta `examples/` de este repositorio.
+
+### 1. Descarga y configura el `.env`
+
+```bash
+curl -O https://raw.githubusercontent.com/devailab/open-reclamos/main/examples/.env.example
+mv .env.example .env
+```
+
+Edita el `.env` con tus valores antes de continuar.
+
+### 2. Descarga el `docker-compose.yml`
+
+```bash
+curl -O https://raw.githubusercontent.com/devailab/open-reclamos/main/examples/docker-compose.yml
+```
+
+### 3. Levanta los servicios
+
+```bash
+docker compose up -d
+```
+
+Luego de completar esos pasos, ¡felicidades! 🎉 Open Reclamos estará disponible en http://localhost:3000
+. Podrás comenzar registrando tu cuenta y, a partir de ahí, aprovechar todas las funcionalidades que ofrece la plataforma.
+
+## Licencia
+
+[MIT](LICENSE)

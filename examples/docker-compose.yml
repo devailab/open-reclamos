@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  create-bucket:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set minio http://minio:9000 ${S3_ACCESS_KEY} ${S3_SECRET_KEY};
+      mc mb minio/${S3_BUCKET} || true;
+      mc ls minio;
+      exit 0;
+      "
+
+  open-reclamos:
+    image: ghcr.io/devailab/open-reclamos:v0.1.0-alpha.2
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ingest:
+    image: inngest/inngest:latest
+    env_file:
+      - .env
+    depends_on:
+      open-reclamos:
+        condition: service_started
+    command: ["inngest", "start", "-u", "http://open-reclamos:3000/api/inngest"]
+
+volumes:
+  postgres_data:
+  minio_data:
