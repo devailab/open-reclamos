@@ -19,7 +19,7 @@ Open Reclamos permite a cualquier empresa implementar un Libro de Reclamaciones 
 1. Copia el archivo de variables de entorno y completa los valores:
 
 ```bash
-cp examples/.env.example .env
+cp .env.example .env
 ```
 
 2. Instala las dependencias y aplica las migraciones:
