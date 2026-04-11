@@ -1,5 +1,7 @@
 # Open Reclamos
 
+![Open Reclamos Screenshot](examples/open-reclamos-screenshot.png)
+
 Sistema open source para crear y gestionar **Libros de Reclamaciones Virtual** alineado con las regulaciones de INDECOPI (Perú).
 
 Open Reclamos permite a cualquier empresa implementar un Libro de Reclamaciones Virtual en su sitio web de forma sencilla, cumplir con la normativa del Código de Protección y Defensa del Consumidor, y gestionar los reclamos de sus clientes desde un panel administrativo.
