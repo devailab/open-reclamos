@@ -80,6 +80,13 @@ const navItems = [
 		permission: 'stores.view',
 	},
 	{
+		label: 'Avisos',
+		href: '/dashboard/notices',
+		icon: BookOpen,
+		exact: false,
+		permission: 'notices.view',
+	},
+	{
 		label: 'Motivos',
 		href: '/dashboard/reasons',
 		icon: BookOpen,
