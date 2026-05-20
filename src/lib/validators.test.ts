@@ -1,4 +1,4 @@
-﻿import { describe, expect, it, vi } from 'vitest'
+﻿import { describe, expect, it, mock } from 'bun:test'
 
 import { combine, email, minLength, required } from '@/lib/validators'
 
@@ -65,8 +65,8 @@ describe('validators', () => {
 		})
 
 		it('returns the first error and short-circuits execution', () => {
-			const first = vi.fn(() => 'error-1')
-			const second = vi.fn(() => 'error-2')
+			const first = mock(() => 'error-1')
+			const second = mock(() => 'error-2')
 			const validate = combine(first, second)
 
 			expect(validate('any')).toBe('error-1')

@@ -1,8 +1,6 @@
-import type { GetObjectCommandOutput } from '@aws-sdk/client-s3'
-import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth-server'
-import { S3_BUCKET, s3Client } from '@/lib/s3'
+import { s3 } from '@/lib/s3'
 import { getAttachmentByStorageKey } from '@/modules/complaints/detail-queries'
 import { getMembershipContext } from '@/modules/rbac/queries'
 
@@ -31,17 +29,11 @@ export async function GET(
 		return new NextResponse('Forbidden', { status: 403 })
 	}
 
-	const rangeHeader = request.headers.get('range') ?? undefined
+	const file = s3.file(key)
 
-	let object: GetObjectCommandOutput
+	let stat: Awaited<ReturnType<typeof file.stat>>
 	try {
-		object = await s3Client.send(
-			new GetObjectCommand({
-				Bucket: S3_BUCKET,
-				Key: key,
-				Range: rangeHeader,
-			}),
-		)
+		stat = await file.stat()
 	} catch (err: unknown) {
 		const name =
 			err && typeof err === 'object' && 'name' in err ? err.name : ''
@@ -51,34 +43,27 @@ export async function GET(
 		return new NextResponse('Error', { status: 500 })
 	}
 
-	if (!object.Body) {
-		return new NextResponse('Not Found', { status: 404 })
-	}
-
 	const headers = new Headers()
-
-	if (object.ContentType) {
-		headers.set('Content-Type', object.ContentType)
-	}
-	if (object.ContentLength != null) {
-		headers.set('Content-Length', String(object.ContentLength))
-	}
-	if (object.ContentRange) {
-		headers.set('Content-Range', object.ContentRange)
-	}
-	if (object.AcceptRanges) {
-		headers.set('Accept-Ranges', object.AcceptRanges)
-	}
-	if (object.ContentDisposition) {
-		headers.set('Content-Disposition', object.ContentDisposition)
-	}
-
+	headers.set('Content-Type', stat.type ?? 'application/octet-stream')
+	headers.set('Accept-Ranges', 'bytes')
 	headers.set('Cache-Control', 'private, max-age=3600, immutable')
 
-	const status = rangeHeader ? 206 : 200
+	const rangeHeader = request.headers.get('range')
 
-	return new NextResponse(object.Body.transformToWebStream(), {
-		status,
-		headers,
-	})
+	if (rangeHeader) {
+		const match = /bytes=(\d+)-(\d*)/.exec(rangeHeader)
+		if (match) {
+			const start = parseInt(match[1], 10)
+			const end = match[2] ? parseInt(match[2], 10) : stat.size - 1
+			headers.set('Content-Range', `bytes ${start}-${end}/${stat.size}`)
+			headers.set('Content-Length', String(end - start + 1))
+			return new NextResponse(file.slice(start, end + 1).stream(), {
+				status: 206,
+				headers,
+			})
+		}
+	}
+
+	headers.set('Content-Length', String(stat.size))
+	return new NextResponse(file.stream(), { status: 200, headers })
 }

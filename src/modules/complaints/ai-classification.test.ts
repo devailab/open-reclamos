@@ -1,6 +1,6 @@
+import { describe, expect, it } from 'bun:test'
 import type { LanguageModelV3GenerateResult } from '@ai-sdk/provider'
 import { MockLanguageModelV3 } from 'ai/test'
-import { describe, expect, it } from 'vitest'
 import {
 	type ComplaintClassificationContext,
 	type ComplaintExistingTag,

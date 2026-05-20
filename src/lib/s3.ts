@@ -1,25 +1,13 @@
-import {
-	CopyObjectCommand,
-	DeleteObjectCommand,
-	GetObjectCommand,
-	PutObjectCommand,
-	S3Client,
-} from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { S3Client } from 'bun'
 
-const S3_ENDPOINT = process.env.S3_ENDPOINT ?? ''
-const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY ?? ''
-const S3_SECRET_KEY = process.env.S3_SECRET_KEY ?? ''
 export const S3_BUCKET = process.env.S3_BUCKET ?? 'complaints'
 
-export const s3Client = new S3Client({
-	endpoint: S3_ENDPOINT,
-	credentials: {
-		accessKeyId: S3_ACCESS_KEY,
-		secretAccessKey: S3_SECRET_KEY,
-	},
+export const s3 = new S3Client({
+	accessKeyId: process.env.S3_ACCESS_KEY ?? '',
+	secretAccessKey: process.env.S3_SECRET_KEY ?? '',
+	bucket: S3_BUCKET,
+	endpoint: process.env.S3_ENDPOINT ?? '',
 	region: 'auto',
-	forcePathStyle: true,
 })
 
 export async function uploadToS3(
@@ -27,45 +15,23 @@ export async function uploadToS3(
 	body: Buffer | Uint8Array,
 	contentType: string,
 ): Promise<void> {
-	const command = new PutObjectCommand({
-		Bucket: S3_BUCKET,
-		Key: key,
-		Body: body,
-		ContentType: contentType,
-	})
-	await s3Client.send(command)
+	await s3.file(key).write(body, { type: contentType })
 }
 
 export async function getPresignedDownloadUrl(
 	key: string,
 	expiresInSeconds = 3600,
 ): Promise<string> {
-	const command = new GetObjectCommand({
-		Bucket: S3_BUCKET,
-		Key: key,
-	})
-	return getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds })
+	return s3.presign(key, { expiresIn: expiresInSeconds })
 }
 
-/**
- * Mueve un objeto de srcKey a destKey dentro del mismo bucket.
- * S3 no tiene operación de rename nativa, por lo que se hace copy + delete.
- */
 export async function moveS3Object(
 	srcKey: string,
 	destKey: string,
 ): Promise<void> {
-	await s3Client.send(
-		new CopyObjectCommand({
-			Bucket: S3_BUCKET,
-			CopySource: `${S3_BUCKET}/${srcKey}`,
-			Key: destKey,
-		}),
-	)
-	await s3Client.send(
-		new DeleteObjectCommand({
-			Bucket: S3_BUCKET,
-			Key: srcKey,
-		}),
-	)
+	const srcFile = s3.file(srcKey)
+	const stat = await srcFile.stat()
+	const content = await srcFile.arrayBuffer()
+	await s3.file(destKey).write(content, { type: stat.type })
+	await srcFile.delete()
 }

@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { Pool } from 'pg'
+import { drizzle } from 'drizzle-orm/bun-sql'
+import { DATABASE_URL } from '@/lib/config'
 import countriesData from './base/countries.json'
 import rbacData from './base/rbac.json'
 
@@ -200,15 +200,7 @@ async function seedRbac(db: ReturnType<typeof drizzle>) {
 }
 
 async function main() {
-	const pool = new Pool({
-		host: process.env.DB_HOST,
-		port: Number(process.env.DB_PORT),
-		user: process.env.DB_USER,
-		password: process.env.DB_PASSWORD,
-		database: process.env.DB_NAME,
-	})
-
-	const db = drizzle(pool)
+	const db = drizzle(DATABASE_URL)
 
 	try {
 		await seedCountries(db)
@@ -216,7 +208,7 @@ async function main() {
 		await seedRbac(db)
 		console.log('[seed] completed.')
 	} finally {
-		await pool.end()
+		db.$client.close()
 	}
 }
 

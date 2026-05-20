@@ -13,12 +13,11 @@ import {
 	uniqueIndex,
 	uuid,
 } from 'drizzle-orm/pg-core'
-import { v7 as uuidv7 } from 'uuid'
 
 export const ubigeos = pgTable('ubigeos', {
 	id: uuid('id')
 		.primaryKey()
-		.$defaultFn(() => uuidv7()),
+		.$defaultFn(() => Bun.randomUUIDv7()),
 	ubigeo: text('ubigeo').notNull().unique(),
 	ubigeoReniec: text('ubigeo_reniec').unique(),
 	department: text('department').notNull(),
@@ -30,7 +29,7 @@ export const ubigeos = pgTable('ubigeos', {
 export const countries = pgTable('countries', {
 	id: uuid('id')
 		.primaryKey()
-		.$defaultFn(() => uuidv7()),
+		.$defaultFn(() => Bun.randomUUIDv7()),
 	name: text('name').notNull(),
 	iso2: text('iso2').notNull().unique(),
 	iso3: text('iso3').notNull().unique(),
@@ -41,7 +40,7 @@ export const countries = pgTable('countries', {
 export const users = pgTable('users', {
 	id: uuid('id')
 		.primaryKey()
-		.$defaultFn(() => uuidv7()),
+		.$defaultFn(() => Bun.randomUUIDv7()),
 	name: text('name').notNull(),
 	email: text('email').notNull().unique(),
 	emailVerified: boolean('email_verified').default(false).notNull(),
@@ -74,7 +73,7 @@ export const sessions = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		expiresAt: timestamp('expires_at', {
 			withTimezone: true,
 			mode: 'date',
@@ -106,7 +105,7 @@ export const accounts = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		accountId: text('account_id').notNull(),
 		providerId: text('provider_id').notNull(),
 		userId: uuid('user_id')
@@ -146,7 +145,7 @@ export const verifications = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		identifier: text('identifier').notNull(),
 		value: text('value').notNull(),
 		expiresAt: timestamp('expires_at', {
@@ -193,7 +192,7 @@ export const accountRelations = relations(accounts, ({ one }) => ({
 export const organizations = pgTable('organizations', {
 	id: uuid('id')
 		.primaryKey()
-		.$defaultFn(() => uuidv7()),
+		.$defaultFn(() => Bun.randomUUIDv7()),
 	ubigeoId: uuid('ubigeo_id')
 		.notNull()
 		.references(() => ubigeos.id, { onDelete: 'set null' }),
@@ -230,7 +229,7 @@ export const permissions = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		organizationId: uuid('organization_id').references(
 			() => organizations.id,
 			{
@@ -279,7 +278,7 @@ export const roles = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id, {
@@ -425,7 +424,7 @@ export const organizationMemberPermissions = pgTable(
 export const stores = pgTable('stores', {
 	id: uuid('id')
 		.primaryKey()
-		.$defaultFn(() => uuidv7()),
+		.$defaultFn(() => Bun.randomUUIDv7()),
 	organizationId: uuid('organization_id')
 		.notNull()
 		.references(() => organizations.id, { onDelete: 'cascade' }),
@@ -496,7 +495,7 @@ export const organizationInvitations = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id, { onDelete: 'cascade' }),
@@ -567,7 +566,7 @@ export const organizationInvitationStores = pgTable(
 export const organizationSettings = pgTable('organization_settings', {
 	id: uuid('id')
 		.primaryKey()
-		.$defaultFn(() => uuidv7()),
+		.$defaultFn(() => Bun.randomUUIDv7()),
 	organizationId: uuid('organization_id')
 		.notNull()
 		.unique()
@@ -605,7 +604,7 @@ export const organizationSettingsRelations = relations(
 export const complaintReasons = pgTable('complaint_reasons', {
 	id: uuid('id')
 		.primaryKey()
-		.$defaultFn(() => uuidv7()),
+		.$defaultFn(() => Bun.randomUUIDv7()),
 	organizationId: uuid('organization_id').references(() => organizations.id, {
 		onDelete: 'cascade',
 	}),
@@ -632,7 +631,7 @@ export const complaintTags = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id, { onDelete: 'cascade' }),
@@ -670,7 +669,7 @@ export const complaints = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		// multi-tenant directo para facilitar reportes
 		organizationId: uuid('organization_id')
 			.notNull()
@@ -795,7 +794,7 @@ export const complaintDetails = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id, { onDelete: 'cascade' }),
@@ -857,7 +856,7 @@ export const complaintDeliveries = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id, { onDelete: 'cascade' }),
@@ -940,7 +939,7 @@ export const complaintTagAssignments = pgTable(
 export const complaintAttachments = pgTable('complaint_attachments', {
 	id: uuid('id')
 		.primaryKey()
-		.$defaultFn(() => uuidv7()),
+		.$defaultFn(() => Bun.randomUUIDv7()),
 	complaintId: uuid('complaint_id').notNull(),
 	storageKey: text('storage_key').notNull(),
 	fileName: text('file_name').notNull(),
@@ -951,7 +950,7 @@ export const complaintAttachments = pgTable('complaint_attachments', {
 export const storeCorrelatives = pgTable('store_correlatives', {
 	id: uuid('id')
 		.primaryKey()
-		.$defaultFn(() => uuidv7()),
+		.$defaultFn(() => Bun.randomUUIDv7()),
 	storeId: uuid('store_id')
 		.notNull()
 		.unique()
@@ -967,7 +966,7 @@ export const complaintHistory = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		complaintId: uuid('complaint_id')
 			.notNull()
 			.references(() => complaints.id, { onDelete: 'cascade' }),
@@ -1020,7 +1019,7 @@ export const auditLogs = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		organizationId: uuid('organization_id').references(
 			() => organizations.id,
 			{
@@ -1063,7 +1062,7 @@ export const webhookEndpoints = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id, { onDelete: 'cascade' }),
@@ -1115,7 +1114,7 @@ export const webhookDeliveries = pgTable(
 	{
 		id: uuid('id')
 			.primaryKey()
-			.$defaultFn(() => uuidv7()),
+			.$defaultFn(() => Bun.randomUUIDv7()),
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id, { onDelete: 'cascade' }),
