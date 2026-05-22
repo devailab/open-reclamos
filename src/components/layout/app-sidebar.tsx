@@ -19,6 +19,7 @@ import {
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
+import { LogoIcon } from '@/components/logo'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
 	Collapsible,
@@ -179,9 +180,9 @@ export function AppSidebar({ user, permissionKeys = [] }: AppSidebarProps) {
 	return (
 		<Sidebar collapsible='icon'>
 			<SidebarHeader>
-				<div className='flex items-center gap-2 px-2 py-1'>
-					<div className='flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold'>
-						OR
+				<div className='flex items-center gap-2 py-1'>
+					<div className='flex size-7 pl-1 shrink-0 items-center justify-center'>
+						<LogoIcon className='w-5' />
 					</div>
 					<span className='truncate text-sm font-semibold group-data-[collapsible=icon]:hidden'>
 						Open Reclamos
