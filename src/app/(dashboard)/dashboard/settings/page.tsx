@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import {
-	getOrganizationSettingsForUser,
+	getOrganizationSettingsForOrganization,
 	getUbigeoById,
 } from '@/modules/settings/queries'
 import { EmailTestCard } from './_features/email-test-card'
@@ -17,7 +17,9 @@ const SettingsPage: FC = async () => {
 	if (!membership) redirect('/setup')
 	if (!hasPermission(membership, 'settings.view')) redirect('/dashboard')
 
-	const org = await getOrganizationSettingsForUser(session.user.id)
+	const org = await getOrganizationSettingsForOrganization(
+		membership.organizationId,
+	)
 	if (!org) redirect('/setup')
 
 	const currentUbigeo = await getUbigeoById(org.ubigeoId)

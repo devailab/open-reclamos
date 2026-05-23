@@ -13,9 +13,10 @@ import {
 	sendEmail,
 	verifyEmailTransport,
 } from '@/lib/email'
+import { deleteS3Object } from '@/lib/s3'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { renderTestEmailPdfBuffer } from './components/test-email-pdf'
-import { getOrganizationSettingsForUser } from './queries'
+import { getOrganizationSettingsForOrganization } from './queries'
 import {
 	normalizeSendTestEmailInput,
 	normalizeUpdateOrganizationInput,
@@ -123,19 +124,31 @@ function getEmailTestErrorMessage(error: unknown) {
 	return 'No se pudo enviar el correo de prueba. Revisa la configuración SMTP e inténtalo nuevamente.'
 }
 
+async function getOrganizationSettingsAccess(sessionUserId: string) {
+	const membership = await getMembershipContext(sessionUserId)
+	if (!membership) {
+		return { error: 'No se encontró una membresía válida.' as const }
+	}
+
+	const organization = await getOrganizationSettingsForOrganization(
+		membership.organizationId,
+	)
+	if (!organization) {
+		return { error: 'No se encontró una organización asociada.' as const }
+	}
+
+	return { membership, organization }
+}
+
 export async function $updateOrganizationSettingsAction(
 	input: UpdateOrganizationInput,
 ): Promise<SettingsActionResult> {
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const org = await getOrganizationSettingsForUser(session.user.id)
-	if (!org) return { error: 'No se encontró una organización asociada.' }
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership || membership.organizationId !== org.id) {
-		return { error: 'No se encontró una membresía válida.' }
-	}
+	const access = await getOrganizationSettingsAccess(session.user.id)
+	if ('error' in access && access.error) return { error: access.error }
+	const { membership, organization: org } = access
 
 	if (!hasPermission(membership, 'settings.manage')) {
 		return { error: 'No tienes permisos para editar la organización.' }
@@ -270,13 +283,9 @@ export async function $sendOrganizationTestEmailAction(
 	const session = await getSession()
 	if (!session) redirect('/login')
 
-	const org = await getOrganizationSettingsForUser(session.user.id)
-	if (!org) return { error: 'No se encontró una organización asociada.' }
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership || membership.organizationId !== org.id) {
-		return { error: 'No se encontró una membresía válida.' }
-	}
+	const access = await getOrganizationSettingsAccess(session.user.id)
+	if ('error' in access && access.error) return { error: access.error }
+	const { membership, organization: org } = access
 
 	if (!hasPermission(membership, 'settings.manage')) {
 		return {
@@ -359,4 +368,46 @@ export async function $sendOrganizationTestEmailAction(
 		)
 		return { error: getEmailTestErrorMessage(error) }
 	}
+}
+
+export async function $removeOrganizationLogoAction(): Promise<SettingsActionResult> {
+	const session = await getSession()
+	if (!session) redirect('/login')
+
+	const access = await getOrganizationSettingsAccess(session.user.id)
+	if ('error' in access && access.error) return { error: access.error }
+	const { membership, organization } = access
+
+	if (!hasPermission(membership, 'settings.manage')) {
+		return { error: 'No tienes permisos para editar la organización.' }
+	}
+
+	try {
+		await db
+			.update(organizations)
+			.set({
+				logoKey: null,
+				updatedAt: new Date(),
+				updatedBy: session.user.id,
+			})
+			.where(eq(organizations.id, organization.id))
+
+		if (organization.logoKey) {
+			deleteS3Object(organization.logoKey).catch((error) => {
+				console.error(
+					'[settings] No se pudo eliminar el logo anterior de S3:',
+					error,
+				)
+			})
+		}
+	} catch (error) {
+		console.error('[settings] Error al quitar logo:', error)
+		return {
+			error: 'No se pudo quitar el logo. Inténtalo nuevamente.',
+		}
+	}
+
+	revalidatePath('/dashboard')
+	revalidatePath('/dashboard/settings')
+	return { success: true }
 }

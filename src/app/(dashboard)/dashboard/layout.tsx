@@ -12,7 +12,10 @@ import {
 import { db } from '@/database/database'
 import { users } from '@/database/schema'
 import { getSession } from '@/lib/auth-server'
-import { getMembershipContext } from '@/modules/rbac/queries'
+import {
+	getMembershipContext,
+	getUserOrganizationOptions,
+} from '@/modules/rbac/queries'
 
 const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 	const session = await getSession()
@@ -29,7 +32,13 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 		redirect('/setup')
 	}
 
-	const membership = await getMembershipContext(session.user.id)
+	const [membership, organizations] = await Promise.all([
+		getMembershipContext(session.user.id),
+		getUserOrganizationOptions(session.user.id),
+	])
+	const activeOrganization = organizations.find(
+		(organization) => organization.id === membership?.organizationId,
+	)
 
 	return (
 		<SidebarProvider>
@@ -39,6 +48,8 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 					email: session.user.email,
 				}}
 				permissionKeys={membership?.permissionKeys ?? []}
+				organizations={organizations}
+				activeOrganization={activeOrganization ?? null}
 			/>
 			<SidebarInset>
 				<header className='flex h-12 shrink-0 items-center gap-2 border-b px-4'>

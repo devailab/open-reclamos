@@ -1,13 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/database/database'
-import {
-	organizationMembers,
-	organizationSettings,
-	organizations,
-	roles,
-	ubigeos,
-} from '@/database/schema'
+import { organizationSettings, organizations, ubigeos } from '@/database/schema'
 import { DEFAULT_RESPONSE_DEADLINE_DAYS } from '@/lib/constants'
+import { getMembershipContext } from '@/modules/rbac/queries'
 
 export interface OrganizationSettings {
 	id: string
@@ -15,6 +10,7 @@ export interface OrganizationSettings {
 	name: string
 	legalName: string
 	taxId: string
+	logoKey: string | null
 	ubigeoId: string
 	addressType: string
 	address: string
@@ -25,7 +21,6 @@ export interface OrganizationSettings {
 	aiClassificationEnabled: boolean
 	aiOrganizationContext: string | null
 	responseDeadlineDays: number
-	role: string
 }
 
 export interface UbigeoOption {
@@ -43,6 +38,15 @@ export interface OrganizationComplaintSettings {
 export async function getOrganizationSettingsForUser(
 	userId: string,
 ): Promise<OrganizationSettings | null> {
+	const membership = await getMembershipContext(userId)
+	if (!membership) return null
+
+	return getOrganizationSettingsForOrganization(membership.organizationId)
+}
+
+export async function getOrganizationSettingsForOrganization(
+	organizationId: string,
+): Promise<OrganizationSettings | null> {
 	const [result] = await db
 		.select({
 			id: organizations.id,
@@ -50,6 +54,7 @@ export async function getOrganizationSettingsForUser(
 			name: organizations.name,
 			legalName: organizations.legalName,
 			taxId: organizations.taxId,
+			logoKey: organizations.logoKey,
 			ubigeoId: organizations.ubigeoId,
 			addressType: organizations.addressType,
 			address: organizations.address,
@@ -61,19 +66,13 @@ export async function getOrganizationSettingsForUser(
 				organizationSettings.aiClassificationEnabled,
 			aiOrganizationContext: organizationSettings.aiOrganizationContext,
 			responseDeadlineDays: organizationSettings.responseDeadlineDays,
-			role: roles.slug,
 		})
 		.from(organizations)
-		.innerJoin(
-			organizationMembers,
-			eq(organizationMembers.organizationId, organizations.id),
-		)
-		.innerJoin(roles, eq(organizationMembers.roleId, roles.id))
 		.leftJoin(
 			organizationSettings,
 			eq(organizationSettings.organizationId, organizations.id),
 		)
-		.where(eq(organizationMembers.userId, userId))
+		.where(eq(organizations.id, organizationId))
 		.limit(1)
 
 	if (!result) return null

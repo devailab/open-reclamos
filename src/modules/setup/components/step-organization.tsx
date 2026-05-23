@@ -36,7 +36,7 @@ import {
 	validateSlug,
 } from '@/modules/setup/validation'
 
-type CountryData = {
+export interface SetupCountryData {
 	id: string
 	name: string
 	iso2: string
@@ -44,7 +44,7 @@ type CountryData = {
 }
 
 type StepOrganizationProps = {
-	countries: CountryData[]
+	countries: SetupCountryData[]
 }
 
 type OrgFormValues = {
@@ -69,10 +69,9 @@ const INITIAL_VALUES: OrgFormValues = {
 	website: null,
 }
 
-// Intenta adivinar el tipo de dirección a partir de la dirección de SUNAT
-function guessAddressType(direccion: string): SelectOption | null {
-	const d = direccion.toUpperCase()
-	const map: Array<[string[], string]> = [
+function guessAddressType(address: string): SelectOption | null {
+	const normalized = address.toUpperCase()
+	const candidates: Array<[string[], string]> = [
 		[['AV.', 'AVE.', 'AVENIDA'], 'AVENIDA'],
 		[['JR.', 'JR ', 'JIRON', 'JIRÓN'], 'JIRON'],
 		[['PJE.', 'PJ.', 'PSJE.', 'PASAJE'], 'PASAJE'],
@@ -83,16 +82,19 @@ function guessAddressType(direccion: string): SelectOption | null {
 		[['PROL.', 'PROLONGACION', 'PROLONGACIÓN'], 'PROLONGACION'],
 	]
 
-	for (const [prefixes, value] of map) {
-		if (prefixes.some((p) => d.startsWith(p))) {
-			const option = ADDRESS_TYPE_OPTIONS.find((o) => o.value === value)
-			return option ?? null
+	for (const [prefixes, value] of candidates) {
+		if (prefixes.some((prefix) => normalized.startsWith(prefix))) {
+			return (
+				ADDRESS_TYPE_OPTIONS.find((option) => option.value === value) ??
+				null
+			)
 		}
 	}
+
 	return null
 }
 
-export function StepOrganization({ countries }: StepOrganizationProps) {
+export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 	const [ruc, setRuc] = useState('')
 	const [rucData, setRucData] = useState<RucData | null>(null)
 	const [ubigeoId, setUbigeoId] = useState<string | null>(null)
@@ -109,9 +111,9 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 		initialValues: INITIAL_VALUES,
 	})
 
-	const phoneCodeOptions: ComboboxOption[] = countries.map((c) => ({
-		value: c.iso2,
-		label: `+${c.phoneCode} — ${c.name}`,
+	const phoneCodeOptions: ComboboxOption[] = countries.map((country) => ({
+		value: country.iso2,
+		label: `+${country.phoneCode} — ${country.name}`,
 	}))
 
 	const handleRucChange = (value: string | null) => {
@@ -145,8 +147,8 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 			setRucData(result.data)
 			setUbigeoId(result.ubigeoId)
 			setRucFound(true)
-			setValues((prev) => ({
-				...prev,
+			setValues((previous) => ({
+				...previous,
 				name: result.data.legalName,
 				legalName: result.data.legalName,
 				address: result.data.address,
@@ -156,15 +158,8 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 		})
 	}
 
-	const handleRucKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter') {
-			e.preventDefault()
-			handleRucLookup()
-		}
-	}
-
-	const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
-		e.preventDefault()
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
 
 		if (!rucData || !ubigeoId) {
 			feedback.alert.error({
@@ -176,9 +171,17 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 		const errors = validate({ focus: 'first' })
 		if (errors.length > 0) return
 
+		const confirmed = await feedback.confirm({
+			title: '¿Crear esta organización?',
+			description: `Se registrará "${values.name}" con RUC ${ruc}. Una vez creada no podrás modificar el RUC.`,
+			confirmText: 'Sí, crear organización',
+			cancelText: 'Revisar datos',
+		})
+		if (!confirmed) return
+
 		startTransition(async () => {
 			const selectedCountry = countries.find(
-				(c) => c.iso2 === values.phoneCodeOption?.value,
+				(country) => country.iso2 === values.phoneCodeOption?.value,
 			)
 
 			const result = await $setupOrganizationAction({
@@ -207,7 +210,6 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 
 	return (
 		<form onSubmit={handleSubmit} className='space-y-4'>
-			{/* Sección RUC */}
 			<Card>
 				<CardHeader className='pb-4'>
 					<CardTitle className='text-base'>
@@ -225,7 +227,12 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 								ref={rucFieldRef}
 								value={ruc}
 								onValueChange={handleRucChange}
-								onKeyDown={handleRucKeyDown}
+								onKeyDown={(event) => {
+									if (event.key === 'Enter') {
+										event.preventDefault()
+										handleRucLookup()
+									}
+								}}
 								validate={validateRuc}
 								placeholder='20552103816'
 								disabled={isLoading}
@@ -251,7 +258,6 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 				</CardContent>
 			</Card>
 
-			{/* Datos de la organización */}
 			{rucFound && (
 				<Card>
 					<CardHeader className='pb-4'>
@@ -296,7 +302,7 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 						<Separator />
 
 						<div>
-							<p className='text-sm font-medium mb-3'>
+							<p className='mb-3 text-sm font-medium'>
 								Dirección
 							</p>
 							<div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
@@ -323,13 +329,13 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 						<Separator />
 
 						<div>
-							<p className='text-sm font-medium mb-1'>
+							<p className='mb-1 text-sm font-medium'>
 								Contacto{' '}
-								<span className='text-muted-foreground font-normal'>
+								<span className='font-normal text-muted-foreground'>
 									(opcional)
 								</span>
 							</p>
-							<p className='text-xs text-muted-foreground mb-3'>
+							<p className='mb-3 text-xs text-muted-foreground'>
 								Datos de contacto visibles en el libro de
 								reclamaciones
 							</p>
@@ -351,9 +357,9 @@ export function StepOrganization({ countries }: StepOrganizationProps) {
 											type='tel'
 											disabled={isPending}
 											prepend={
-												values.phoneCodeOption && (
+												values.phoneCodeOption ? (
 													<Phone className='h-4 w-4 text-muted-foreground' />
-												)
+												) : undefined
 											}
 										/>
 									</div>

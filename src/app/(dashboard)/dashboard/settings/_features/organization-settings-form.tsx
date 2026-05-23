@@ -12,7 +12,8 @@ import {
 	Phone,
 	Tag,
 } from 'lucide-react'
-import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { useRef, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import AutocompleteField, {
 	type AutocompleteOption,
@@ -22,6 +23,7 @@ import NumberField from '@/components/forms/number-field'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import TextField from '@/components/forms/text-field'
 import TextAreaField from '@/components/forms/textarea-field'
+import { OrganizationLogo } from '@/components/organization-logo'
 import { PublicFormLink } from '@/components/public-form-link'
 import { Button } from '@/components/ui/button'
 import {
@@ -39,7 +41,10 @@ import {
 	MIN_RESPONSE_DEADLINE_DAYS,
 } from '@/lib/constants'
 import { required } from '@/lib/validators'
-import { $updateOrganizationSettingsAction } from '@/modules/settings/actions'
+import {
+	$removeOrganizationLogoAction,
+	$updateOrganizationSettingsAction,
+} from '@/modules/settings/actions'
 import type { OrganizationSettings } from '@/modules/settings/queries'
 import { $searchUbigeosAction } from '@/modules/setup/actions'
 
@@ -69,6 +74,7 @@ export function OrganizationSettingsForm({
 	currentUbigeoOption,
 	canManage,
 }: OrganizationSettingsFormProps) {
+	const router = useRouter()
 	const getInitialAddressType = (): SelectOption | null => {
 		return (
 			ADDRESS_TYPE_OPTIONS.find((o) => o.value === org.addressType) ??
@@ -92,7 +98,12 @@ export function OrganizationSettingsForm({
 	}
 
 	const [values, setValues] = useState<OrgFormValues>(initialValues)
+	const [logoKey, setLogoKey] = useState(org.logoKey)
+	const [logoVersion, setLogoVersion] = useState(0)
 	const [isPending, startTransition] = useTransition()
+	const [isUploadingLogo, startUploadTransition] = useTransition()
+	const [isRemovingLogo, startRemoveLogoTransition] = useTransition()
+	const logoInputRef = useRef<HTMLInputElement>(null)
 	const { register, validate } = useForm({
 		values,
 		setValues,
@@ -110,6 +121,65 @@ export function OrganizationSettingsForm({
 			return `El plazo máximo es ${MAX_RESPONSE_DEADLINE_DAYS} días.`
 		}
 		return null
+	}
+
+	const handleLogoUpload = (file: File | null) => {
+		if (!file) return
+
+		startUploadTransition(async () => {
+			try {
+				const formData = new FormData()
+				formData.append('file', file)
+
+				const response = await fetch('/api/organizations/logo', {
+					method: 'POST',
+					body: formData,
+				})
+				const payload = await response.json()
+
+				if (!response.ok) {
+					sileo.error({
+						title: 'No se pudo subir el logo',
+						description:
+							payload.error ??
+							'Inténtalo nuevamente en unos segundos.',
+					})
+					return
+				}
+
+				setLogoKey(payload.logoKey ?? 'uploaded')
+				setLogoVersion((current) => current + 1)
+				router.refresh()
+				sileo.success({ title: 'Logo actualizado' })
+			} catch {
+				sileo.error({
+					title: 'No se pudo subir el logo',
+					description: 'Inténtalo nuevamente en unos segundos.',
+				})
+			} finally {
+				if (logoInputRef.current) {
+					logoInputRef.current.value = ''
+				}
+			}
+		})
+	}
+
+	const handleRemoveLogo = () => {
+		startRemoveLogoTransition(async () => {
+			const result = await $removeOrganizationLogoAction()
+			if ('error' in result) {
+				sileo.error({
+					title: 'No se pudo quitar el logo',
+					description: result.error,
+				})
+				return
+			}
+
+			setLogoKey(null)
+			setLogoVersion((current) => current + 1)
+			router.refresh()
+			sileo.success({ title: 'Logo eliminado' })
+		})
 	}
 
 	const handleSubmit = () => {
@@ -140,6 +210,7 @@ export function OrganizationSettingsForm({
 				return
 			}
 
+			router.refresh()
 			sileo.success({ title: 'Configuración guardada' })
 		})
 	}
@@ -154,6 +225,86 @@ export function OrganizationSettingsForm({
 					organización.
 				</div>
 			)}
+
+			<Card>
+				<CardHeader>
+					<CardTitle className='flex items-center gap-2 text-base'>
+						<Building2 className='size-4' />
+						Identidad visual
+					</CardTitle>
+					<CardDescription>
+						Sube el logo de tu organización. Recomendado: PNG, JPG o
+						WebP en formato cuadrado de 512x512 px y máximo 2 MB.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className='space-y-4'>
+					<div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
+						<OrganizationLogo
+							organizationId={org.id}
+							logoKey={logoKey}
+							name={org.name}
+							cacheKey={logoVersion}
+							className='size-20 rounded-2xl'
+						/>
+						<div className='space-y-3'>
+							<div>
+								<p className='text-sm font-medium'>
+									Logo de la organización
+								</p>
+								<p className='text-xs text-muted-foreground'>
+									Si no subes uno, usaremos el logo por
+									defecto de Open Reclamos en el sidebar.
+								</p>
+							</div>
+							<div className='flex flex-wrap gap-2'>
+								<Button
+									type='button'
+									variant='outline'
+									disabled={
+										disabled ||
+										isUploadingLogo ||
+										isRemovingLogo
+									}
+									onClick={() =>
+										logoInputRef.current?.click()
+									}
+								>
+									{isUploadingLogo
+										? 'Subiendo...'
+										: 'Subir logo'}
+								</Button>
+								<Button
+									type='button'
+									variant='ghost'
+									disabled={
+										disabled ||
+										!logoKey ||
+										isUploadingLogo ||
+										isRemovingLogo
+									}
+									onClick={handleRemoveLogo}
+								>
+									{isRemovingLogo
+										? 'Quitando...'
+										: 'Quitar logo'}
+								</Button>
+								<input
+									ref={logoInputRef}
+									type='file'
+									accept='image/png,image/jpeg,image/webp'
+									className='hidden'
+									disabled={disabled || isUploadingLogo}
+									onChange={(event) =>
+										handleLogoUpload(
+											event.target.files?.[0] ?? null,
+										)
+									}
+								/>
+							</div>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
 
 			{/* Información general */}
 			<Card>

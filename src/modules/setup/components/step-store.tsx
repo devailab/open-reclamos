@@ -49,9 +49,12 @@ const INITIAL_VALUES: StoreFormValues = {
 	url: null,
 }
 
-export function StepStore() {
-	const [isPending, startTransition] = useTransition()
+type SetupStepStoreProps = {
+	organizationName?: string
+}
 
+export function SetupStepStore({ organizationName }: SetupStepStoreProps) {
+	const [isPending, startTransition] = useTransition()
 	const [values, setValues] = useState<StoreFormValues>(INITIAL_VALUES)
 	const { register, validate } = useForm({
 		values,
@@ -61,8 +64,8 @@ export function StepStore() {
 
 	const isPhysical = values.type?.value === 'physical'
 
-	const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
-		e.preventDefault()
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
 
 		const errors = validate({ focus: 'first' })
 		if (errors.length > 0) return
@@ -92,6 +95,16 @@ export function StepStore() {
 
 	return (
 		<form onSubmit={handleSubmit} className='space-y-4'>
+			{organizationName && (
+				<div className='flex items-center gap-2 rounded-lg border bg-muted/50 px-4 py-3 text-sm'>
+					<span className='text-muted-foreground'>
+						Completando configuración para
+					</span>
+					<span className='font-medium text-foreground'>
+						{organizationName}
+					</span>
+				</div>
+			)}
 			<Card>
 				<CardHeader className='pb-4'>
 					<CardTitle className='text-base'>
@@ -102,7 +115,6 @@ export function StepStore() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className='space-y-5'>
-					{/* Nombre y tipo */}
 					<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
 						<TextField
 							{...register('name')}
@@ -121,7 +133,6 @@ export function StepStore() {
 						/>
 					</div>
 
-					{/* Campos condicionales según el tipo */}
 					{values.type && (
 						<>
 							<Separator />

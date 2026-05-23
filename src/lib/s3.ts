@@ -35,3 +35,7 @@ export async function moveS3Object(
 	await s3.file(destKey).write(content, { type: stat.type })
 	await srcFile.delete()
 }
+
+export async function deleteS3Object(key: string): Promise<void> {
+	await s3.file(key).delete()
+}

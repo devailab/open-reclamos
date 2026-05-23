@@ -1,4 +1,5 @@
 import { drizzle } from 'drizzle-orm/bun-sql'
+import { DATABASE_URL } from '@/lib/config'
 
 type DrizzleDb = ReturnType<typeof drizzle>
 
@@ -6,10 +7,7 @@ let _db: DrizzleDb | undefined
 
 function getDb(): DrizzleDb {
 	if (!_db) {
-		const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } = process.env
-		_db = drizzle(
-			`postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`,
-		)
+		_db = drizzle(DATABASE_URL)
 	}
 	return _db
 }

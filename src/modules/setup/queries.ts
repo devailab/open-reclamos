@@ -1,4 +1,4 @@
-import { eq, ilike, or } from 'drizzle-orm'
+import { and, eq, ilike, isNull, or } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
 	countries,
@@ -85,4 +85,29 @@ export async function getUserOrganization(userId: string) {
 		.where(eq(organizationMembers.userId, userId))
 		.limit(1)
 	return result[0] ?? null
+}
+
+export async function getOrganizationById(organizationId: string) {
+	const result = await db
+		.select({ id: organizations.id, name: organizations.name })
+		.from(organizations)
+		.where(eq(organizations.id, organizationId))
+		.limit(1)
+	return result[0] ?? null
+}
+
+export async function hasOrganizationStores(
+	organizationId: string,
+): Promise<boolean> {
+	const result = await db
+		.select({ id: stores.id })
+		.from(stores)
+		.where(
+			and(
+				eq(stores.organizationId, organizationId),
+				isNull(stores.deletedAt),
+			),
+		)
+		.limit(1)
+	return result.length > 0
 }

@@ -16,6 +16,7 @@ import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { getSession } from '@/lib/auth-server'
 import { sendEmail } from '@/lib/email'
+import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { getRoleByIdForOrganization } from '@/modules/roles/queries'
 import { createInvitationToken, hashInvitationToken } from './lib'
@@ -753,6 +754,7 @@ export async function $acceptInvitationAction(
 	}
 
 	revalidatePath('/dashboard/users')
+	await setActiveOrganizationCookie(invitation.organizationId)
 	redirect('/dashboard')
 }
 

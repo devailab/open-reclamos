@@ -1,4 +1,5 @@
 import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm'
+import { cache } from 'react'
 import { type DbTransaction, db } from '@/database/database'
 import {
 	organizationInvitationStores,
@@ -11,8 +12,11 @@ import {
 	rolePermissions,
 	roles,
 	stores,
+	users,
 } from '@/database/schema'
+import { getActiveOrganizationCookie } from './cookies'
 import { BASE_ROLE_DEFINITIONS, SYSTEM_PERMISSION_DEFINITIONS } from './lib'
+import { selectActiveOrganizationId } from './organization-selection'
 
 type DatabaseExecutor = typeof db | DbTransaction
 
@@ -69,6 +73,14 @@ export interface InvitationDetails {
 	revokedAt: Date | null
 }
 
+export interface UserOrganizationOption {
+	id: string
+	name: string
+	slug: string
+	logoKey: string | null
+	logoVersion: string | null
+}
+
 export async function getOrganizationForUser(userId: string) {
 	const [membership] = await db
 		.select({ organizationId: organizationMembers.organizationId })
@@ -79,8 +91,52 @@ export async function getOrganizationForUser(userId: string) {
 	return membership?.organizationId ?? null
 }
 
-export async function getMembershipContext(
+export const getUserOrganizationOptions = cache(
+	async (userId: string): Promise<UserOrganizationOption[]> => {
+		const rows = await db
+			.select({
+				id: organizations.id,
+				name: organizations.name,
+				slug: organizations.slug,
+				logoKey: organizations.logoKey,
+				logoVersion: organizations.updatedAt,
+			})
+			.from(organizationMembers)
+			.innerJoin(
+				organizations,
+				eq(organizationMembers.organizationId, organizations.id),
+			)
+			.where(eq(organizationMembers.userId, userId))
+			.orderBy(asc(organizations.name))
+
+		return rows.map((row) => ({
+			...row,
+			logoVersion: row.logoVersion?.toISOString() ?? null,
+		}))
+	},
+)
+
+export const getPendingOrganizationId = cache(async (userId: string) => {
+	const [user] = await db
+		.select({ pendingOrganizationId: users.pendingOrganizationId })
+		.from(users)
+		.where(eq(users.id, userId))
+		.limit(1)
+
+	const pendingOrganizationId = user?.pendingOrganizationId ?? null
+	if (!pendingOrganizationId) return null
+
+	const organizations = await getUserOrganizationOptions(userId)
+	return organizations.some(
+		(organization) => organization.id === pendingOrganizationId,
+	)
+		? pendingOrganizationId
+		: null
+})
+
+async function getMembershipContextByOrganization(
 	userId: string,
+	organizationId: string,
 ): Promise<MembershipContext | null> {
 	const [membership] = await db
 		.select({
@@ -94,7 +150,12 @@ export async function getMembershipContext(
 		})
 		.from(organizationMembers)
 		.innerJoin(roles, eq(organizationMembers.roleId, roles.id))
-		.where(eq(organizationMembers.userId, userId))
+		.where(
+			and(
+				eq(organizationMembers.userId, userId),
+				eq(organizationMembers.organizationId, organizationId),
+			),
+		)
 		.limit(1)
 
 	if (!membership) return null
@@ -177,6 +238,34 @@ export async function getMembershipContext(
 		),
 		storeIds: assignedStores.map((store) => store.id),
 	}
+}
+
+export const getActiveMembershipContext = cache(
+	async (userId: string): Promise<MembershipContext | null> => {
+		const organizations = await getUserOrganizationOptions(userId)
+		const selectedOrganizationId = selectActiveOrganizationId(
+			await getActiveOrganizationCookie(),
+			organizations.map((organization) => organization.id),
+		)
+
+		if (!selectedOrganizationId) return null
+
+		return getMembershipContextByOrganization(
+			userId,
+			selectedOrganizationId,
+		)
+	},
+)
+
+export async function getMembershipContext(
+	userId: string,
+	organizationId?: string,
+): Promise<MembershipContext | null> {
+	if (!organizationId) {
+		return getActiveMembershipContext(userId)
+	}
+
+	return getMembershipContextByOrganization(userId, organizationId)
 }
 
 export function hasPermission(

@@ -15,9 +15,11 @@ import {
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { DOCUMENT_LOOKUP_PROVIDER } from '@/lib/config'
+import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
 import {
 	ensureOrganizationRoles,
 	findRoleByKeyForOrganization,
+	getMembershipContext,
 } from '@/modules/rbac/queries'
 import {
 	getDocumentLookupProvider,
@@ -158,6 +160,24 @@ export type SetupOrganizationInput = {
 
 export type SetupActionResult = { error: string } | null
 
+async function getUserSetupStatus(userId: string) {
+	const [user] = await db
+		.select({
+			setupStatus: users.setupStatus,
+			pendingOrganizationId: users.pendingOrganizationId,
+		})
+		.from(users)
+		.where(eq(users.id, userId))
+		.limit(1)
+
+	return (
+		user ?? {
+			setupStatus: null,
+			pendingOrganizationId: null,
+		}
+	)
+}
+
 export async function $setupOrganizationAction(
 	input: SetupOrganizationInput,
 ): Promise<SetupActionResult> {
@@ -170,6 +190,10 @@ export async function $setupOrganizationAction(
 	if (await checkSlugExists(input.slug)) {
 		return { error: 'Este identificador ya está en uso. Elige otro.' }
 	}
+
+	const userState = await getUserSetupStatus(session.user.id)
+	const isOnboardingFlow = userState.setupStatus !== 'complete'
+	let createdOrganizationId: string | null = null
 
 	try {
 		await db.transaction(async (tx) => {
@@ -189,6 +213,8 @@ export async function $setupOrganizationAction(
 					createdBy: session.user.id,
 				})
 				.returning({ id: organizations.id })
+
+			createdOrganizationId = org.id
 
 			await ensureOrganizationRoles(
 				{
@@ -220,10 +246,20 @@ export async function $setupOrganizationAction(
 				createdBy: session.user.id,
 			})
 
-			await tx
-				.update(users)
-				.set({ setupStatus: 'store' })
-				.where(eq(users.id, session.user.id))
+			if (isOnboardingFlow) {
+				await tx
+					.update(users)
+					.set({
+						setupStatus: 'store',
+						pendingOrganizationId: org.id,
+					})
+					.where(eq(users.id, session.user.id))
+			} else {
+				await tx
+					.update(users)
+					.set({ pendingOrganizationId: org.id })
+					.where(eq(users.id, session.user.id))
+			}
 
 			await createAuditLog(
 				{
@@ -248,7 +284,37 @@ export async function $setupOrganizationAction(
 		}
 	}
 
-	redirect('/setup')
+	if (!createdOrganizationId) {
+		return {
+			error: 'Error al guardar la organización. Inténtalo de nuevo.',
+		}
+	}
+
+	if (isOnboardingFlow) {
+		redirect('/setup?continued=1')
+	}
+
+	redirect('/dashboard/organizations/new')
+}
+
+async function resolveSetupStoreOrganizationId(
+	userId: string,
+	setupStatus: string | null,
+	pendingOrganizationId: string | null,
+) {
+	if (
+		pendingOrganizationId &&
+		(await getMembershipContext(userId, pendingOrganizationId))
+	) {
+		return pendingOrganizationId
+	}
+
+	if (setupStatus === 'complete') {
+		return null
+	}
+
+	const organization = await getUserOrganization(userId)
+	return organization?.id ?? null
 }
 
 export type SetupStoreInput = {
@@ -269,10 +335,16 @@ export async function $setupStoreAction(
 		redirect('/login')
 	}
 
-	// Derivar la organización desde la membresía del usuario — nunca confiar en input del cliente
-	const org = await getUserOrganization(session.user.id)
-	if (!org) {
-		return { error: 'No se encontró una organización asociada.' }
+	const userState = await getUserSetupStatus(session.user.id)
+	const organizationId = await resolveSetupStoreOrganizationId(
+		session.user.id,
+		userState.setupStatus,
+		userState.pendingOrganizationId,
+	)
+	if (!organizationId) {
+		return {
+			error: 'No se encontró la organización pendiente. Vuelve a crearla para continuar.',
+		}
 	}
 
 	const slug = await $getStoreSlugSuggestionAction(input.name)
@@ -282,7 +354,7 @@ export async function $setupStoreAction(
 			const [store] = await tx
 				.insert(stores)
 				.values({
-					organizationId: org.id,
+					organizationId,
 					name: input.name,
 					slug,
 					type: input.type,
@@ -294,14 +366,24 @@ export async function $setupStoreAction(
 				})
 				.returning({ id: stores.id })
 
-			await tx
-				.update(users)
-				.set({ setupStatus: 'complete' })
-				.where(eq(users.id, session.user.id))
+			if (userState.setupStatus !== 'complete') {
+				await tx
+					.update(users)
+					.set({
+						setupStatus: 'complete',
+						pendingOrganizationId: null,
+					})
+					.where(eq(users.id, session.user.id))
+			} else {
+				await tx
+					.update(users)
+					.set({ pendingOrganizationId: null })
+					.where(eq(users.id, session.user.id))
+			}
 
 			await createAuditLog(
 				{
-					organizationId: org.id,
+					organizationId,
 					userId: session.user.id,
 					action: AUDIT_LOG.STORE_CREATED,
 					entityType: 'store',
@@ -309,7 +391,7 @@ export async function $setupStoreAction(
 					newData: {
 						name: input.name,
 						type: input.type,
-						organizationId: org.id,
+						organizationId,
 					},
 				},
 				tx,
@@ -319,5 +401,6 @@ export async function $setupStoreAction(
 		return { error: 'Error al guardar la tienda. Inténtalo de nuevo.' }
 	}
 
+	await setActiveOrganizationCookie(organizationId)
 	redirect('/dashboard')
 }

@@ -8,6 +8,13 @@ import { db } from '@/database/database'
 import { organizationMembers, users } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
+import {
+	clearActiveOrganizationCookie,
+	getActiveOrganizationCookie,
+	setActiveOrganizationCookie,
+} from '@/modules/rbac/cookies'
+import { selectActiveOrganizationId } from '@/modules/rbac/organization-selection'
+import { getUserOrganizationOptions } from '@/modules/rbac/queries'
 
 export type AuthActionResult = {
 	error: string | null
@@ -156,6 +163,15 @@ export async function $loginAction(
 		redirect('/setup')
 	}
 
+	const organizations = await getUserOrganizationOptions(result.user.id)
+	const activeOrganizationId = selectActiveOrganizationId(
+		await getActiveOrganizationCookie(),
+		organizations.map((organization) => organization.id),
+	)
+	if (activeOrganizationId) {
+		await setActiveOrganizationCookie(activeOrganizationId)
+	}
+
 	redirect('/dashboard')
 }
 
@@ -192,6 +208,7 @@ export async function $registerAction(
 }
 
 export async function $logoutAction(): Promise<void> {
+	await clearActiveOrganizationCookie()
 	await auth.api.signOut({
 		headers: await headers(),
 	})
