@@ -1,10 +1,4 @@
-const host = process.env.DB_HOST
-const port = process.env.DB_PORT
-const user = process.env.DB_USER
-const password = process.env.DB_PASSWORD
-const dbName = process.env.DB_NAME
-
-export const DATABASE_URL = `postgresql://${user}:${password}@${host}:${port}/${dbName}`
+export const DATABASE_URL = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
 
 export const DOCUMENT_LOOKUP_PROVIDER =
 	process.env.DOCUMENT_LOOKUP_PROVIDER ?? 'JSON_PE'
