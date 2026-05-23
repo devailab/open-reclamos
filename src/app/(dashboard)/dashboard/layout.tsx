@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import type { FC, PropsWithChildren } from 'react'
 import { AppSidebar } from '@/components/layout/app-sidebar'
+import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { Separator } from '@/components/ui/separator'
 import {
 	SidebarInset,
@@ -46,6 +47,9 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 					<span className='text-sm text-muted-foreground'>
 						Open Reclamos
 					</span>
+					<div className='ml-auto'>
+						<ThemeToggle />
+					</div>
 				</header>
 				<div className='flex flex-1 flex-col p-4'>{children}</div>
 			</SidebarInset>

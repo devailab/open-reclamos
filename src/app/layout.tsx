@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import './globals.css'
 import type { FC, PropsWithChildren } from 'react'
-import { Toaster } from 'sileo'
 import FeedbackDialog from '@/components/feedback-dialog'
+import { ThemeProvider } from '@/components/theme/theme-provider'
+import { ThemeToaster } from '@/components/theme/theme-toaster'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 const poppins = Poppins({
@@ -19,11 +20,18 @@ export const metadata: Metadata = {
 
 const RootLayout: FC<PropsWithChildren> = ({ children }) => {
 	return (
-		<html lang='es'>
+		<html lang='es' suppressHydrationWarning>
 			<body className={`${poppins.variable} antialiased`}>
-				<TooltipProvider>{children}</TooltipProvider>
-				<FeedbackDialog />
-				<Toaster position='top-center' theme='light' />
+				<ThemeProvider
+					attribute='class'
+					defaultTheme='system'
+					enableSystem
+					disableTransitionOnChange
+				>
+					<TooltipProvider>{children}</TooltipProvider>
+					<FeedbackDialog />
+					<ThemeToaster />
+				</ThemeProvider>
 			</body>
 		</html>
 	)
