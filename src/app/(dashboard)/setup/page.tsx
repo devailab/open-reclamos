@@ -65,7 +65,9 @@ const SetupPage: NextPage<Props> = async ({ searchParams }) => {
 				step='store'
 				countries={countries}
 				mode='setup'
-				organizationName={isDirectContinuation ? undefined : organization.name}
+				organizationName={
+					isDirectContinuation ? undefined : organization.name
+				}
 			/>
 		)
 	}
