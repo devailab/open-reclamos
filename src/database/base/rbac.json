@@ -36,6 +36,20 @@
             "description": "Permite crear, editar y desactivar tiendas."
         },
         {
+            "key": "notices.view",
+            "slug": "notices-view",
+            "module": "notices",
+            "name": "Ver avisos",
+            "description": "Permite consultar los avisos informativos de la organizacion."
+        },
+        {
+            "key": "printable.view",
+            "slug": "printable-view",
+            "module": "printable",
+            "name": "Ver exportables",
+            "description": "Permite acceder a la exportacion del widget y del aviso en PDF."
+        },
+        {
             "key": "reasons.view",
             "slug": "reasons-view",
             "module": "reasons",
@@ -153,6 +167,8 @@
                 "complaints.respond",
                 "stores.view",
                 "stores.manage",
+                "notices.view",
+                "printable.view",
                 "reasons.view",
                 "reasons.manage",
                 "audit.view",
@@ -180,6 +196,8 @@
                 "complaints.manage",
                 "complaints.respond",
                 "stores.view",
+                "notices.view",
+                "printable.view",
                 "reasons.view",
                 "audit.view",
                 "settings.view"
@@ -193,6 +211,8 @@
             "permissionKeys": [
                 "complaints.view",
                 "stores.view",
+                "notices.view",
+                "printable.view",
                 "reasons.view",
                 "audit.view",
                 "settings.view"

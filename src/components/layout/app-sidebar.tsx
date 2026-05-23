@@ -9,6 +9,7 @@ import {
 	KeyRound,
 	LayoutDashboard,
 	LogOut,
+	ScanText,
 	Settings,
 	ShieldCheck,
 	Store,
@@ -81,13 +82,6 @@ const navItems = [
 		permission: 'stores.view',
 	},
 	{
-		label: 'Avisos',
-		href: '/dashboard/notices',
-		icon: BookOpen,
-		exact: false,
-		permission: 'notices.view',
-	},
-	{
 		label: 'Motivos',
 		href: '/dashboard/reasons',
 		icon: BookOpen,
@@ -107,6 +101,21 @@ const navItems = [
 		icon: Settings,
 		exact: false,
 		permission: 'settings.view',
+	},
+]
+
+const noticesItems = [
+	{
+		label: 'Sitio web',
+		href: '/dashboard/notices/website',
+		icon: BookOpen,
+		permission: 'notices.view',
+	},
+	{
+		label: 'Imprimible',
+		href: '/dashboard/notices/printable',
+		icon: ScanText,
+		permission: 'printable.view',
 	},
 ]
 
@@ -156,6 +165,15 @@ export function AppSidebar({ user, permissionKeys = [] }: AppSidebarProps) {
 			item.permission === null ||
 			permissionKeys.includes(item.permission),
 	)
+	const visibleNoticesItems = noticesItems.filter((item) =>
+		permissionKeys.includes(item.permission),
+	)
+	const isNoticesActive = visibleNoticesItems.some(
+		(item) =>
+			pathname === item.href || pathname.startsWith(`${item.href}/`),
+	)
+	const [isNoticesOpen, setIsNoticesOpen] = useState(isNoticesActive)
+
 	const visibleAdministrationItems = administrationItems.filter((item) =>
 		permissionKeys.includes(item.permission),
 	)
@@ -166,6 +184,10 @@ export function AppSidebar({ user, permissionKeys = [] }: AppSidebarProps) {
 	const [isAdministrationOpen, setIsAdministrationOpen] = useState(
 		isAdministrationActive,
 	)
+
+	useEffect(() => {
+		if (isNoticesActive) setIsNoticesOpen(true)
+	}, [isNoticesActive])
 
 	useEffect(() => {
 		if (isAdministrationActive) setIsAdministrationOpen(true)
@@ -213,6 +235,63 @@ export function AppSidebar({ user, permissionKeys = [] }: AppSidebarProps) {
 									</SidebarMenuItem>
 								)
 							})}
+							{visibleNoticesItems.length > 0 && (
+								<SidebarMenuItem>
+									<Collapsible
+										open={isNoticesOpen}
+										onOpenChange={setIsNoticesOpen}
+									>
+										<CollapsibleTrigger
+											render={
+												<SidebarMenuButton tooltip='Aviso'>
+													<BookOpen />
+													<span>Aviso</span>
+													<ChevronRight className='ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
+												</SidebarMenuButton>
+											}
+										/>
+										<CollapsibleContent>
+											<SidebarMenuSub>
+												{visibleNoticesItems.map(
+													(item) => {
+														const isActive =
+															pathname ===
+																item.href ||
+															pathname.startsWith(
+																`${item.href}/`,
+															)
+														return (
+															<SidebarMenuSubItem
+																key={item.href}
+															>
+																<SidebarMenuSubButton
+																	render={
+																		<Link
+																			href={
+																				item.href
+																			}
+																		/>
+																	}
+																	isActive={
+																		isActive
+																	}
+																>
+																	<item.icon />
+																	<span>
+																		{
+																			item.label
+																		}
+																	</span>
+																</SidebarMenuSubButton>
+															</SidebarMenuSubItem>
+														)
+													},
+												)}
+											</SidebarMenuSub>
+										</CollapsibleContent>
+									</Collapsible>
+								</SidebarMenuItem>
+							)}
 							{visibleAdministrationItems.length > 0 && (
 								<SidebarMenuItem>
 									<Collapsible
