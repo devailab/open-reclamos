@@ -8,6 +8,8 @@ import { db } from '@/database/database'
 import { organizationMembers, users } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
+import { ALLOW_PUBLIC_REGISTRATION } from '@/lib/config'
+import { hasAnyUser } from '@/modules/auth/queries'
 import {
 	clearActiveOrganizationCookie,
 	getActiveOrganizationCookie,
@@ -180,6 +182,11 @@ export async function $registerAction(
 	email: string,
 	password: string,
 ): Promise<AuthActionResult> {
+	const anyUser = await hasAnyUser()
+	if (!ALLOW_PUBLIC_REGISTRATION && anyUser) {
+		return { error: 'El registro de nuevas cuentas no está disponible.' }
+	}
+
 	let result: Awaited<ReturnType<typeof auth.api.signUpEmail>>
 
 	try {

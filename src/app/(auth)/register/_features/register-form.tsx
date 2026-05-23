@@ -37,7 +37,13 @@ const INITIAL_VALUES: RegisterValues = {
 	confirmPassword: null,
 }
 
-export const RegisterForm: FC = () => {
+interface RegisterFormProps {
+	isFirstUser?: boolean
+}
+
+export const RegisterForm: FC<RegisterFormProps> = ({
+	isFirstUser = false,
+}) => {
 	const [values, setValues] = useState<RegisterValues>(INITIAL_VALUES)
 	const [isPending, startTransition] = useTransition()
 
@@ -71,9 +77,15 @@ export const RegisterForm: FC = () => {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Crear cuenta</CardTitle>
+				<CardTitle>
+					{isFirstUser
+						? 'Bienvenido a Open Reclamos'
+						: 'Crear cuenta'}
+				</CardTitle>
 				<CardDescription>
-					Completa los datos para registrarte en la plataforma
+					{isFirstUser
+						? 'Estás configurando la plataforma por primera vez.'
+						: 'Completa los datos para registrarte en la plataforma'}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -114,16 +126,27 @@ export const RegisterForm: FC = () => {
 						className='w-full mt-2'
 						disabled={isPending}
 					>
-						{isPending ? <Spinner /> : 'Crear cuenta'}
+						{isPending ? (
+							<Spinner />
+						) : isFirstUser ? (
+							'Crear cuenta de administrador'
+						) : (
+							'Crear cuenta'
+						)}
 					</Button>
 				</form>
 			</CardContent>
-			<CardFooter className='justify-center text-sm text-muted-foreground'>
-				¿Ya tienes cuenta?&nbsp;
-				<Link href='/login' className='text-primary hover:underline'>
-					Inicia sesión
-				</Link>
-			</CardFooter>
+			{!isFirstUser && (
+				<CardFooter className='justify-center text-sm text-muted-foreground'>
+					¿Ya tienes cuenta?&nbsp;
+					<Link
+						href='/login'
+						className='text-primary hover:underline'
+					>
+						Inicia sesión
+					</Link>
+				</CardFooter>
+			)}
 		</Card>
 	)
 }

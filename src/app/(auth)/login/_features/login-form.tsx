@@ -28,7 +28,11 @@ const INITIAL_VALUES: LoginValues = {
 	password: null,
 }
 
-export const LoginForm: FC = () => {
+interface LoginFormProps {
+	showRegisterLink?: boolean
+}
+
+export const LoginForm: FC<LoginFormProps> = ({ showRegisterLink = false }) => {
 	const [values, setValues] = useState<LoginValues>(INITIAL_VALUES)
 	const [isPending, startTransition] = useTransition()
 
@@ -94,12 +98,17 @@ export const LoginForm: FC = () => {
 					</Button>
 				</form>
 			</CardContent>
-			<CardFooter className='justify-center text-sm text-muted-foreground'>
-				¿No tienes cuenta?&nbsp;
-				<Link href='/register' className='text-primary hover:underline'>
-					Regístrate
-				</Link>
-			</CardFooter>
+			{showRegisterLink && (
+				<CardFooter className='justify-center text-sm text-muted-foreground'>
+					¿No tienes cuenta?&nbsp;
+					<Link
+						href='/register'
+						className='text-primary hover:underline'
+					>
+						Regístrate
+					</Link>
+				</CardFooter>
+			)}
 		</Card>
 	)
 }
