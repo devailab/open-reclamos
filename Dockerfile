@@ -25,6 +25,8 @@ COPY --from=migration-deps --chown=bun:bun /usr/src/app/node_modules ./node_modu
 COPY --from=builder --chown=bun:bun /usr/src/app/package.json ./package.json
 COPY --from=builder --chown=bun:bun /usr/src/app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder --chown=bun:bun /usr/src/app/docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --from=builder --chown=bun:bun /usr/src/app/tsconfig.json ./tsconfig.json
+COPY --from=builder --chown=bun:bun /usr/src/app/src/lib ./src/lib
 COPY --from=builder --chown=bun:bun /usr/src/app/src/database ./src/database
 
 RUN chmod +x ./docker-entrypoint.sh
