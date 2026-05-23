@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
 import type { LanguageModelV3GenerateResult } from '@ai-sdk/provider'
 import { MockLanguageModelV3 } from 'ai/test'
 import {
@@ -6,6 +6,8 @@ import {
 	type ComplaintExistingTag,
 	classifyComplaintCore,
 } from './ai-classification'
+
+mock.module('@/database/database', () => ({ db: {} }))
 
 const BASE_COMPLAINT: ComplaintClassificationContext = {
 	reasonLabel: 'Cobro indebido',
