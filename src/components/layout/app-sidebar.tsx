@@ -4,6 +4,8 @@ import {
 	BookOpen,
 	ChevronRight,
 	ChevronsUpDown,
+	FileText,
+	FlaskConical,
 	LogOut,
 	Plus,
 	ShieldCheck,
@@ -112,6 +114,10 @@ export function AppSidebar({
 		isAdministrationActive,
 	)
 
+	const isDevMode = process.env.NODE_ENV === 'development'
+	const isDevActive = pathname.startsWith('/dashboard/dev/')
+	const [isDevOpen, setIsDevOpen] = useState(isDevActive)
+
 	useEffect(() => {
 		if (isNoticesActive) setIsNoticesOpen(true)
 	}, [isNoticesActive])
@@ -119,6 +125,10 @@ export function AppSidebar({
 	useEffect(() => {
 		if (isAdministrationActive) setIsAdministrationOpen(true)
 	}, [isAdministrationActive])
+
+	useEffect(() => {
+		if (isDevActive) setIsDevOpen(true)
+	}, [isDevActive])
 
 	const handleLogout = () => {
 		startTransition(async () => {
@@ -370,6 +380,45 @@ export function AppSidebar({
 														)
 													},
 												)}
+											</SidebarMenuSub>
+										</CollapsibleContent>
+									</Collapsible>
+								</SidebarMenuItem>
+							)}
+
+							{isDevMode && (
+								<SidebarMenuItem>
+									<Collapsible
+										open={isDevOpen}
+										onOpenChange={setIsDevOpen}
+									>
+										<CollapsibleTrigger
+											render={
+												<SidebarMenuButton tooltip='Dev Tools'>
+													<FlaskConical />
+													<span>Dev Tools</span>
+													<ChevronRight className='ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
+												</SidebarMenuButton>
+											}
+										/>
+										<CollapsibleContent>
+											<SidebarMenuSub>
+												<SidebarMenuSubItem>
+													<SidebarMenuSubButton
+														render={
+															<Link href='/dashboard/dev/pdf-preview' />
+														}
+														isActive={
+															pathname ===
+															'/dashboard/dev/pdf-preview'
+														}
+													>
+														<FileText />
+														<span>
+															Vista previa PDF
+														</span>
+													</SidebarMenuSubButton>
+												</SidebarMenuSubItem>
 											</SidebarMenuSub>
 										</CollapsibleContent>
 									</Collapsible>
