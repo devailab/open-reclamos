@@ -31,7 +31,6 @@ const styles = StyleSheet.create({
 		letterSpacing: 0.8,
 		textTransform: 'uppercase',
 		color: '#9CA3AF',
-		marginBottom: 3,
 	},
 	headerTitle: {
 		fontSize: 14,
@@ -48,18 +47,17 @@ const styles = StyleSheet.create({
 		letterSpacing: 0.5,
 		textTransform: 'uppercase',
 		color: '#6B7280',
-		marginBottom: 2,
 	},
 	headerCorrelative: {
-		fontSize: 17,
+		fontSize: 14,
 		fontWeight: 700,
 		color: '#111827',
 	},
 	headerRule: {
 		borderBottomWidth: 2,
 		borderBottomColor: '#374151',
-		marginBottom: 4,
-		marginTop: 4,
+		marginBottom: 5,
+		marginTop: 5,
 	},
 	headerOrgLine: {
 		fontSize: 8,
@@ -232,7 +230,6 @@ const styles = StyleSheet.create({
 	providerTitleBar: {
 		backgroundColor: '#F3F4F6',
 		paddingTop: 4,
-		paddingBottom: 3,
 		paddingLeft: 7,
 		paddingRight: 7,
 		borderBottomWidth: 1,
@@ -242,7 +239,6 @@ const styles = StyleSheet.create({
 	providerTitleBarResponse: {
 		backgroundColor: '#DCFCE7',
 		paddingTop: 4,
-		paddingBottom: 3,
 		paddingLeft: 7,
 		paddingRight: 7,
 		borderBottomWidth: 1,
@@ -635,6 +631,7 @@ export function ComplaintReceiptPdfDocument({
 							5. {data.providerSection.title}
 						</Text>
 					</View>
+
 					<View style={styles.providerBody}>
 						<Text
 							style={
