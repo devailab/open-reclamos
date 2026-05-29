@@ -16,6 +16,7 @@ import {
 	rolePermissions,
 	roles,
 } from '@/database/schema'
+import { isRoleAssignableSystemPermissionKey } from '@/modules/rbac/lib'
 import type { RolesTableFilters } from './validation'
 
 export interface RoleTableRow {
@@ -248,7 +249,11 @@ export async function getAvailablePermissionIdsForOrganization(
 	organizationId: string,
 ) {
 	const rows = await db
-		.select({ id: permissions.id })
+		.select({
+			id: permissions.id,
+			key: permissions.key,
+			isSystem: permissions.isSystem,
+		})
 		.from(permissions)
 		.where(
 			and(
@@ -260,5 +265,13 @@ export async function getAvailablePermissionIdsForOrganization(
 			),
 		)
 
-	return new Set(rows.map((row) => row.id))
+	return new Set(
+		rows
+			.filter(
+				(permission) =>
+					!permission.isSystem ||
+					isRoleAssignableSystemPermissionKey(permission.key),
+			)
+			.map((row) => row.id),
+	)
 }

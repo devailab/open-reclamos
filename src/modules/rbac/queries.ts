@@ -15,7 +15,12 @@ import {
 	users,
 } from '@/database/schema'
 import { getActiveOrganizationCookie } from './cookies'
-import { BASE_ROLE_DEFINITIONS, SYSTEM_PERMISSION_DEFINITIONS } from './lib'
+import {
+	BASE_ROLE_DEFINITIONS,
+	getDefaultMemberPermissionKeysForRoleKey,
+	isRoleAssignableSystemPermissionKey,
+	SYSTEM_PERMISSION_DEFINITIONS,
+} from './lib'
 import { selectActiveOrganizationId } from './organization-selection'
 
 type DatabaseExecutor = typeof db | DbTransaction
@@ -50,6 +55,10 @@ export interface PermissionOption {
 	name: string
 	description: string | null
 	isSystem: boolean
+}
+
+interface PermissionAssignmentFilterOptions {
+	assignment?: 'all' | 'role'
 }
 
 export interface StoreOption {
@@ -374,8 +383,9 @@ export async function getRoleOptionsWithPermissionsForOrganization(
 
 export async function getPermissionOptionsForOrganization(
 	organizationId: string,
+	options?: PermissionAssignmentFilterOptions,
 ): Promise<PermissionOption[]> {
-	return db
+	const rows = await db
 		.select({
 			id: permissions.id,
 			key: permissions.key,
@@ -395,6 +405,16 @@ export async function getPermissionOptionsForOrganization(
 			),
 		)
 		.orderBy(asc(permissions.module), asc(permissions.name))
+
+	if (options?.assignment !== 'role') {
+		return rows
+	}
+
+	return rows.filter(
+		(permission) =>
+			!permission.isSystem ||
+			isRoleAssignableSystemPermissionKey(permission.key),
+	)
 }
 
 export async function getStoreOptionsForOrganization(
@@ -548,9 +568,14 @@ export async function ensureOrganizationRoles(
 
 export async function getAvailablePermissionIdsForOrganization(
 	organizationId: string,
+	options?: PermissionAssignmentFilterOptions,
 ) {
 	const rows = await db
-		.select({ id: permissions.id })
+		.select({
+			id: permissions.id,
+			key: permissions.key,
+			isSystem: permissions.isSystem,
+		})
 		.from(permissions)
 		.where(
 			and(
@@ -562,7 +587,64 @@ export async function getAvailablePermissionIdsForOrganization(
 			),
 		)
 
+	if (options?.assignment === 'role') {
+		return new Set(
+			rows
+				.filter(
+					(permission) =>
+						!permission.isSystem ||
+						isRoleAssignableSystemPermissionKey(permission.key),
+				)
+				.map((row) => row.id),
+		)
+	}
+
 	return new Set(rows.map((row) => row.id))
+}
+
+export async function assignDefaultMemberPermissionsForRole(
+	params: {
+		userId: string
+		organizationId: string
+		roleKey: string
+		createdBy?: string | null
+	},
+	client: DatabaseExecutor = db,
+) {
+	const permissionKeys = getDefaultMemberPermissionKeysForRoleKey(
+		params.roleKey,
+	)
+	if (permissionKeys.length === 0) return
+
+	const permissionRows = await client
+		.select({ id: permissions.id })
+		.from(permissions)
+		.where(
+			and(
+				inArray(permissions.key, permissionKeys),
+				isNull(permissions.deletedAt),
+			),
+		)
+
+	if (permissionRows.length === 0) return
+
+	await client
+		.insert(organizationMemberPermissions)
+		.values(
+			permissionRows.map((permission) => ({
+				userId: params.userId,
+				organizationId: params.organizationId,
+				permissionId: permission.id,
+				createdBy: params.createdBy ?? null,
+			})),
+		)
+		.onConflictDoNothing({
+			target: [
+				organizationMemberPermissions.userId,
+				organizationMemberPermissions.organizationId,
+				organizationMemberPermissions.permissionId,
+			],
+		})
 }
 
 export async function getPermissionsByIds(permissionIds: string[]) {

@@ -17,6 +17,7 @@ import { auth } from '@/lib/auth'
 import { DOCUMENT_LOOKUP_PROVIDER } from '@/lib/config'
 import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
 import {
+	assignDefaultMemberPermissionsForRole,
 	ensureOrganizationRoles,
 	findRoleByKeyForOrganization,
 	getMembershipContext,
@@ -240,6 +241,16 @@ export async function $setupOrganizationAction(
 				roleId: adminRole.id,
 				createdBy: session.user.id,
 			})
+
+			await assignDefaultMemberPermissionsForRole(
+				{
+					userId: session.user.id,
+					organizationId: org.id,
+					roleKey: adminRole.key,
+					createdBy: session.user.id,
+				},
+				tx,
+			)
 
 			await tx.insert(organizationSettings).values({
 				organizationId: org.id,

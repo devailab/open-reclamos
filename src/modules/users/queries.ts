@@ -525,6 +525,7 @@ export async function getOpenInvitationByToken(token: string) {
 			email: organizationInvitations.email,
 			organizationId: organizationInvitations.organizationId,
 			roleId: organizationInvitations.roleId,
+			roleKey: roles.key,
 			roleName: roles.name,
 			roleSlug: roles.slug,
 			storeAccessMode: organizationInvitations.storeAccessMode,

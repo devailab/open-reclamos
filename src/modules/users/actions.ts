@@ -17,7 +17,12 @@ import { auth } from '@/lib/auth'
 import { getSession } from '@/lib/auth-server'
 import { sendEmail } from '@/lib/email'
 import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import {
+	assignDefaultMemberPermissionsForRole,
+	getAvailablePermissionIdsForOrganization,
+	getMembershipContext,
+	hasPermission,
+} from '@/modules/rbac/queries'
 import { getRoleByIdForOrganization } from '@/modules/roles/queries'
 import { createInvitationToken, hashInvitationToken } from './lib'
 import {
@@ -379,6 +384,17 @@ export async function $updateUserAccessAction(
 		}
 	}
 
+	const availablePermissionIds =
+		await getAvailablePermissionIdsForOrganization(
+			access.membership.organizationId,
+		)
+	const invalidPermissionId = normalizedInput.permissionIds.find(
+		(permissionId) => !availablePermissionIds.has(permissionId),
+	)
+	if (invalidPermissionId) {
+		return { error: 'Uno de los permisos seleccionados no es válido.' }
+	}
+
 	try {
 		await db.transaction(async (tx) => {
 			await tx
@@ -680,6 +696,16 @@ export async function $acceptInvitationAction(
 				storeAccessMode: invitation.storeAccessMode,
 				createdBy: userId,
 			})
+
+			await assignDefaultMemberPermissionsForRole(
+				{
+					userId,
+					organizationId: invitation.organizationId,
+					roleKey: invitation.roleKey,
+					createdBy: userId,
+				},
+				tx,
+			)
 
 			if (
 				invitation.storeAccessMode === 'selected' &&

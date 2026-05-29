@@ -29,7 +29,9 @@ const RolesRoute: FC = async () => {
 			pageSize: INITIAL_PAGE_SIZE,
 			filters: DEFAULT_ROLES_TABLE_FILTERS,
 		}),
-		getPermissionOptionsForOrganization(membership.organizationId),
+		getPermissionOptionsForOrganization(membership.organizationId, {
+			assignment: 'role',
+		}),
 	])
 
 	const initialState: RolesInitialState = {

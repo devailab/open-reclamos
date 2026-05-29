@@ -17,6 +17,7 @@ import { verifyTurnstileToken } from '@/lib/turnstile'
 import { WEBHOOK_EVENT } from '@/lib/webhook-events'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
 import { dispatchWebhookEvent } from '../webhooks/dispatch'
+import { enqueueComplaintAdminNotification } from './admin-notifications'
 import { enqueueComplaintAiClassification } from './ai-classification'
 import {
 	enqueueComplaintReceiptDelivery,
@@ -401,6 +402,18 @@ export async function $submitComplaintAction(
 				status: 'failed',
 				failureMessage: failure.technicalMessage,
 			})
+		}
+
+		try {
+			await enqueueComplaintAdminNotification({
+				complaintId,
+				organizationId: input.organizationId,
+			})
+		} catch (error) {
+			console.error(
+				'[complaints] No se pudo encolar la notificación interna:',
+				error,
+			)
 		}
 
 		try {

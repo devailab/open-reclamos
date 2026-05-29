@@ -8,6 +8,14 @@
     },
     "permissions": [
         {
+            "key": "complaints.notify",
+            "slug": "complaints-notify",
+            "module": "complaints",
+            "name": "Recibir notificaciones de reclamos",
+            "description": "Permite recibir por correo avisos cuando se registra un nuevo reclamo.",
+            "assignment": "member"
+        },
+        {
             "key": "complaints.view",
             "slug": "complaints-view",
             "module": "complaints",
@@ -175,6 +183,7 @@
             "slug": "admin",
             "name": "Administrador",
             "description": "Acceso total al panel administrativo de la organizacion.",
+            "defaultMemberPermissionKeys": ["complaints.notify"],
             "permissionKeys": [
                 "complaints.view",
                 "complaints.manage",
@@ -206,6 +215,7 @@
             "slug": "operator",
             "name": "Operador",
             "description": "Atiende reclamos y consulta la configuracion operativa.",
+            "defaultMemberPermissionKeys": ["complaints.notify"],
             "permissionKeys": [
                 "complaints.view",
                 "complaints.manage",
