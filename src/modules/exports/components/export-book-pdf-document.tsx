@@ -148,7 +148,9 @@ function CoverPage({
 
 	return (
 		<Page size='A4' style={coverStyles.page}>
-			<View style={[coverStyles.accentBar, { backgroundColor: barColor }]} />
+			<View
+				style={[coverStyles.accentBar, { backgroundColor: barColor }]}
+			/>
 
 			<View style={coverStyles.body}>
 				<View>
@@ -179,9 +181,7 @@ function CoverPage({
 							</Text>
 						</View>
 						<View style={coverStyles.metaBlockBorder}>
-							<Text style={coverStyles.metaLabel}>
-								Tienda
-							</Text>
+							<Text style={coverStyles.metaLabel}>Tienda</Text>
 							<Text style={coverStyles.metaValue}>
 								{storeName}
 							</Text>

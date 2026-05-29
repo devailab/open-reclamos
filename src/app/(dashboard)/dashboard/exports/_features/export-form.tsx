@@ -1,11 +1,6 @@
 'use client'
 
-import {
-	FileDown,
-	FileSpreadsheet,
-	FileText,
-	Loader2,
-} from 'lucide-react'
+import { FileDown, FileSpreadsheet, FileText, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { sileo } from 'sileo'
 import DateField from '@/components/forms/date-field'
@@ -61,7 +56,8 @@ export function ExportForm({ stores }: ExportFormProps) {
 		if (values.startDate > values.endDate) {
 			sileo.error({
 				title: 'Rango de fechas inválido',
-				description: 'La fecha de inicio debe ser anterior a la fecha fin.',
+				description:
+					'La fecha de inicio debe ser anterior a la fecha fin.',
 			})
 			return
 		}
@@ -87,8 +83,11 @@ export function ExportForm({ stores }: ExportFormProps) {
 				return
 			}
 
-			const contentDisposition = response.headers.get('Content-Disposition')
-			const filenameMatch = contentDisposition?.match(/filename="([^"]+)"/)
+			const contentDisposition = response.headers.get(
+				'Content-Disposition',
+			)
+			const filenameMatch =
+				contentDisposition?.match(/filename="([^"]+)"/)
 			const filename = filenameMatch?.[1] ?? `reclamos.${values.format}`
 
 			const blob = await response.blob()
@@ -106,7 +105,8 @@ export function ExportForm({ stores }: ExportFormProps) {
 		} catch {
 			sileo.error({
 				title: 'Error al exportar',
-				description: 'No se pudo conectar al servidor. Intenta de nuevo.',
+				description:
+					'No se pudo conectar al servidor. Intenta de nuevo.',
 			})
 		} finally {
 			setIsExporting(false)
@@ -119,7 +119,11 @@ export function ExportForm({ stores }: ExportFormProps) {
 				<CardContent className='space-y-5 pt-6'>
 					<SelectField
 						{...register('storeId')}
-						value={storeOptions.find((o) => o.value === values.storeId) ?? null}
+						value={
+							storeOptions.find(
+								(o) => o.value === values.storeId,
+							) ?? null
+						}
 						onValueChange={(option) =>
 							setValues((prev) => ({
 								...prev,
@@ -154,11 +158,14 @@ export function ExportForm({ stores }: ExportFormProps) {
 					</div>
 
 					<div className='space-y-2'>
-						<p className='text-sm font-medium'>Formato de exportación</p>
+						<p className='text-sm font-medium'>
+							Formato de exportación
+						</p>
 						<div className='grid grid-cols-3 gap-3'>
 							{EXPORT_FORMAT_OPTIONS.map((option) => {
 								const Icon = FORMAT_ICONS[option.value]
-								const isSelected = values.format === option.value
+								const isSelected =
+									values.format === option.value
 								return (
 									<button
 										key={option.value}

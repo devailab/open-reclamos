@@ -145,7 +145,10 @@ export async function getComplaintsForExport({
 			complaintDetails,
 			eq(complaintDetails.complaintId, complaints.id),
 		)
-		.leftJoin(complaintReasons, eq(complaintReasons.id, complaints.reasonId))
+		.leftJoin(
+			complaintReasons,
+			eq(complaintReasons.id, complaints.reasonId),
+		)
 		.where(
 			and(
 				eq(complaints.organizationId, organizationId),
@@ -194,7 +197,8 @@ export async function getOrganizationForExport(
 		taxId: row.taxId,
 		addressType: row.addressType,
 		address: row.address,
-		locationLabel: locationParts.length > 0 ? locationParts.join(', ') : null,
+		locationLabel:
+			locationParts.length > 0 ? locationParts.join(', ') : null,
 		phoneCode: row.phoneCode,
 		phone: row.phone,
 		website: row.website,

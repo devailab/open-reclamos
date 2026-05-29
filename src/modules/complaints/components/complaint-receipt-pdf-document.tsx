@@ -513,10 +513,7 @@ export function ComplaintReceiptPdfPage({
 								value={data.consumer.representative}
 							/>
 						)}
-						<Field
-							label='Contacto'
-							value={data.consumer.contact}
-						/>
+						<Field label='Contacto' value={data.consumer.contact} />
 						<Field
 							label='Domicilio'
 							value={data.consumer.address}
@@ -531,15 +528,9 @@ export function ComplaintReceiptPdfPage({
 							value={data.store.name}
 							strong
 						/>
-						<Field
-							label='Modalidad'
-							value={data.store.modeLabel}
-						/>
+						<Field label='Modalidad' value={data.store.modeLabel} />
 						<Field label='Detalle' value={data.store.detail} />
-						<Field
-							label='Motivo'
-							value={data.complaint.reason}
-						/>
+						<Field label='Motivo' value={data.complaint.reason} />
 						<Field
 							label='Fecha del incidente'
 							value={data.complaint.incidentDate}
@@ -575,14 +566,8 @@ export function ComplaintReceiptPdfPage({
 				</View>
 				<View style={styles.narrativeRow}>
 					<View style={styles.narrativeColLeft}>
-						<Text style={styles.narrativeColLabel}>
-							Detalle
-						</Text>
-						<Text
-							style={getNarrativeStyle(
-								data.narratives.detail,
-							)}
-						>
+						<Text style={styles.narrativeColLabel}>Detalle</Text>
+						<Text style={getNarrativeStyle(data.narratives.detail)}>
 							{data.narratives.detail}
 						</Text>
 					</View>
@@ -591,9 +576,7 @@ export function ComplaintReceiptPdfPage({
 							Pedido del consumidor
 						</Text>
 						<Text
-							style={getNarrativeStyle(
-								data.narratives.request,
-							)}
+							style={getNarrativeStyle(data.narratives.request)}
 						>
 							{data.narratives.request}
 						</Text>

@@ -14,7 +14,9 @@ export async function $getExportPageDataAction() {
 	if (!membership) redirect('/setup')
 
 	if (!hasPermission(membership, 'exports.view')) {
-		return { error: 'No tienes permisos para acceder a las exportaciones.' } as const
+		return {
+			error: 'No tienes permisos para acceder a las exportaciones.',
+		} as const
 	}
 
 	const allowedStoreIds =
@@ -23,7 +25,10 @@ export async function $getExportPageDataAction() {
 			: undefined
 
 	const [stores, organization] = await Promise.all([
-		getStoreOptionsForOrganization(membership.organizationId, allowedStoreIds),
+		getStoreOptionsForOrganization(
+			membership.organizationId,
+			allowedStoreIds,
+		),
 		getOrganizationForExport(membership.organizationId),
 	])
 
