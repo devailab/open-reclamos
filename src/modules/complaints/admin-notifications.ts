@@ -21,10 +21,6 @@ export interface ComplaintAdminNotificationEventData {
 	organizationId: string
 }
 
-function getComplaintTypeLabel(type: string) {
-	return type === 'complaint' ? 'Queja' : 'Reclamo'
-}
-
 function getConsumerName(params: {
 	personType: string
 	firstName: string
@@ -59,13 +55,13 @@ function buildComplaintAdminNotificationText(params: {
 
 	const detailUrl = buildAdminNotificationDashboardUrl(complaint.id)
 	const lines = [
-		`Se registró un nuevo ${getComplaintTypeLabel(complaint.type).toLowerCase()} en ${organizationName}.`,
+		`Se registró un nuevo reclamo en ${organizationName}.`,
 		'',
 		`Código de seguimiento: ${complaint.trackingCode}`,
 		`Correlativo: ${complaint.correlative}`,
 		`Fecha de registro: ${formatDateTimeDisplay(complaint.createdAt)}`,
 		`Tienda: ${complaint.storeName}`,
-		`Tipo: ${getComplaintTypeLabel(complaint.type)}`,
+		`Tipo: ${complaint.type === 'complaint' ? 'Queja' : 'Reclamo'}`,
 		`Consumidor: ${getConsumerName({
 			personType: complaint.personType,
 			firstName: complaint.firstName,
@@ -171,7 +167,7 @@ export async function sendComplaintAdminNotification(
 
 	const organizationName =
 		receiptContext?.organization.name ?? 'tu organización'
-	const subject = `Nuevo ${getComplaintTypeLabel(complaint.type).toLowerCase()} ${complaint.correlative}`
+	const subject = `Nuevo reclamo ${complaint.correlative}`
 	const text = buildComplaintAdminNotificationText({
 		complaint,
 		organizationName,
