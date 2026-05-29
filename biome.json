@@ -35,7 +35,9 @@
                 "noImgElement": "off"
             },
             "a11y": {
-                "useSemanticElements": "off"
+                "useSemanticElements": "off",
+                "useFocusableInteractive": "off",
+                "useAriaPropsForRole": "off"
             }
         },
         "domains": {

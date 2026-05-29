@@ -25,6 +25,16 @@ export const minLength =
 		return null
 	}
 
+export const exactLength =
+	(length: number, message?: string) =>
+	(value: unknown): string | null => {
+		const str = String(value ?? '')
+		if (str.length !== length) {
+			return message ?? `Debe tener exactamente ${length} caracteres`
+		}
+		return null
+	}
+
 export const combine =
 	(...validators: Array<(value: unknown) => string | null>) =>
 	(value: unknown): string | null => {

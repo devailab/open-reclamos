@@ -1,9 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { type FC, useState, useTransition } from 'react'
-import TextField from '@/components/forms/text-field'
-import { Button } from '@/components/ui/button'
+import { type FC, useState } from 'react'
+import { sileo } from 'sileo'
 import {
 	Card,
 	CardContent,
@@ -12,58 +11,55 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
-import { Spinner } from '@/components/ui/spinner'
-import { useForm } from '@/hooks/use-form'
 import { feedback } from '@/lib/feedback'
-import { $registerAction } from '@/modules/auth/actions'
 import {
-	validateConfirmPassword,
-	validateEmail,
-	validateName,
-	validatePassword,
-} from '@/modules/auth/validation'
+	$registerAction,
+	$sendRegistrationVerificationAction,
+	$verifyAndRegisterAction,
+} from '@/modules/auth/actions'
+import { CredentialsStep } from './credentials-step'
+import { VerifyEmailStep } from './verify-email-step'
 
-interface RegisterValues {
-	name: string | null
-	email: string | null
-	password: string | null
-	confirmPassword: string | null
-}
+type Step = 'credentials' | 'verify-email'
 
-const INITIAL_VALUES: RegisterValues = {
-	name: null,
-	email: null,
-	password: null,
-	confirmPassword: null,
+interface PendingCredentials {
+	name: string
+	email: string
+	password: string
 }
 
 interface RegisterFormProps {
 	isFirstUser?: boolean
+	emailVerificationEnabled?: boolean
 }
 
 export const RegisterForm: FC<RegisterFormProps> = ({
 	isFirstUser = false,
+	emailVerificationEnabled = false,
 }) => {
-	const [values, setValues] = useState<RegisterValues>(INITIAL_VALUES)
-	const [isPending, startTransition] = useTransition()
+	const [step, setStep] = useState<Step>('credentials')
+	const [pendingCredentials, setPendingCredentials] =
+		useState<PendingCredentials | null>(null)
 
-	const { register, validate } = useForm({
-		values,
-		setValues,
-		initialValues: INITIAL_VALUES,
-	})
+	const cardDescription =
+		step === 'verify-email'
+			? 'Ingresa el código enviado a tu correo'
+			: isFirstUser
+				? 'Estás configurando la plataforma por primera vez.'
+				: 'Completa los datos para registrarte en la plataforma'
 
-	const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
-		e.preventDefault()
+	const submitLabel = emailVerificationEnabled
+		? 'Continuar'
+		: isFirstUser
+			? 'Crear cuenta de administrador'
+			: 'Crear cuenta'
 
-		const errors = validate({ focus: 'first' })
-		if (errors.length > 0) return
-
-		startTransition(async () => {
+	const handleCredentialsSubmit = async (values: PendingCredentials) => {
+		if (!emailVerificationEnabled) {
 			const result = await $registerAction(
-				values.name ?? '',
-				values.email ?? '',
-				values.password ?? '',
+				values.name,
+				values.email,
+				values.password,
 			)
 			if (result?.error) {
 				feedback.alert.error({
@@ -71,7 +67,59 @@ export const RegisterForm: FC<RegisterFormProps> = ({
 					description: result.error,
 				})
 			}
-		})
+			return
+		}
+
+		const result = await $sendRegistrationVerificationAction(
+			values.name,
+			values.email,
+			values.password,
+		)
+		if (result?.error) {
+			feedback.alert.error({
+				title: 'Error al enviar código',
+				description: result.error,
+			})
+			return
+		}
+
+		setPendingCredentials(values)
+		setStep('verify-email')
+	}
+
+	const handleVerifySubmit = async (code: string) => {
+		if (!pendingCredentials) return
+
+		const result = await $verifyAndRegisterAction(
+			pendingCredentials.email,
+			code,
+		)
+
+		if (result?.error) {
+			feedback.alert.error({
+				title: 'Error al verificar código',
+				description: result.error,
+			})
+		}
+	}
+
+	const handleResend = async () => {
+		if (!pendingCredentials) return
+
+		const result = await $sendRegistrationVerificationAction(
+			pendingCredentials.name,
+			pendingCredentials.email,
+			pendingCredentials.password,
+		)
+
+		if (result?.error) {
+			feedback.alert.error({
+				title: 'Error al reenviar código',
+				description: result.error,
+			})
+		} else {
+			sileo.success({ title: 'Código reenviado a tu correo' })
+		}
 	}
 
 	return (
@@ -82,61 +130,23 @@ export const RegisterForm: FC<RegisterFormProps> = ({
 						? 'Bienvenido a Open Reclamos'
 						: 'Crear cuenta'}
 				</CardTitle>
-				<CardDescription>
-					{isFirstUser
-						? 'Estás configurando la plataforma por primera vez.'
-						: 'Completa los datos para registrarte en la plataforma'}
-				</CardDescription>
+				<CardDescription>{cardDescription}</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<form onSubmit={handleSubmit} className='flex flex-col gap-4'>
-					<TextField
-						{...register('name')}
-						label='Nombre completo'
-						placeholder='Juan Pérez'
-						validate={validateName}
-						disabled={isPending}
+				{step === 'credentials' ? (
+					<CredentialsStep
+						submitLabel={submitLabel}
+						onSubmit={handleCredentialsSubmit}
 					/>
-					<TextField
-						{...register('email')}
-						label='Correo electrónico'
-						placeholder='tu@correo.com'
-						type='email'
-						validate={validateEmail}
-						disabled={isPending}
+				) : (
+					<VerifyEmailStep
+						email={pendingCredentials?.email ?? ''}
+						onSubmit={handleVerifySubmit}
+						onResend={handleResend}
 					/>
-					<TextField
-						{...register('password')}
-						label='Contraseña'
-						placeholder='••••••••'
-						type='password'
-						validate={validatePassword}
-						disabled={isPending}
-					/>
-					<TextField
-						{...register('confirmPassword')}
-						label='Confirmar contraseña'
-						placeholder='••••••••'
-						type='password'
-						validate={validateConfirmPassword(values.password)}
-						disabled={isPending}
-					/>
-					<Button
-						type='submit'
-						className='w-full mt-2'
-						disabled={isPending}
-					>
-						{isPending ? (
-							<Spinner />
-						) : isFirstUser ? (
-							'Crear cuenta de administrador'
-						) : (
-							'Crear cuenta'
-						)}
-					</Button>
-				</form>
+				)}
 			</CardContent>
-			{!isFirstUser && (
+			{!isFirstUser && step === 'credentials' && (
 				<CardFooter className='justify-center text-sm text-muted-foreground'>
 					¿Ya tienes cuenta?&nbsp;
 					<Link

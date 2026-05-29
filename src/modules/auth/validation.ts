@@ -1,4 +1,10 @@
-import { combine, email, minLength, required } from '@/lib/validators'
+import {
+	combine,
+	email,
+	exactLength,
+	minLength,
+	required,
+} from '@/lib/validators'
 
 export const validateEmail = combine(required, email)
 
@@ -16,3 +22,8 @@ export const validateConfirmPassword =
 		if (value !== password) return 'Las contraseñas no coinciden'
 		return null
 	}
+
+export const validateOtpCode = combine(
+	required,
+	exactLength(6, 'El código debe tener 6 dígitos'),
+)

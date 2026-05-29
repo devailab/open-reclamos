@@ -1,5 +1,8 @@
 import type { NextPage } from 'next'
-import { ALLOW_PUBLIC_REGISTRATION } from '@/lib/config'
+import {
+	ALLOW_PUBLIC_REGISTRATION,
+	EMAIL_VERIFICATION_ENABLED,
+} from '@/lib/config'
 import { hasAnyUser } from '@/modules/auth/queries'
 import { RegisterForm } from './_features/register-form'
 import { RegistrationClosed } from './_features/registration-closed'
@@ -14,7 +17,12 @@ const RegisterPage: NextPage = async () => {
 		return <RegistrationClosed />
 	}
 
-	return <RegisterForm isFirstUser={isFirstInstall} />
+	return (
+		<RegisterForm
+			isFirstUser={isFirstInstall}
+			emailVerificationEnabled={EMAIL_VERIFICATION_ENABLED}
+		/>
+	)
 }
 
 export default RegisterPage

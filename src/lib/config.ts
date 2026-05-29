@@ -9,3 +9,6 @@ export const EMAIL_TRANSPORT = process.env.EMAIL_TRANSPORT ?? 'SMTP'
 
 export const ALLOW_PUBLIC_REGISTRATION =
 	process.env.ALLOW_PUBLIC_REGISTRATION === 'true'
+
+export const EMAIL_VERIFICATION_ENABLED =
+	process.env.EMAIL_VERIFICATION_ENABLED === 'true'

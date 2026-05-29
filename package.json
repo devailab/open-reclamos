@@ -33,6 +33,7 @@
         "date-fns": "^4.1.0",
         "drizzle-orm": "^0.45.1",
         "inngest": "^4.1.0",
+        "input-otp": "^1.4.2",
         "lucide-react": "^0.577.0",
         "motion": "^12.35.1",
         "nanoid": "^5.1.6",

@@ -42,6 +42,12 @@ function getAuthErrorMessage(error: unknown, fallbackMessage: string): string {
 		case 'USER_ALREADY_EXISTS':
 		case 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL':
 			return 'Ya existe una cuenta con este correo. Usa otro email.'
+		case 'OTP_EXPIRED':
+			return 'El código expiró. Solicita uno nuevo.'
+		case 'INVALID_OTP':
+			return 'Código incorrecto. Verifica e intenta nuevamente.'
+		case 'TOO_MANY_ATTEMPTS':
+			return 'Demasiados intentos fallidos. Solicita un nuevo código.'
 		default:
 			return fallbackMessage
 	}
@@ -220,4 +226,111 @@ export async function $logoutAction(): Promise<void> {
 		headers: await headers(),
 	})
 	redirect('/login')
+}
+
+export async function $sendRegistrationVerificationAction(
+	name: string,
+	email: string,
+	password: string,
+): Promise<AuthActionResult> {
+	const anyUser = await hasAnyUser()
+	if (!ALLOW_PUBLIC_REGISTRATION && anyUser) {
+		return { error: 'El registro de nuevas cuentas no está disponible.' }
+	}
+
+	const normalizedEmail = email.trim().toLowerCase()
+	const reqHeaders = await headers()
+
+	const [existingUser] = await db
+		.select({ id: users.id, emailVerified: users.emailVerified })
+		.from(users)
+		.where(eq(users.email, normalizedEmail))
+		.limit(1)
+
+	if (existingUser?.emailVerified) {
+		return {
+			error: 'Ya existe una cuenta verificada con este correo. Inicia sesión.',
+		}
+	}
+
+	// Only create if the user doesn't exist yet (avoids USER_ALREADY_EXISTS error on resend)
+	if (!existingUser) {
+		try {
+			await auth.api.signUpEmail({
+				body: { name, email: normalizedEmail, password },
+			})
+		} catch (error) {
+			return {
+				error: getAuthErrorMessage(
+					error,
+					'No se pudo crear la cuenta. Intenta nuevamente.',
+				),
+			}
+		}
+	}
+
+	try {
+		await auth.api.sendVerificationOTP({
+			body: {
+				email: normalizedEmail,
+				type: 'email-verification',
+			},
+			headers: reqHeaders,
+		})
+	} catch (error) {
+		return {
+			error: getAuthErrorMessage(
+				error,
+				'No se pudo enviar el código. Intenta nuevamente.',
+			),
+		}
+	}
+
+	return { error: null }
+}
+
+export async function $verifyAndRegisterAction(
+	email: string,
+	code: string,
+): Promise<AuthActionResult> {
+	const anyUser = await hasAnyUser()
+	if (!ALLOW_PUBLIC_REGISTRATION && anyUser) {
+		return { error: 'El registro de nuevas cuentas no está disponible.' }
+	}
+
+	const normalizedEmail = email.trim().toLowerCase()
+	const reqHeaders = await headers()
+
+	const [existingUser] = await db
+		.select({ id: users.id })
+		.from(users)
+		.where(eq(users.email, normalizedEmail))
+		.limit(1)
+
+	if (!existingUser) {
+		return {
+			error: 'No se encontró la cuenta. Inicia el registro nuevamente.',
+		}
+	}
+
+	try {
+		await auth.api.verifyEmailOTP({
+			body: { email: normalizedEmail, otp: code },
+			headers: reqHeaders,
+		})
+	} catch (error) {
+		return {
+			error: getAuthErrorMessage(
+				error,
+				'No se pudo verificar el código. Intenta nuevamente.',
+			),
+		}
+	}
+
+	await db
+		.update(users)
+		.set({ setupStatus: 'organization' })
+		.where(eq(users.id, existingUser.id))
+
+	redirect('/setup')
 }
