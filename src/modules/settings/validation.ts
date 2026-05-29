@@ -23,6 +23,8 @@ export interface UpdateOrganizationInput {
 	aiClassificationEnabled: boolean
 	aiOrganizationContext: string | null
 	responseDeadlineDays: number | null
+	mcpEnabledTools: string | null
+	mcpShowSensitiveData: boolean
 }
 
 export function normalizeUpdateOrganizationInput(
@@ -43,6 +45,8 @@ export function normalizeUpdateOrganizationInput(
 		responseDeadlineDays: Number.isFinite(input.responseDeadlineDays)
 			? Math.trunc(input.responseDeadlineDays as number)
 			: null,
+		mcpEnabledTools: input.mcpEnabledTools?.trim() || null,
+		mcpShowSensitiveData: input.mcpShowSensitiveData,
 	}
 }
 

@@ -102,3 +102,21 @@ export const WEBHOOK_EVENTS = [
 ] as const
 
 export type WebhookEventKey = (typeof WEBHOOK_EVENTS)[number]['key']
+
+export const MCP_TOOLS = {
+	LIST_COMPLAINTS: 'list_complaints',
+	GET_COMPLAINT: 'get_complaint',
+	LIST_STORES: 'list_stores',
+	LIST_COMPLAINT_REASONS: 'list_complaint_reasons',
+	GET_ORGANIZATION_STATS: 'get_organization_stats',
+} as const
+
+export type McpToolName = (typeof MCP_TOOLS)[keyof typeof MCP_TOOLS]
+
+export const MCP_TOOL_LABELS: Record<McpToolName, string> = {
+	list_complaints: 'Listar reclamos',
+	get_complaint: 'Ver reclamo por código',
+	list_stores: 'Listar tiendas',
+	list_complaint_reasons: 'Listar motivos de reclamo',
+	get_organization_stats: 'Estadísticas generales',
+}

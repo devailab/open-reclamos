@@ -15,6 +15,13 @@
             "when": 1779555822498,
             "tag": "0001_large_gamora",
             "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1780029177326,
+            "tag": "0002_volatile_supernaut",
+            "breakpoints": true
         }
     ]
 }

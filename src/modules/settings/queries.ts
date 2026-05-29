@@ -21,6 +21,8 @@ export interface OrganizationSettings {
 	aiClassificationEnabled: boolean
 	aiOrganizationContext: string | null
 	responseDeadlineDays: number
+	mcpEnabledTools: string | null
+	mcpShowSensitiveData: boolean
 }
 
 export interface UbigeoOption {
@@ -66,6 +68,8 @@ export async function getOrganizationSettingsForOrganization(
 				organizationSettings.aiClassificationEnabled,
 			aiOrganizationContext: organizationSettings.aiOrganizationContext,
 			responseDeadlineDays: organizationSettings.responseDeadlineDays,
+			mcpEnabledTools: organizationSettings.mcpEnabledTools,
+			mcpShowSensitiveData: organizationSettings.mcpShowSensitiveData,
 		})
 		.from(organizations)
 		.leftJoin(
@@ -84,6 +88,8 @@ export async function getOrganizationSettingsForOrganization(
 		aiOrganizationContext: result.aiOrganizationContext ?? null,
 		responseDeadlineDays:
 			result.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
+		mcpEnabledTools: result.mcpEnabledTools ?? null,
+		mcpShowSensitiveData: result.mcpShowSensitiveData ?? true,
 	}
 }
 
@@ -108,6 +114,29 @@ export async function getOrganizationComplaintSettingsForOrganization(
 		aiOrganizationContext: result?.aiOrganizationContext ?? null,
 		responseDeadlineDays:
 			result?.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
+	}
+}
+
+export interface OrganizationMcpSettings {
+	mcpEnabledTools: string | null
+	mcpShowSensitiveData: boolean
+}
+
+export async function getOrganizationMcpSettings(
+	organizationId: string,
+): Promise<OrganizationMcpSettings> {
+	const [result] = await db
+		.select({
+			mcpEnabledTools: organizationSettings.mcpEnabledTools,
+			mcpShowSensitiveData: organizationSettings.mcpShowSensitiveData,
+		})
+		.from(organizationSettings)
+		.where(eq(organizationSettings.organizationId, organizationId))
+		.limit(1)
+
+	return {
+		mcpEnabledTools: result?.mcpEnabledTools ?? null,
+		mcpShowSensitiveData: result?.mcpShowSensitiveData ?? true,
 	}
 }
 

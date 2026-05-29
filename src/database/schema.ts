@@ -580,6 +580,10 @@ export const organizationSettings = pgTable('organization_settings', {
 		.notNull()
 		.default(false),
 	aiOrganizationContext: text('ai_organization_context'),
+	mcpEnabledTools: text('mcp_enabled_tools'),
+	mcpShowSensitiveData: boolean('mcp_show_sensitive_data')
+		.notNull()
+		.default(true),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),

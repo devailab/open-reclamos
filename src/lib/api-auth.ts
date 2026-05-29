@@ -8,19 +8,9 @@ export interface ApiAuthContext {
 	organizationId: string
 }
 
-/**
- * Valida el API key del header `Authorization: Bearer <key>` y retorna
- * el contexto del usuario autenticado (userId + organizationId).
- * Retorna null si el key es inválido, el usuario no existe o no pertenece
- * a ninguna organización.
- */
-export async function resolveApiKey(
-	request: NextRequest,
+export async function resolveApiKeyFromString(
+	apiKey: string,
 ): Promise<ApiAuthContext | null> {
-	const authHeader = request.headers.get('authorization')
-	if (!authHeader?.startsWith('Bearer ')) return null
-
-	const apiKey = authHeader.slice(7).trim()
 	if (!apiKey) return null
 
 	const [userRow] = await db
@@ -43,6 +33,22 @@ export async function resolveApiKey(
 		userId: userRow.id,
 		organizationId: membership.organizationId,
 	}
+}
+
+/**
+ * Valida el API key del header `Authorization: Bearer <key>` y retorna
+ * el contexto del usuario autenticado (userId + organizationId).
+ * Retorna null si el key es inválido, el usuario no existe o no pertenece
+ * a ninguna organización.
+ */
+export async function resolveApiKey(
+	request: NextRequest,
+): Promise<ApiAuthContext | null> {
+	const authHeader = request.headers.get('authorization')
+	if (!authHeader?.startsWith('Bearer ')) return null
+
+	const apiKey = authHeader.slice(7).trim()
+	return resolveApiKeyFromString(apiKey)
 }
 
 export function unauthorizedResponse(

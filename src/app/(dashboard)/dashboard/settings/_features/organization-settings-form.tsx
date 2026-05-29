@@ -4,6 +4,8 @@ import {
 	Bot,
 	Building2,
 	CalendarClock,
+	Check,
+	Copy,
 	FileText,
 	Globe,
 	Hash,
@@ -11,6 +13,7 @@ import {
 	MapPin,
 	Phone,
 	Tag,
+	Zap,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useRef, useState, useTransition } from 'react'
@@ -38,6 +41,8 @@ import { useForm } from '@/hooks/use-form'
 import {
 	ADDRESS_TYPE_OPTIONS,
 	MAX_RESPONSE_DEADLINE_DAYS,
+	MCP_TOOL_LABELS,
+	MCP_TOOLS,
 	MIN_RESPONSE_DEADLINE_DAYS,
 } from '@/lib/constants'
 import { required } from '@/lib/validators'
@@ -61,6 +66,7 @@ interface OrgFormValues {
 	aiClassificationEnabled: boolean
 	aiOrganizationContext: string | null
 	responseDeadlineDays: number | null
+	mcpShowSensitiveData: boolean
 }
 
 interface OrganizationSettingsFormProps {
@@ -95,9 +101,25 @@ export function OrganizationSettingsForm({
 		aiClassificationEnabled: org.aiClassificationEnabled,
 		aiOrganizationContext: org.aiOrganizationContext,
 		responseDeadlineDays: org.responseDeadlineDays,
+		mcpShowSensitiveData: org.mcpShowSensitiveData,
+	}
+
+	const ALL_TOOL_NAMES = Object.values(MCP_TOOLS)
+
+	const getInitialEnabledTools = (): string[] => {
+		if (!org.mcpEnabledTools) return ALL_TOOL_NAMES
+		const saved = org.mcpEnabledTools
+			.split(',')
+			.map((t) => t.trim())
+			.filter(Boolean)
+		return ALL_TOOL_NAMES.filter((t) => saved.includes(t))
 	}
 
 	const [values, setValues] = useState<OrgFormValues>(initialValues)
+	const [mcpEnabledTools, setMcpEnabledTools] = useState<string[]>(
+		getInitialEnabledTools,
+	)
+	const [copied, setCopied] = useState(false)
 	const [logoKey, setLogoKey] = useState(org.logoKey)
 	const [logoVersion, setLogoVersion] = useState(0)
 	const [isPending, startTransition] = useTransition()
@@ -187,6 +209,7 @@ export function OrganizationSettingsForm({
 		if (errors.length > 0) return
 
 		startTransition(async () => {
+			const allEnabled = mcpEnabledTools.length === ALL_TOOL_NAMES.length
 			const result = await $updateOrganizationSettingsAction({
 				name: values.name,
 				legalName: values.legalName,
@@ -200,6 +223,8 @@ export function OrganizationSettingsForm({
 				aiClassificationEnabled: values.aiClassificationEnabled,
 				aiOrganizationContext: values.aiOrganizationContext,
 				responseDeadlineDays: values.responseDeadlineDays,
+				mcpEnabledTools: allEnabled ? null : mcpEnabledTools.join(','),
+				mcpShowSensitiveData: values.mcpShowSensitiveData,
 			})
 
 			if ('error' in result) {
@@ -212,6 +237,14 @@ export function OrganizationSettingsForm({
 
 			router.refresh()
 			sileo.success({ title: 'Configuración guardada' })
+		})
+	}
+
+	const handleCopyMcpUrl = () => {
+		const url = `${window.location.origin}/api/mcp/mcp?key=[aqui-tu-api-key]`
+		navigator.clipboard.writeText(url).then(() => {
+			setCopied(true)
+			setTimeout(() => setCopied(false), 2000)
 		})
 	}
 
@@ -544,6 +577,18 @@ export function OrganizationSettingsForm({
 				</CardContent>
 			</Card>
 
+			<McpSettingsCard
+				disabled={disabled}
+				mcpEnabledTools={mcpEnabledTools}
+				setMcpEnabledTools={setMcpEnabledTools}
+				mcpShowSensitiveData={values.mcpShowSensitiveData}
+				onShowSensitiveDataChange={(v) =>
+					setValues((prev) => ({ ...prev, mcpShowSensitiveData: v }))
+				}
+				copied={copied}
+				onCopy={handleCopyMcpUrl}
+			/>
+
 			{canManage && (
 				<div className='flex justify-end'>
 					<Button onClick={handleSubmit} disabled={isPending}>
@@ -552,5 +597,140 @@ export function OrganizationSettingsForm({
 				</div>
 			)}
 		</div>
+	)
+}
+
+interface McpSettingsCardProps {
+	disabled: boolean
+	mcpEnabledTools: string[]
+	setMcpEnabledTools: (tools: string[]) => void
+	mcpShowSensitiveData: boolean
+	onShowSensitiveDataChange: (value: boolean) => void
+	copied: boolean
+	onCopy: () => void
+}
+
+function McpSettingsCard({
+	disabled,
+	mcpEnabledTools,
+	setMcpEnabledTools,
+	mcpShowSensitiveData,
+	onShowSensitiveDataChange,
+	copied,
+	onCopy,
+}: McpSettingsCardProps) {
+	const ALL_TOOL_NAMES = Object.values(MCP_TOOLS)
+
+	const toggleTool = (toolName: string) => {
+		if (mcpEnabledTools.includes(toolName)) {
+			setMcpEnabledTools(mcpEnabledTools.filter((t) => t !== toolName))
+		} else {
+			setMcpEnabledTools([...mcpEnabledTools, toolName])
+		}
+	}
+
+	const mcpUrl =
+		typeof window !== 'undefined'
+			? `${window.location.origin}/api/mcp/mcp?key=[aqui-tu-api-key]`
+			: '/api/mcp/mcp?key=[aqui-tu-api-key]'
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle className='flex items-center gap-2 text-base'>
+					<Zap className='size-4' />
+					MCP (Model Context Protocol)
+				</CardTitle>
+				<CardDescription>
+					Conecta agentes de IA a los reclamos de tu organización con
+					herramientas de solo lectura.
+				</CardDescription>
+			</CardHeader>
+			<CardContent className='space-y-4'>
+				<BooleanField
+					value={mcpShowSensitiveData}
+					onValueChange={onShowSensitiveDataChange}
+					label='Mostrar datos personales completos'
+					description='Si está desactivado, nombres, DNI y contacto quedan enmascarados. El DNI se muestra como "7****887".'
+					disabled={disabled}
+				/>
+
+				<Separator />
+
+				<div className='space-y-2'>
+					<p className='text-sm font-medium'>
+						Herramientas habilitadas
+					</p>
+					<p className='text-xs text-muted-foreground'>
+						Selecciona qué herramientas pueden usar los agentes de
+						IA.
+					</p>
+					<div className='space-y-2 pt-1'>
+						{ALL_TOOL_NAMES.map((toolName) => {
+							const checked = mcpEnabledTools.includes(toolName)
+							return (
+								<label
+									key={toolName}
+									className='flex cursor-pointer items-center gap-3'
+								>
+									<input
+										type='checkbox'
+										checked={checked}
+										disabled={disabled}
+										onChange={() => toggleTool(toolName)}
+										className='size-4 rounded border-border accent-primary'
+									/>
+									<span className='text-sm'>
+										{
+											MCP_TOOL_LABELS[
+												toolName as keyof typeof MCP_TOOL_LABELS
+											]
+										}
+									</span>
+								</label>
+							)
+						})}
+					</div>
+				</div>
+
+				<Separator />
+
+				<div className='space-y-2'>
+					<p className='text-sm font-medium'>URL del servidor MCP</p>
+					<div className='flex items-center gap-2'>
+						<div className='flex h-9 flex-1 items-center overflow-hidden rounded-md border bg-muted/50 px-3 font-mono text-xs text-muted-foreground'>
+							<span className='truncate'>{mcpUrl}</span>
+						</div>
+						<Button
+							type='button'
+							variant='outline'
+							size='sm'
+							className='shrink-0'
+							onClick={onCopy}
+						>
+							{copied ? (
+								<Check className='size-3.5' />
+							) : (
+								<Copy className='size-3.5' />
+							)}
+						</Button>
+					</div>
+					<p className='text-xs text-muted-foreground'>
+						Reemplaza{' '}
+						<code className='rounded bg-muted px-1 py-0.5 font-mono text-xs'>
+							[aqui-tu-api-key]
+						</code>{' '}
+						con tu API key.{' '}
+						<a
+							href='/dashboard/account'
+							className='text-primary underline-offset-4 hover:underline'
+						>
+							Genera tu API key en tu perfil
+						</a>
+						.
+					</p>
+				</div>
+			</CardContent>
+		</Card>
 	)
 }

@@ -193,6 +193,8 @@ export async function $updateOrganizationSettingsAction(
 					aiOrganizationContext:
 						normalizedInput.aiOrganizationContext,
 					responseDeadlineDays: normalizedInput.responseDeadlineDays,
+					mcpEnabledTools: normalizedInput.mcpEnabledTools,
+					mcpShowSensitiveData: normalizedInput.mcpShowSensitiveData,
 					createdBy: session.user.id,
 					updatedAt: now,
 					updatedBy: session.user.id,
@@ -207,6 +209,9 @@ export async function $updateOrganizationSettingsAction(
 							normalizedInput.aiOrganizationContext,
 						responseDeadlineDays:
 							normalizedInput.responseDeadlineDays,
+						mcpEnabledTools: normalizedInput.mcpEnabledTools,
+						mcpShowSensitiveData:
+							normalizedInput.mcpShowSensitiveData,
 						updatedAt: now,
 						updatedBy: session.user.id,
 					},
@@ -232,6 +237,8 @@ export async function $updateOrganizationSettingsAction(
 						aiClassificationEnabled: org.aiClassificationEnabled,
 						aiOrganizationContext: org.aiOrganizationContext,
 						responseDeadlineDays: org.responseDeadlineDays,
+						mcpEnabledTools: org.mcpEnabledTools,
+						mcpShowSensitiveData: org.mcpShowSensitiveData,
 					},
 					newData: {
 						name: normalizedInput.name,
@@ -249,6 +256,9 @@ export async function $updateOrganizationSettingsAction(
 							normalizedInput.aiOrganizationContext,
 						responseDeadlineDays:
 							normalizedInput.responseDeadlineDays,
+						mcpEnabledTools: normalizedInput.mcpEnabledTools,
+						mcpShowSensitiveData:
+							normalizedInput.mcpShowSensitiveData,
 					},
 				},
 				tx,
