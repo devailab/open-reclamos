@@ -24,7 +24,10 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 	}
 
 	const [userData] = await db
-		.select({ setupStatus: users.setupStatus })
+		.select({
+			setupStatus: users.setupStatus,
+			isSuperAdmin: users.isSuperAdmin,
+		})
 		.from(users)
 		.where(eq(users.id, session.user.id))
 		.limit(1)
@@ -48,6 +51,7 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 					email: session.user.email,
 				}}
 				permissionKeys={membership?.permissionKeys ?? []}
+				isSuperAdmin={userData?.isSuperAdmin ?? false}
 				organizations={organizations}
 				activeOrganization={activeOrganization ?? null}
 			/>

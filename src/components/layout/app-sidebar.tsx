@@ -46,6 +46,7 @@ import {
 	sidebarAdministrationItems,
 	sidebarNavItems,
 	sidebarNoticesItems,
+	sidebarPlatformItems,
 } from '@/lib/sidebar-navigation'
 import { $logoutAction } from '@/modules/auth/actions'
 import { $switchOrganizationAction } from '@/modules/rbac/actions'
@@ -67,6 +68,7 @@ export interface AppSidebarProps {
 		email: string
 	}
 	permissionKeys?: string[]
+	isSuperAdmin?: boolean
 	organizations: UserOrganizationOption[]
 	activeOrganization: UserOrganizationOption | null
 }
@@ -74,6 +76,7 @@ export interface AppSidebarProps {
 export function AppSidebar({
 	user,
 	permissionKeys = [],
+	isSuperAdmin = false,
 	organizations,
 	activeOrganization,
 }: AppSidebarProps) {
@@ -297,6 +300,27 @@ export function AppSidebar({
 									</Collapsible>
 								</SidebarMenuItem>
 							)}
+
+							{isSuperAdmin &&
+								sidebarPlatformItems.map((item) => {
+									const isActive =
+										pathname === item.href ||
+										pathname.startsWith(`${item.href}/`)
+									return (
+										<SidebarMenuItem key={item.href}>
+											<SidebarMenuButton
+												render={
+													<Link href={item.href} />
+												}
+												isActive={isActive}
+												tooltip={item.label}
+											>
+												<item.icon />
+												<span>{item.label}</span>
+											</SidebarMenuButton>
+										</SidebarMenuItem>
+									)
+								})}
 
 							{isDevMode && (
 								<SidebarMenuItem>

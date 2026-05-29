@@ -6,7 +6,6 @@ import {
 	getOrganizationSettingsForOrganization,
 	getUbigeoById,
 } from '@/modules/settings/queries'
-import { EmailTestCard } from './_features/email-test-card'
 import { OrganizationSettingsForm } from './_features/organization-settings-form'
 
 const SettingsPage: FC = async () => {
@@ -43,11 +42,6 @@ const SettingsPage: FC = async () => {
 							}
 						: null
 				}
-				canManage={hasPermission(membership, 'settings.manage')}
-			/>
-
-			<EmailTestCard
-				defaultRecipientEmail={session.user.email}
 				canManage={hasPermission(membership, 'settings.manage')}
 			/>
 		</div>

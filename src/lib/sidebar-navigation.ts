@@ -8,6 +8,7 @@ import {
 	ScanText,
 	Settings,
 	ShieldCheck,
+	ShieldHalf,
 	Store,
 	Users,
 	Webhook,
@@ -109,6 +110,17 @@ export const sidebarAdministrationItems: SidebarNavigationItem[] = [
 	},
 ]
 
+export const sidebarPlatformItems: SidebarNavigationItem[] = [
+	{
+		label: 'Admin Plataforma',
+		href: '/dashboard/admin-settings',
+		icon: ShieldHalf,
+		permission: null,
+	},
+]
+
+// sidebarPlatformItems is intentionally excluded — access is guarded
+// at the page level via isSuperAdmin, not via permission keys
 const allNavigationItems = [
 	...sidebarNavItems,
 	...sidebarNoticesItems,

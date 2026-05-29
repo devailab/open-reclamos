@@ -193,6 +193,8 @@ export async function $registerAction(
 		return { error: 'El registro de nuevas cuentas no está disponible.' }
 	}
 
+	const isFirstUser = !anyUser
+
 	let result: Awaited<ReturnType<typeof auth.api.signUpEmail>>
 
 	try {
@@ -214,7 +216,7 @@ export async function $registerAction(
 
 	await db
 		.update(users)
-		.set({ setupStatus: 'organization' })
+		.set({ setupStatus: 'organization', isSuperAdmin: isFirstUser })
 		.where(eq(users.id, result.user.id))
 
 	redirect('/setup')
@@ -255,8 +257,11 @@ export async function $sendRegistrationVerificationAction(
 
 	// Only create if the user doesn't exist yet (avoids USER_ALREADY_EXISTS error on resend)
 	if (!existingUser) {
+		const isFirstUser = !anyUser
+		let signUpResult: Awaited<ReturnType<typeof auth.api.signUpEmail>>
+
 		try {
-			await auth.api.signUpEmail({
+			signUpResult = await auth.api.signUpEmail({
 				body: { name, email: normalizedEmail, password },
 			})
 		} catch (error) {
@@ -266,6 +271,13 @@ export async function $sendRegistrationVerificationAction(
 					'No se pudo crear la cuenta. Intenta nuevamente.',
 				),
 			}
+		}
+
+		if (isFirstUser && signUpResult?.user?.id) {
+			await db
+				.update(users)
+				.set({ isSuperAdmin: true })
+				.where(eq(users.id, signUpResult.user.id))
 		}
 	}
 
@@ -294,11 +306,24 @@ export async function $verifyAndRegisterAction(
 	code: string,
 ): Promise<AuthActionResult> {
 	const anyUser = await hasAnyUser()
+	const normalizedEmail = email.trim().toLowerCase()
+
 	if (!ALLOW_PUBLIC_REGISTRATION && anyUser) {
-		return { error: 'El registro de nuevas cuentas no está disponible.' }
+		// The super admin (first user) may already exist in the DB by the time
+		// they reach this step — allow them to complete OTP verification
+		const [verifyingUser] = await db
+			.select({ isSuperAdmin: users.isSuperAdmin })
+			.from(users)
+			.where(eq(users.email, normalizedEmail))
+			.limit(1)
+
+		if (!verifyingUser?.isSuperAdmin) {
+			return {
+				error: 'El registro de nuevas cuentas no está disponible.',
+			}
+		}
 	}
 
-	const normalizedEmail = email.trim().toLowerCase()
 	const reqHeaders = await headers()
 
 	const [existingUser] = await db

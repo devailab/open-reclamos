@@ -5,6 +5,7 @@ export type RoleDefinition = (typeof rbacData.roles)[number]
 
 export const SYSTEM_PERMISSION_DEFINITIONS = rbacData.permissions
 export const BASE_ROLE_DEFINITIONS = rbacData.roles
+export const SUPER_ADMIN_ROLE_DEFINITION = rbacData.superAdminRole
 
 export const STORE_ACCESS_ALL = 'all'
 export const STORE_ACCESS_SELECTED = 'selected'

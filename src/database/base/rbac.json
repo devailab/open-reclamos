@@ -1,4 +1,11 @@
 {
+    "superAdminRole": {
+        "key": "platform-super-admin",
+        "slug": "super-admin",
+        "name": "Super Administrador",
+        "description": "Acceso total a la plataforma. Asignado automáticamente al primer usuario registrado.",
+        "scope": "platform"
+    },
     "permissions": [
         {
             "key": "complaints.view",
