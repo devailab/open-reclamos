@@ -153,6 +153,13 @@
             "module": "webhooks",
             "name": "Gestionar webhooks",
             "description": "Permite crear, editar y eliminar webhooks."
+        },
+        {
+            "key": "exports.view",
+            "slug": "exports-view",
+            "module": "exports",
+            "name": "Exportar registro",
+            "description": "Permite generar y descargar exportaciones del libro de reclamos en PDF, CSV y Excel."
         }
     ],
     "roles": [
@@ -183,7 +190,8 @@
                 "permissions.view",
                 "permissions.manage",
                 "webhooks.view",
-                "webhooks.manage"
+                "webhooks.manage",
+                "exports.view"
             ]
         },
         {
@@ -200,7 +208,8 @@
                 "printable.view",
                 "reasons.view",
                 "audit.view",
-                "settings.view"
+                "settings.view",
+                "exports.view"
             ]
         },
         {

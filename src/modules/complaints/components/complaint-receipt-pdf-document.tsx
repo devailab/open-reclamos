@@ -389,7 +389,7 @@ function Section({
 	)
 }
 
-export function ComplaintReceiptPdfDocument({
+export function ComplaintReceiptPdfPage({
 	data,
 }: {
 	data: ComplaintReceiptPdfInput
@@ -409,249 +409,259 @@ export function ComplaintReceiptPdfDocument({
 	const isResponseTone = data.providerSection.tone === 'response'
 
 	return (
+		<Page size='A4' style={styles.page}>
+			{/* Header */}
+			<View style={styles.header}>
+				<View style={styles.headerTopRow}>
+					<View style={styles.headerBrand}>
+						<Text style={styles.eyebrow}>
+							Libro de Reclamaciones Virtual
+						</Text>
+						<Text style={styles.headerTitle}>
+							{data.document.title}
+						</Text>
+					</View>
+					<View style={styles.headerCorrelativeBox}>
+						<Text style={styles.headerCorrelativeLabel}>
+							N.° Correlativo
+						</Text>
+						<Text style={styles.headerCorrelative}>
+							{data.complaint.correlative}
+						</Text>
+					</View>
+				</View>
+
+				<View style={styles.headerRule} />
+
+				<Text style={styles.headerOrgLine}>{orgLine}</Text>
+
+				<View style={styles.metaStrip}>
+					<View style={styles.metaCell}>
+						<Text style={styles.metaCellLabel}>
+							Fecha de registro
+						</Text>
+						<Text style={styles.metaCellValue}>
+							{data.complaint.createdAt}
+						</Text>
+					</View>
+					<View style={styles.metaCellBorder}>
+						<Text style={styles.metaCellLabel}>Tipo</Text>
+						<Text style={styles.metaCellValue}>
+							{data.complaint.typeLabel}
+						</Text>
+					</View>
+					<View style={styles.metaCellBorder}>
+						<Text style={styles.metaCellLabel}>
+							Código de seguimiento
+						</Text>
+						<Text style={styles.metaCellValue}>
+							{data.complaint.trackingCode}
+						</Text>
+					</View>
+					<View style={styles.metaCellBorder}>
+						<Text style={styles.metaCellLabel}>
+							Plazo máximo de respuesta
+						</Text>
+						<Text style={styles.metaCellValue}>
+							{data.complaint.responseDeadline}
+						</Text>
+					</View>
+				</View>
+			</View>
+
+			{/* 2-column grid: Proveedor + Consumidor | Bien o servicio */}
+			<View style={styles.grid}>
+				<View style={styles.column}>
+					<Section number='1' title='Proveedor'>
+						<Field
+							label='Razón social'
+							value={data.organization.legalName}
+							strong
+						/>
+						<Field
+							label='RUC'
+							value={data.organization.taxId}
+							strong
+						/>
+						<Field
+							label='Dirección'
+							value={data.organization.address}
+						/>
+						<Field
+							label='Ubicación'
+							value={data.organization.location}
+						/>
+						<Field
+							label='Contacto'
+							value={data.organization.contact}
+						/>
+					</Section>
+
+					<Section number='2' title='Consumidor reclamante'>
+						<Field
+							label='Nombre o razón social'
+							value={data.consumer.heading}
+							strong
+						/>
+						<Field
+							label='Documento'
+							value={data.consumer.identity}
+						/>
+						{data.consumer.representative && (
+							<Field
+								label='Representante o tutor'
+								value={data.consumer.representative}
+							/>
+						)}
+						<Field
+							label='Contacto'
+							value={data.consumer.contact}
+						/>
+						<Field
+							label='Domicilio'
+							value={data.consumer.address}
+						/>
+					</Section>
+				</View>
+
+				<View style={styles.column}>
+					<Section number='3' title='Bien o servicio involucrado'>
+						<Field
+							label='Tienda o canal'
+							value={data.store.name}
+							strong
+						/>
+						<Field
+							label='Modalidad'
+							value={data.store.modeLabel}
+						/>
+						<Field label='Detalle' value={data.store.detail} />
+						<Field
+							label='Motivo'
+							value={data.complaint.reason}
+						/>
+						<Field
+							label='Fecha del incidente'
+							value={data.complaint.incidentDate}
+						/>
+						<Field
+							label='Bien contratado'
+							value={data.complaint.itemSummary}
+						/>
+						<Field
+							label='Monto reclamado'
+							value={data.complaint.amount}
+						/>
+						<Field
+							label='Comprobante de pago'
+							value={data.complaint.proofOfPayment}
+						/>
+					</Section>
+
+					<View style={styles.attachmentsNote}>
+						<Text style={styles.attachmentsNoteText}>
+							{data.narratives.attachments}
+						</Text>
+					</View>
+				</View>
+			</View>
+
+			{/* Detalle y pedido — full width, split in 2 */}
+			<View style={styles.section}>
+				<View style={styles.sectionTitleBar}>
+					<Text style={styles.sectionTitle}>
+						4. Detalle y pedido del consumidor
+					</Text>
+				</View>
+				<View style={styles.narrativeRow}>
+					<View style={styles.narrativeColLeft}>
+						<Text style={styles.narrativeColLabel}>
+							Detalle
+						</Text>
+						<Text
+							style={getNarrativeStyle(
+								data.narratives.detail,
+							)}
+						>
+							{data.narratives.detail}
+						</Text>
+					</View>
+					<View style={styles.narrativeColRight}>
+						<Text style={styles.narrativeColLabel}>
+							Pedido del consumidor
+						</Text>
+						<Text
+							style={getNarrativeStyle(
+								data.narratives.request,
+							)}
+						>
+							{data.narratives.request}
+						</Text>
+					</View>
+				</View>
+			</View>
+
+			{/* Respuesta del proveedor */}
+			<View
+				style={
+					isResponseTone
+						? styles.providerSectionResponse
+						: styles.providerSection
+				}
+			>
+				<View
+					style={
+						isResponseTone
+							? styles.providerTitleBarResponse
+							: styles.providerTitleBar
+					}
+				>
+					<Text
+						style={
+							isResponseTone
+								? styles.providerTitleResponse
+								: styles.providerTitle
+						}
+					>
+						5. {data.providerSection.title}
+					</Text>
+				</View>
+
+				<View style={styles.providerBody}>
+					<Text
+						style={
+							isResponseTone
+								? styles.providerTextResponse
+								: styles.providerText
+						}
+					>
+						{data.providerSection.content}
+					</Text>
+				</View>
+			</View>
+
+			{/* Footer */}
+			<View style={styles.footer}>
+				<Text style={styles.footerText}>
+					{data.document.footerNote}
+				</Text>
+			</View>
+		</Page>
+	)
+}
+
+export function ComplaintReceiptPdfDocument({
+	data,
+}: {
+	data: ComplaintReceiptPdfInput
+}) {
+	return (
 		<Document
 			title={`${data.document.title} ${data.complaint.correlative}`}
 			author='Open Reclamos'
 			subject={data.document.subject}
 		>
-			<Page size='A4' style={styles.page}>
-				{/* Header */}
-				<View style={styles.header}>
-					<View style={styles.headerTopRow}>
-						<View style={styles.headerBrand}>
-							<Text style={styles.eyebrow}>
-								Libro de Reclamaciones Virtual
-							</Text>
-							<Text style={styles.headerTitle}>
-								{data.document.title}
-							</Text>
-						</View>
-						<View style={styles.headerCorrelativeBox}>
-							<Text style={styles.headerCorrelativeLabel}>
-								N.° Correlativo
-							</Text>
-							<Text style={styles.headerCorrelative}>
-								{data.complaint.correlative}
-							</Text>
-						</View>
-					</View>
-
-					<View style={styles.headerRule} />
-
-					<Text style={styles.headerOrgLine}>{orgLine}</Text>
-
-					<View style={styles.metaStrip}>
-						<View style={styles.metaCell}>
-							<Text style={styles.metaCellLabel}>
-								Fecha de registro
-							</Text>
-							<Text style={styles.metaCellValue}>
-								{data.complaint.createdAt}
-							</Text>
-						</View>
-						<View style={styles.metaCellBorder}>
-							<Text style={styles.metaCellLabel}>Tipo</Text>
-							<Text style={styles.metaCellValue}>
-								{data.complaint.typeLabel}
-							</Text>
-						</View>
-						<View style={styles.metaCellBorder}>
-							<Text style={styles.metaCellLabel}>
-								Código de seguimiento
-							</Text>
-							<Text style={styles.metaCellValue}>
-								{data.complaint.trackingCode}
-							</Text>
-						</View>
-						<View style={styles.metaCellBorder}>
-							<Text style={styles.metaCellLabel}>
-								Plazo máximo de respuesta
-							</Text>
-							<Text style={styles.metaCellValue}>
-								{data.complaint.responseDeadline}
-							</Text>
-						</View>
-					</View>
-				</View>
-
-				{/* 2-column grid: Proveedor + Consumidor | Bien o servicio */}
-				<View style={styles.grid}>
-					<View style={styles.column}>
-						<Section number='1' title='Proveedor'>
-							<Field
-								label='Razón social'
-								value={data.organization.legalName}
-								strong
-							/>
-							<Field
-								label='RUC'
-								value={data.organization.taxId}
-								strong
-							/>
-							<Field
-								label='Dirección'
-								value={data.organization.address}
-							/>
-							<Field
-								label='Ubicación'
-								value={data.organization.location}
-							/>
-							<Field
-								label='Contacto'
-								value={data.organization.contact}
-							/>
-						</Section>
-
-						<Section number='2' title='Consumidor reclamante'>
-							<Field
-								label='Nombre o razón social'
-								value={data.consumer.heading}
-								strong
-							/>
-							<Field
-								label='Documento'
-								value={data.consumer.identity}
-							/>
-							{data.consumer.representative && (
-								<Field
-									label='Representante o tutor'
-									value={data.consumer.representative}
-								/>
-							)}
-							<Field
-								label='Contacto'
-								value={data.consumer.contact}
-							/>
-							<Field
-								label='Domicilio'
-								value={data.consumer.address}
-							/>
-						</Section>
-					</View>
-
-					<View style={styles.column}>
-						<Section number='3' title='Bien o servicio involucrado'>
-							<Field
-								label='Tienda o canal'
-								value={data.store.name}
-								strong
-							/>
-							<Field
-								label='Modalidad'
-								value={data.store.modeLabel}
-							/>
-							<Field label='Detalle' value={data.store.detail} />
-							<Field
-								label='Motivo'
-								value={data.complaint.reason}
-							/>
-							<Field
-								label='Fecha del incidente'
-								value={data.complaint.incidentDate}
-							/>
-							<Field
-								label='Bien contratado'
-								value={data.complaint.itemSummary}
-							/>
-							<Field
-								label='Monto reclamado'
-								value={data.complaint.amount}
-							/>
-							<Field
-								label='Comprobante de pago'
-								value={data.complaint.proofOfPayment}
-							/>
-						</Section>
-
-						<View style={styles.attachmentsNote}>
-							<Text style={styles.attachmentsNoteText}>
-								{data.narratives.attachments}
-							</Text>
-						</View>
-					</View>
-				</View>
-
-				{/* Detalle y pedido — full width, split in 2 */}
-				<View style={styles.section}>
-					<View style={styles.sectionTitleBar}>
-						<Text style={styles.sectionTitle}>
-							4. Detalle y pedido del consumidor
-						</Text>
-					</View>
-					<View style={styles.narrativeRow}>
-						<View style={styles.narrativeColLeft}>
-							<Text style={styles.narrativeColLabel}>
-								Detalle
-							</Text>
-							<Text
-								style={getNarrativeStyle(
-									data.narratives.detail,
-								)}
-							>
-								{data.narratives.detail}
-							</Text>
-						</View>
-						<View style={styles.narrativeColRight}>
-							<Text style={styles.narrativeColLabel}>
-								Pedido del consumidor
-							</Text>
-							<Text
-								style={getNarrativeStyle(
-									data.narratives.request,
-								)}
-							>
-								{data.narratives.request}
-							</Text>
-						</View>
-					</View>
-				</View>
-
-				{/* Respuesta del proveedor */}
-				<View
-					style={
-						isResponseTone
-							? styles.providerSectionResponse
-							: styles.providerSection
-					}
-				>
-					<View
-						style={
-							isResponseTone
-								? styles.providerTitleBarResponse
-								: styles.providerTitleBar
-						}
-					>
-						<Text
-							style={
-								isResponseTone
-									? styles.providerTitleResponse
-									: styles.providerTitle
-							}
-						>
-							5. {data.providerSection.title}
-						</Text>
-					</View>
-
-					<View style={styles.providerBody}>
-						<Text
-							style={
-								isResponseTone
-									? styles.providerTextResponse
-									: styles.providerText
-							}
-						>
-							{data.providerSection.content}
-						</Text>
-					</View>
-				</View>
-
-				{/* Footer */}
-				<View style={styles.footer}>
-					<Text style={styles.footerText}>
-						{data.document.footerNote}
-					</Text>
-				</View>
-			</Page>
+			<ComplaintReceiptPdfPage data={data} />
 		</Document>
 	)
 }

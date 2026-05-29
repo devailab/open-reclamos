@@ -2,6 +2,7 @@ import {
 	BookOpen,
 	ClipboardList,
 	Clock3,
+	FileDown,
 	KeyRound,
 	LayoutDashboard,
 	ScanText,
@@ -33,6 +34,12 @@ export const sidebarNavItems: SidebarNavigationItem[] = [
 		href: '/dashboard/complaints',
 		icon: ClipboardList,
 		permission: 'complaints.view',
+	},
+	{
+		label: 'Exportar',
+		href: '/dashboard/exports',
+		icon: FileDown,
+		permission: 'exports.view',
 	},
 	{
 		label: 'Auditoría',

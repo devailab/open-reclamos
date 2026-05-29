@@ -47,7 +47,6 @@ export const auth = betterAuth({
 		enabled: true,
 	},
 	plugins: [
-		nextCookies(),
 		emailOTP({
 			sendVerificationOnSignUp: false,
 			otpLength: 6,
@@ -65,5 +64,6 @@ export const auth = betterAuth({
 				})
 			},
 		}),
+		nextCookies(),
 	],
 })
