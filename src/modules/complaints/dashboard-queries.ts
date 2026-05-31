@@ -20,10 +20,9 @@ import {
 } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
+	complaintCategories,
 	complaintDetails,
 	complaints,
-	complaintTagAssignments,
-	complaintTags,
 	stores,
 } from '@/database/schema'
 import type {
@@ -32,10 +31,10 @@ import type {
 	DashboardTrendPoint,
 } from './dashboard-validation'
 
-export interface ComplaintTagSummary {
+export interface ComplaintCategorySummary {
 	id: string
 	name: string
-	color: string | null
+	description: string | null
 }
 
 export interface ComplaintTableRow {
@@ -48,7 +47,7 @@ export interface ComplaintTableRow {
 	storeName: string
 	status: string
 	priority: string
-	tags: ComplaintTagSummary[]
+	category: ComplaintCategorySummary | null
 	responseDeadline: Date | null
 	hasResponse: boolean
 	createdAt: Date
@@ -74,22 +73,6 @@ interface GetComplaintsTableForOrganizationParams {
 	filters: ComplaintsTableFilters
 	/** Cuando está definido, solo se devuelven reclamos de estas tiendas. */
 	allowedStoreIds?: string[]
-}
-
-function parseComplaintTags(value: unknown): ComplaintTagSummary[] {
-	if (Array.isArray(value)) {
-		return value as ComplaintTagSummary[]
-	}
-
-	if (typeof value === 'string') {
-		try {
-			return JSON.parse(value) as ComplaintTagSummary[]
-		} catch {
-			return []
-		}
-	}
-
-	return []
 }
 
 const buildComplaintsTableConditions = (
@@ -159,33 +142,6 @@ export async function getComplaintsTableForOrganization({
 	}
 
 	const offset = (page - 1) * pageSize
-	const complaintTagsAggregate = db
-		.select({
-			complaintId: complaintTagAssignments.complaintId,
-			tags: sql<ComplaintTagSummary[]>`
-				coalesce(
-					json_agg(
-						json_build_object(
-							'id', ${complaintTags.id},
-							'name', ${complaintTags.name},
-							'color', ${complaintTags.color}
-						)
-						order by ${complaintTags.name}
-					),
-					'[]'::json
-				)
-			`
-				.mapWith(parseComplaintTags)
-				.as('tags'),
-		})
-		.from(complaintTagAssignments)
-		.innerJoin(
-			complaintTags,
-			eq(complaintTagAssignments.tagId, complaintTags.id),
-		)
-		.groupBy(complaintTagAssignments.complaintId)
-		.as('complaint_tags_aggregate')
-
 	const rows = await db
 		.select({
 			id: complaints.id,
@@ -197,9 +153,11 @@ export async function getComplaintsTableForOrganization({
 			storeName: stores.name,
 			status: complaints.status,
 			priority: complaints.priority,
-			tags: sql<ComplaintTagSummary[]>`
-				coalesce(${complaintTagsAggregate.tags}, '[]'::json)
-			`.mapWith(parseComplaintTags),
+			category: {
+				id: complaintCategories.id,
+				name: complaintCategories.name,
+				description: complaintCategories.description,
+			},
 			responseDeadline: complaints.responseDeadline,
 			hasResponse: sql<boolean>`${complaintDetails.officialResponse} IS NOT NULL`,
 			createdAt: complaints.createdAt,
@@ -211,8 +169,8 @@ export async function getComplaintsTableForOrganization({
 			eq(complaintDetails.complaintId, complaints.id),
 		)
 		.leftJoin(
-			complaintTagsAggregate,
-			eq(complaintTagsAggregate.complaintId, complaints.id),
+			complaintCategories,
+			eq(complaints.categoryId, complaintCategories.id),
 		)
 		.where(whereClause)
 		.orderBy(desc(complaints.createdAt))
@@ -225,7 +183,10 @@ export async function getComplaintsTableForOrganization({
 		.where(whereClause)
 
 	return {
-		rows,
+		rows: rows.map((row) => ({
+			...row,
+			category: row.category?.id ? row.category : null,
+		})),
 		totalItems: total?.total ?? 0,
 	}
 }

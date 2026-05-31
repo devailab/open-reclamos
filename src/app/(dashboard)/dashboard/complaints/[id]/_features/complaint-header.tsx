@@ -5,9 +5,11 @@ import { formatDateDisplay } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import type { ComplaintDetail } from '@/modules/complaints/detail-queries'
 import {
+	COMPLAINT_PRIORITY_LABEL,
 	COMPLAINT_STATUS_LABEL,
 	COMPLAINT_TYPE_LABEL,
 	type DeadlineStatus,
+	PRIORITY_BADGE_CLASS,
 	STATUS_BADGE_VARIANT,
 } from './shared'
 
@@ -51,6 +53,16 @@ export const ComplaintHeader: FC<ComplaintHeaderProps> = ({
 					>
 						{COMPLAINT_STATUS_LABEL[complaint.status] ??
 							complaint.status}
+					</Badge>
+					<Badge
+						variant='outline'
+						className={
+							PRIORITY_BADGE_CLASS[complaint.priority] ??
+							PRIORITY_BADGE_CLASS.medium
+						}
+					>
+						{COMPLAINT_PRIORITY_LABEL[complaint.priority] ??
+							complaint.priority}
 					</Badge>
 				</div>
 			</div>

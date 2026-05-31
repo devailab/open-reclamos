@@ -1,3 +1,4 @@
+import type { ComplaintCategoryRow } from '@/modules/categories/queries'
 import type {
 	ComplaintAttachment,
 	ComplaintAuditEntry,
@@ -10,4 +11,8 @@ export interface ComplaintDetailPageProps {
 	auditHistory: ComplaintAuditEntry[]
 	history: ComplaintHistoryEntry[]
 	attachments: ComplaintAttachment[]
+	availableCategories: Pick<
+		ComplaintCategoryRow,
+		'id' | 'name' | 'description'
+	>[]
 }

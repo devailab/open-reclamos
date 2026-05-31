@@ -5,29 +5,8 @@
         {
             "idx": 0,
             "version": "7",
-            "when": 1775645141240,
-            "tag": "0000_natural_wallflower",
-            "breakpoints": true
-        },
-        {
-            "idx": 1,
-            "version": "7",
-            "when": 1779555822498,
-            "tag": "0001_large_gamora",
-            "breakpoints": true
-        },
-        {
-            "idx": 2,
-            "version": "7",
-            "when": 1780029177326,
-            "tag": "0002_volatile_supernaut",
-            "breakpoints": true
-        },
-        {
-            "idx": 3,
-            "version": "7",
-            "when": 1780054707726,
-            "tag": "0003_aspiring_micromax",
+            "when": 1780185656582,
+            "tag": "0000_youthful_the_santerians",
             "breakpoints": true
         }
     ]

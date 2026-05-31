@@ -38,6 +38,17 @@ CREATE TABLE "complaint_attachments" (
 	"description" text
 );
 --> statement-breakpoint
+CREATE TABLE "complaint_categories" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" uuid NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone,
+	"updated_by" uuid
+);
+--> statement-breakpoint
 CREATE TABLE "complaint_deliveries" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"organization_id" uuid NOT NULL,
@@ -64,7 +75,6 @@ CREATE TABLE "complaint_details" (
 	"responded_at" timestamp with time zone,
 	"responded_by" uuid,
 	"ai_summary" text,
-	"ai_priority_reason" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "complaint_details_complaint_id_unique" UNIQUE("complaint_id")
@@ -96,31 +106,12 @@ CREATE TABLE "complaint_reasons" (
 	"updated_by" uuid
 );
 --> statement-breakpoint
-CREATE TABLE "complaint_tag_assignments" (
-	"complaint_id" uuid NOT NULL,
-	"tag_id" uuid NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"created_by" uuid,
-	CONSTRAINT "complaint_tag_assignments_complaint_id_tag_id_pk" PRIMARY KEY("complaint_id","tag_id")
-);
---> statement-breakpoint
-CREATE TABLE "complaint_tags" (
-	"id" uuid PRIMARY KEY NOT NULL,
-	"organization_id" uuid NOT NULL,
-	"name" text NOT NULL,
-	"description" text,
-	"color" text,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"created_by" uuid,
-	"updated_at" timestamp with time zone,
-	"updated_by" uuid
-);
---> statement-breakpoint
 CREATE TABLE "complaints" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"organization_id" uuid NOT NULL,
 	"store_id" uuid NOT NULL,
 	"reason_id" uuid,
+	"category_id" uuid,
 	"ubigeo_id" uuid,
 	"status" text DEFAULT 'open' NOT NULL,
 	"priority" text DEFAULT 'medium' NOT NULL,
@@ -232,6 +223,8 @@ CREATE TABLE "organization_settings" (
 	"form_enabled" boolean DEFAULT true NOT NULL,
 	"ai_classification_enabled" boolean DEFAULT false NOT NULL,
 	"ai_organization_context" text,
+	"mcp_enabled_tools" text,
+	"mcp_show_sensitive_data" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid NOT NULL,
 	"updated_at" timestamp with time zone,
@@ -362,6 +355,8 @@ CREATE TABLE "users" (
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
 	"setup_status" text DEFAULT 'complete' NOT NULL,
+	"is_super_admin" boolean DEFAULT false NOT NULL,
+	"pending_organization_id" uuid,
 	"api_key" text,
 	"api_key_created_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -420,6 +415,9 @@ CREATE TABLE "webhook_endpoints" (
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaint_categories" ADD CONSTRAINT "complaint_categories_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaint_categories" ADD CONSTRAINT "complaint_categories_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaint_categories" ADD CONSTRAINT "complaint_categories_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaint_deliveries" ADD CONSTRAINT "complaint_deliveries_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaint_deliveries" ADD CONSTRAINT "complaint_deliveries_complaint_id_complaints_id_fk" FOREIGN KEY ("complaint_id") REFERENCES "public"."complaints"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaint_details" ADD CONSTRAINT "complaint_details_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -432,15 +430,10 @@ ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_organization_i
 ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_deleted_by_users_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaint_reasons" ADD CONSTRAINT "complaint_reasons_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "complaint_tag_assignments" ADD CONSTRAINT "complaint_tag_assignments_complaint_id_complaints_id_fk" FOREIGN KEY ("complaint_id") REFERENCES "public"."complaints"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "complaint_tag_assignments" ADD CONSTRAINT "complaint_tag_assignments_tag_id_complaint_tags_id_fk" FOREIGN KEY ("tag_id") REFERENCES "public"."complaint_tags"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "complaint_tag_assignments" ADD CONSTRAINT "complaint_tag_assignments_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "complaint_tags" ADD CONSTRAINT "complaint_tags_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "complaint_tags" ADD CONSTRAINT "complaint_tags_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "complaint_tags" ADD CONSTRAINT "complaint_tags_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_store_id_stores_id_fk" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_reason_id_complaint_reasons_id_fk" FOREIGN KEY ("reason_id") REFERENCES "public"."complaint_reasons"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "complaints" ADD CONSTRAINT "complaints_category_id_complaint_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."complaint_categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_ubigeo_id_ubigeos_id_fk" FOREIGN KEY ("ubigeo_id") REFERENCES "public"."ubigeos"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "complaints" ADD CONSTRAINT "complaints_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "organization_invitation_stores" ADD CONSTRAINT "organization_invitation_stores_invitation_id_organization_invitations_id_fk" FOREIGN KEY ("invitation_id") REFERENCES "public"."organization_invitations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -498,6 +491,8 @@ CREATE INDEX "audit_logs_action_idx" ON "audit_logs" USING btree ("action");--> 
 CREATE INDEX "audit_logs_entity_type_idx" ON "audit_logs" USING btree ("entity_type");--> statement-breakpoint
 CREATE INDEX "audit_logs_entity_id_idx" ON "audit_logs" USING btree ("entity_id");--> statement-breakpoint
 CREATE INDEX "audit_logs_organization_created_at_idx" ON "audit_logs" USING btree ("organization_id","created_at");--> statement-breakpoint
+CREATE INDEX "complaint_categories_organization_id_idx" ON "complaint_categories" USING btree ("organization_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "complaint_categories_organization_id_name_uidx" ON "complaint_categories" USING btree ("organization_id","name");--> statement-breakpoint
 CREATE INDEX "complaint_deliveries_organization_id_idx" ON "complaint_deliveries" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "complaint_deliveries_complaint_id_idx" ON "complaint_deliveries" USING btree ("complaint_id");--> statement-breakpoint
 CREATE INDEX "complaint_deliveries_organization_complaint_id_idx" ON "complaint_deliveries" USING btree ("organization_id","complaint_id");--> statement-breakpoint
@@ -510,12 +505,10 @@ CREATE INDEX "complaint_details_responded_by_idx" ON "complaint_details" USING b
 CREATE INDEX "complaint_history_complaint_id_idx" ON "complaint_history" USING btree ("complaint_id");--> statement-breakpoint
 CREATE INDEX "complaint_history_created_at_idx" ON "complaint_history" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "complaint_history_complaint_id_created_at_idx" ON "complaint_history" USING btree ("complaint_id","created_at");--> statement-breakpoint
-CREATE INDEX "complaint_tag_assignments_tag_id_idx" ON "complaint_tag_assignments" USING btree ("tag_id");--> statement-breakpoint
-CREATE INDEX "complaint_tags_organization_id_idx" ON "complaint_tags" USING btree ("organization_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "complaint_tags_organization_id_name_uidx" ON "complaint_tags" USING btree ("organization_id","name");--> statement-breakpoint
 CREATE INDEX "complaints_organization_id_idx" ON "complaints" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "complaints_store_id_idx" ON "complaints" USING btree ("store_id");--> statement-breakpoint
 CREATE INDEX "complaints_reason_id_idx" ON "complaints" USING btree ("reason_id");--> statement-breakpoint
+CREATE INDEX "complaints_category_id_idx" ON "complaints" USING btree ("category_id");--> statement-breakpoint
 CREATE INDEX "complaints_status_idx" ON "complaints" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "complaints_created_at_idx" ON "complaints" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "complaints_response_deadline_idx" ON "complaints" USING btree ("response_deadline");--> statement-breakpoint

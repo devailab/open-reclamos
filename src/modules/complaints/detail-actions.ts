@@ -4,13 +4,18 @@ import { and, eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
-import { complaintDetails, complaints } from '@/database/schema'
+import {
+	complaintCategories,
+	complaintDetails,
+	complaints,
+} from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
 import { getPresignedDownloadUrl } from '@/lib/s3'
 import { WEBHOOK_EVENT } from '@/lib/webhook-events'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { dispatchWebhookEvent } from '@/modules/webhooks/dispatch'
+import type { ComplaintPriority } from './ai-classification'
 import type { ChangeableStatus } from './dashboard-validation'
 import {
 	enqueueComplaintResponseDelivery,
@@ -19,6 +24,7 @@ import {
 } from './delivery'
 import {
 	type ComplaintAuditEntry,
+	type ComplaintCategorySummary,
 	type ComplaintDetail,
 	type ComplaintHistoryEntry,
 	getAttachmentByStorageKey,
@@ -63,6 +69,38 @@ function canAccessStore(
 	return allowedStoreIds.includes(storeId)
 }
 
+const COMPLAINT_PRIORITY_VALUES = ['low', 'medium', 'high', 'urgent'] as const
+
+function isComplaintPriority(value: string): value is ComplaintPriority {
+	return COMPLAINT_PRIORITY_VALUES.includes(value as ComplaintPriority)
+}
+
+async function getComplaintCategoryForOrganization(params: {
+	categoryId: string | null
+	organizationId: string
+}) {
+	if (!params.categoryId) {
+		return null
+	}
+
+	const [category] = await db
+		.select({
+			id: complaintCategories.id,
+			name: complaintCategories.name,
+			description: complaintCategories.description,
+		})
+		.from(complaintCategories)
+		.where(
+			and(
+				eq(complaintCategories.id, params.categoryId),
+				eq(complaintCategories.organizationId, params.organizationId),
+			),
+		)
+		.limit(1)
+
+	return category ?? null
+}
+
 export async function $getComplaintDetailAction(
 	id: string,
 ): Promise<GetComplaintDetailResult> {
@@ -93,6 +131,23 @@ export async function $getComplaintDetailAction(
 export interface RespondToComplaintInput {
 	id: string
 	response: string
+	priority: ComplaintPriority
+	categoryId: string | null
+}
+
+export interface UpdateComplaintClassificationInput {
+	id: string
+	priority: ComplaintPriority
+	categoryId: string | null
+}
+
+export interface UpdateComplaintClassificationResult {
+	success: boolean
+	data?: {
+		priority: ComplaintPriority
+		category: ComplaintCategorySummary | null
+	}
+	error?: string
 }
 
 export async function $saveDraftResponseAction(
@@ -155,6 +210,112 @@ export async function $saveDraftResponseAction(
 	return { success: true }
 }
 
+export async function $updateComplaintClassificationAction(
+	input: UpdateComplaintClassificationInput,
+): Promise<UpdateComplaintClassificationResult> {
+	const access = await requireAccess('complaints.respond')
+	if ('error' in access) {
+		return {
+			success: false,
+			error:
+				access.error ?? 'No tienes permisos para realizar esta acción.',
+		}
+	}
+
+	if (!isComplaintPriority(input.priority)) {
+		return {
+			success: false,
+			error: 'La prioridad seleccionada no es válida.',
+		}
+	}
+
+	const existing = await getComplaintDetailById(
+		input.id,
+		access.membership.organizationId,
+	)
+	if (!existing) {
+		return { success: false, error: 'Reclamo no encontrado.' }
+	}
+
+	if (
+		!canAccessStore(
+			existing.storeId,
+			access.membership.storeAccessMode,
+			access.membership.storeIds,
+		)
+	) {
+		return { success: false, error: 'No tienes acceso a este reclamo.' }
+	}
+
+	const category = await getComplaintCategoryForOrganization({
+		categoryId: input.categoryId,
+		organizationId: access.membership.organizationId,
+	})
+	if (input.categoryId && !category) {
+		return {
+			success: false,
+			error: 'La categoría seleccionada no es válida.',
+		}
+	}
+
+	try {
+		const data = await db.transaction(async (tx) => {
+			await tx
+				.update(complaints)
+				.set({
+					priority: input.priority,
+					categoryId: input.categoryId,
+					updatedAt: new Date(),
+					updatedBy: access.session.user.id,
+				})
+				.where(
+					and(
+						eq(complaints.id, input.id),
+						eq(
+							complaints.organizationId,
+							access.membership.organizationId,
+						),
+					),
+				)
+
+			await createAuditLog(
+				{
+					organizationId: access.membership.organizationId,
+					userId: access.session.user.id,
+					action: AUDIT_LOG.COMPLAINT_UPDATED,
+					entityType: 'complaint',
+					entityId: input.id,
+					oldData: {
+						priority: existing.priority,
+						categoryId: existing.categoryId,
+					},
+					newData: {
+						priority: input.priority,
+						categoryId: input.categoryId,
+					},
+				},
+				tx,
+			)
+
+			return {
+				priority: input.priority,
+				category,
+			}
+		})
+
+		return { success: true, data }
+	} catch (error) {
+		console.error(
+			'[complaints] Error al actualizar prioridad o categoría del reclamo:',
+			error,
+		)
+		return {
+			success: false,
+			error: 'No se pudieron guardar la prioridad y la categoría.',
+		}
+	}
+}
+
 export interface RespondToComplaintResult {
 	success: boolean
 	data?: {
@@ -162,6 +323,8 @@ export interface RespondToComplaintResult {
 		respondedAt: string
 		respondedByName: string | null
 		publicNote: string
+		priority: ComplaintPriority
+		category: ComplaintCategorySummary | null
 	}
 	error?: string
 }
@@ -181,6 +344,13 @@ export async function $respondToComplaintAction(
 	const response = input.response?.trim()
 	if (!response) {
 		return { success: false, error: 'La respuesta no puede estar vacía' }
+	}
+
+	if (!isComplaintPriority(input.priority)) {
+		return {
+			success: false,
+			error: 'La prioridad seleccionada no es válida.',
+		}
 	}
 
 	const existing = await getComplaintDetailById(
@@ -215,6 +385,17 @@ export async function $respondToComplaintAction(
 		reqHeaders.get('x-forwarded-for') ?? reqHeaders.get('x-real-ip')
 	const userAgent = reqHeaders.get('user-agent')
 	const publicNote = 'Se registró una respuesta oficial a tu reclamo.'
+	const category = await getComplaintCategoryForOrganization({
+		categoryId: input.categoryId,
+		organizationId: access.membership.organizationId,
+	})
+	if (input.categoryId && !category) {
+		return {
+			success: false,
+			error: 'La categoría seleccionada no es válida.',
+		}
+	}
+
 	try {
 		await db.transaction(async (tx) => {
 			await tx
@@ -247,6 +428,8 @@ export async function $respondToComplaintAction(
 				.update(complaints)
 				.set({
 					status: 'resolved',
+					priority: input.priority,
+					categoryId: input.categoryId,
 					updatedAt: now,
 					updatedBy: access.session.user.id,
 				})
@@ -269,10 +452,14 @@ export async function $respondToComplaintAction(
 					entityId: input.id,
 					oldData: {
 						status: existing.status,
+						priority: existing.priority,
+						categoryId: existing.categoryId,
 						officialResponse: null,
 					},
 					newData: {
 						status: 'resolved',
+						priority: input.priority,
+						categoryId: input.categoryId,
 						officialResponse: response,
 						respondedAt: now.toISOString(),
 					},
@@ -360,6 +547,8 @@ export async function $respondToComplaintAction(
 			respondedAt: now.toISOString(),
 			respondedByName: access.session.user.name ?? null,
 			publicNote,
+			priority: input.priority,
+			category,
 		},
 	}
 }

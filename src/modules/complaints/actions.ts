@@ -18,7 +18,10 @@ import { WEBHOOK_EVENT } from '@/lib/webhook-events'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
 import { dispatchWebhookEvent } from '../webhooks/dispatch'
 import { enqueueComplaintAdminNotification } from './admin-notifications'
-import { enqueueComplaintAiClassification } from './ai-classification'
+import {
+	enqueueComplaintAiClassification,
+	shouldRunComplaintAiClassification,
+} from './ai-classification'
 import {
 	enqueueComplaintReceiptDelivery,
 	getComplaintDeliveryFailure,
@@ -364,7 +367,8 @@ export async function $submitComplaintAction(
 	if (complaintId) {
 		if (
 			organizationSettings.aiClassificationEnabled &&
-			isAiClassificationConfigured()
+			isAiClassificationConfigured() &&
+			shouldRunComplaintAiClassification(input.description)
 		) {
 			try {
 				await enqueueComplaintAiClassification({

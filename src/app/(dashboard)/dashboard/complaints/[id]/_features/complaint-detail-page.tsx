@@ -7,6 +7,7 @@ import { sileo } from 'sileo'
 import { Button } from '@/components/ui/button'
 import type { ChangeableStatus } from '@/modules/complaints/dashboard-validation'
 import { $changeComplaintStatusAction } from '@/modules/complaints/detail-actions'
+import type { ComplaintCategorySummary } from '@/modules/complaints/detail-queries'
 import { ComplaintAuditCard } from './complaint-audit-card'
 import { ComplaintConsumerCard } from './complaint-consumer-card'
 import { ComplaintDetailsCard } from './complaint-details-card'
@@ -24,6 +25,7 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 	auditHistory,
 	history,
 	attachments,
+	availableCategories,
 }) => {
 	const [currentStatus, setCurrentStatus] = useState(complaint.status)
 	const [resolvedResponse, setResolvedResponse] = useState<string | null>(
@@ -35,6 +37,8 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 	const [respondedByName, setRespondedByName] = useState<string | null>(
 		complaint.respondedByName,
 	)
+	const [currentPriority, setCurrentPriority] = useState(complaint.priority)
+	const [currentCategory, setCurrentCategory] = useState(complaint.category)
 	const [historyEntries, setHistoryEntries] = useState(history)
 	const [isPending, startTransition] = useTransition()
 
@@ -54,10 +58,14 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 		respondedAt: string
 		respondedByName: string | null
 		publicNote: string
+		priority: string
+		category: ComplaintCategorySummary | null
 	}) => {
 		setResolvedResponse(result.response)
 		setResolvedAt(new Date(result.respondedAt))
 		setRespondedByName(result.respondedByName)
+		setCurrentPriority(result.priority)
+		setCurrentCategory(result.category)
 		setCurrentStatus('resolved')
 		setHistoryEntries((prev) => [
 			...prev,
@@ -73,6 +81,14 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 				createdAt: new Date(result.respondedAt),
 			},
 		])
+	}
+
+	const handleClassificationSaved = (result: {
+		priority: string
+		category: ComplaintCategorySummary | null
+	}) => {
+		setCurrentPriority(result.priority)
+		setCurrentCategory(result.category)
 	}
 
 	const handleStatusChange = (status: ChangeableStatus) => {
@@ -125,7 +141,12 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 			</div>
 
 			<ComplaintHeader
-				complaint={{ ...complaint, status: currentStatus }}
+				complaint={{
+					...complaint,
+					status: currentStatus,
+					priority: currentPriority,
+					category: currentCategory,
+				}}
 				deadline={deadline}
 				resolvedAt={resolvedAt}
 				hasResponse={Boolean(resolvedResponse)}
@@ -135,7 +156,11 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 				<div className='lg:col-span-2 space-y-4'>
 					<ComplaintConsumerCard complaint={complaint} />
 					<ComplaintDetailsCard
-						complaint={complaint}
+						complaint={{
+							...complaint,
+							priority: currentPriority,
+							category: currentCategory,
+						}}
 						attachments={attachments}
 					/>
 				</div>
@@ -154,11 +179,18 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 						</Button>
 					)}
 					<ComplaintSolutionCard
-						complaint={{ ...complaint, status: currentStatus }}
+						complaint={{
+							...complaint,
+							status: currentStatus,
+							priority: currentPriority,
+							category: currentCategory,
+						}}
 						resolvedResponse={resolvedResponse}
 						resolvedAt={resolvedAt}
 						respondedByName={respondedByName}
 						isRespondable={isRespondable}
+						availableCategories={availableCategories}
+						onClassificationSaved={handleClassificationSaved}
 						onResponseSuccess={handleResponseSuccess}
 					/>
 					<ComplaintAuditCard

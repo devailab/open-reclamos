@@ -1,7 +1,11 @@
 import { Lightbulb } from 'lucide-react'
 import type { FC } from 'react'
 import { formatDateTimeDisplay } from '@/lib/formatters'
-import type { ComplaintDetail } from '@/modules/complaints/detail-queries'
+import type { ComplaintCategoryRow } from '@/modules/categories/queries'
+import type {
+	ComplaintCategorySummary,
+	ComplaintDetail,
+} from '@/modules/complaints/detail-queries'
 import { ResponseForm } from './response-form'
 import { Section } from './shared'
 
@@ -11,11 +15,21 @@ interface ComplaintSolutionCardProps {
 	resolvedAt: Date | null
 	respondedByName: string | null
 	isRespondable: boolean
+	availableCategories: Pick<
+		ComplaintCategoryRow,
+		'id' | 'name' | 'description'
+	>[]
+	onClassificationSaved: (result: {
+		priority: string
+		category: ComplaintCategorySummary | null
+	}) => void
 	onResponseSuccess: (result: {
 		response: string
 		respondedAt: string
 		respondedByName: string | null
 		publicNote: string
+		priority: string
+		category: ComplaintCategorySummary | null
 	}) => void
 }
 
@@ -25,6 +39,8 @@ export const ComplaintSolutionCard: FC<ComplaintSolutionCardProps> = ({
 	resolvedAt,
 	respondedByName,
 	isRespondable,
+	availableCategories,
+	onClassificationSaved,
 	onResponseSuccess,
 }) => {
 	return (
@@ -48,6 +64,10 @@ export const ComplaintSolutionCard: FC<ComplaintSolutionCardProps> = ({
 				<ResponseForm
 					complaintId={complaint.id}
 					initialDraft={complaint.draftResponse}
+					initialPriority={complaint.priority}
+					initialCategoryId={complaint.categoryId}
+					availableCategories={availableCategories}
+					onClassificationSaved={onClassificationSaved}
 					onSuccess={onResponseSuccess}
 				/>
 			) : (

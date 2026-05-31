@@ -3,6 +3,7 @@ import { db } from '@/database/database'
 import {
 	auditLogs,
 	complaintAttachments,
+	complaintCategories,
 	complaintDeliveries,
 	complaintDetails,
 	complaintHistory,
@@ -12,6 +13,12 @@ import {
 	users,
 } from '@/database/schema'
 
+export interface ComplaintCategorySummary {
+	id: string
+	name: string
+	description: string | null
+}
+
 export interface ComplaintDetail {
 	id: string
 	correlative: string
@@ -19,11 +26,13 @@ export interface ComplaintDetail {
 	organizationId: string
 	storeId: string
 	reasonId: string | null
+	categoryId: string | null
 	ubigeoId: string | null
 	storeName: string
 	// estado
 	status: string
 	type: string
+	priority: string
 	// consumidor
 	firstName: string
 	lastName: string
@@ -55,7 +64,7 @@ export interface ComplaintDetail {
 	// borrador de respuesta
 	draftResponse: string | null
 	aiSummary: string | null
-	aiPriorityReason: string | null
+	category: ComplaintCategorySummary | null
 	// respuesta oficial
 	officialResponse: string | null
 	respondedAt: Date | null
@@ -86,10 +95,12 @@ export async function getComplaintDetailById(
 			organizationId: complaints.organizationId,
 			storeId: complaints.storeId,
 			reasonId: complaints.reasonId,
+			categoryId: complaints.categoryId,
 			ubigeoId: complaints.ubigeoId,
 			storeName: stores.name,
 			status: complaints.status,
 			type: complaints.type,
+			priority: complaints.priority,
 			firstName: complaints.firstName,
 			lastName: complaints.lastName,
 			personType: complaints.personType,
@@ -118,7 +129,11 @@ export async function getComplaintDetailById(
 			reasonLabel: complaintReasons.reason,
 			draftResponse: complaintDetails.draftResponse,
 			aiSummary: complaintDetails.aiSummary,
-			aiPriorityReason: complaintDetails.aiPriorityReason,
+			category: {
+				id: complaintCategories.id,
+				name: complaintCategories.name,
+				description: complaintCategories.description,
+			},
 			officialResponse: complaintDetails.officialResponse,
 			respondedAt: complaintDetails.respondedAt,
 			respondedByName: users.name,
@@ -144,6 +159,10 @@ export async function getComplaintDetailById(
 			eq(complaintDetails.complaintId, complaints.id),
 		)
 		.leftJoin(
+			complaintCategories,
+			eq(complaints.categoryId, complaintCategories.id),
+		)
+		.leftJoin(
 			complaintDeliveries,
 			eq(complaintDeliveries.complaintId, complaints.id),
 		)
@@ -156,7 +175,14 @@ export async function getComplaintDetailById(
 		)
 		.limit(1)
 
-	return row ?? null
+	if (!row) {
+		return null
+	}
+
+	return {
+		...row,
+		category: row.category?.id ? row.category : null,
+	}
 }
 
 export interface ComplaintAttachment {

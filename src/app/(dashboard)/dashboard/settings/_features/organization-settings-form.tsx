@@ -12,7 +12,6 @@ import {
 	Link,
 	MapPin,
 	Phone,
-	Tag,
 	Zap,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -367,7 +366,7 @@ export function OrganizationSettingsForm({
 								Identificador público
 							</p>
 							<div className='flex h-9 items-center gap-2 rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground'>
-								<Tag className='size-3.5 shrink-0' />
+								<Link className='size-3.5 shrink-0' />
 								{org.slug}
 							</div>
 						</div>
@@ -497,7 +496,8 @@ export function OrganizationSettingsForm({
 					</CardTitle>
 					<CardDescription>
 						Clasifica automáticamente la prioridad del reclamo y
-						asigna hasta 3 tags según su contenido.
+						sugiere un resumen interno y una categoría según su
+						contenido.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className='space-y-4'>
@@ -526,7 +526,7 @@ export function OrganizationSettingsForm({
 					{values.aiClassificationEnabled && (
 						<div className='rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800'>
 							Los nuevos reclamos se clasificarán automáticamente
-							con prioridad operativa y tags sugeridos.
+							con prioridad operativa y categoría sugerida.
 						</div>
 					)}
 				</CardContent>

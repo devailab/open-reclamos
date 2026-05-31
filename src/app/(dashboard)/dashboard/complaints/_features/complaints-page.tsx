@@ -292,36 +292,22 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 			),
 		},
 		{
-			header: { render: () => 'Tags' },
-			cell: ({ row }) => {
-				if (row.tags.length === 0) {
-					return (
-						<span className='text-sm text-muted-foreground'>—</span>
-					)
-				}
-
-				return (
-					<div className='flex flex-wrap gap-1'>
-						{row.tags.slice(0, 3).map((tag) => (
-							<Badge
-								key={tag.id}
-								variant='outline'
-								className='max-w-36 truncate'
-								style={
-									tag.color
-										? {
-												borderColor: tag.color,
-												color: tag.color,
-											}
-										: undefined
-								}
-							>
-								{tag.name}
-							</Badge>
-						))}
+			header: { render: () => 'Categoría' },
+			cell: ({ row }) =>
+				row.category ? (
+					<div className='space-y-0.5'>
+						<p className='text-sm font-medium'>
+							{row.category.name}
+						</p>
+						{row.category.description && (
+							<p className='text-xs text-muted-foreground line-clamp-2'>
+								{row.category.description}
+							</p>
+						)}
 					</div>
-				)
-			},
+				) : (
+					<span className='text-sm text-muted-foreground'>—</span>
+				),
 		},
 		{
 			header: { render: () => 'Fecha' },

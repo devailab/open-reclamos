@@ -1,5 +1,5 @@
 {
-    "id": "f00332ee-c617-486d-9009-d6b060a86fa1",
+    "id": "4cf0d8a0-60ec-4d89-8c67-301ed4ee14e4",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -373,6 +373,133 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
+        "public.complaint_categories": {
+            "name": "complaint_categories",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "updated_by": {
+                    "name": "updated_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "complaint_categories_organization_id_idx": {
+                    "name": "complaint_categories_organization_id_idx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "complaint_categories_organization_id_name_uidx": {
+                    "name": "complaint_categories_organization_id_name_uidx",
+                    "columns": [
+                        {
+                            "expression": "organization_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "name",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "complaint_categories_organization_id_organizations_id_fk": {
+                    "name": "complaint_categories_organization_id_organizations_id_fk",
+                    "tableFrom": "complaint_categories",
+                    "tableTo": "organizations",
+                    "columnsFrom": ["organization_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "complaint_categories_created_by_users_id_fk": {
+                    "name": "complaint_categories_created_by_users_id_fk",
+                    "tableFrom": "complaint_categories",
+                    "tableTo": "users",
+                    "columnsFrom": ["created_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "complaint_categories_updated_by_users_id_fk": {
+                    "name": "complaint_categories_updated_by_users_id_fk",
+                    "tableFrom": "complaint_categories",
+                    "tableTo": "users",
+                    "columnsFrom": ["updated_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
         "public.complaint_deliveries": {
             "name": "complaint_deliveries",
             "schema": "",
@@ -621,12 +748,6 @@
                 },
                 "ai_summary": {
                     "name": "ai_summary",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "ai_priority_reason": {
-                    "name": "ai_priority_reason",
                     "type": "text",
                     "primaryKey": false,
                     "notNull": false
@@ -1021,226 +1142,6 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.complaint_tag_assignments": {
-            "name": "complaint_tag_assignments",
-            "schema": "",
-            "columns": {
-                "complaint_id": {
-                    "name": "complaint_id",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": true
-                },
-                "tag_id": {
-                    "name": "tag_id",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": true
-                },
-                "created_at": {
-                    "name": "created_at",
-                    "type": "timestamp with time zone",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "default": "now()"
-                },
-                "created_by": {
-                    "name": "created_by",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": false
-                }
-            },
-            "indexes": {
-                "complaint_tag_assignments_tag_id_idx": {
-                    "name": "complaint_tag_assignments_tag_id_idx",
-                    "columns": [
-                        {
-                            "expression": "tag_id",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": false,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                }
-            },
-            "foreignKeys": {
-                "complaint_tag_assignments_complaint_id_complaints_id_fk": {
-                    "name": "complaint_tag_assignments_complaint_id_complaints_id_fk",
-                    "tableFrom": "complaint_tag_assignments",
-                    "tableTo": "complaints",
-                    "columnsFrom": ["complaint_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "cascade",
-                    "onUpdate": "no action"
-                },
-                "complaint_tag_assignments_tag_id_complaint_tags_id_fk": {
-                    "name": "complaint_tag_assignments_tag_id_complaint_tags_id_fk",
-                    "tableFrom": "complaint_tag_assignments",
-                    "tableTo": "complaint_tags",
-                    "columnsFrom": ["tag_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "cascade",
-                    "onUpdate": "no action"
-                },
-                "complaint_tag_assignments_created_by_users_id_fk": {
-                    "name": "complaint_tag_assignments_created_by_users_id_fk",
-                    "tableFrom": "complaint_tag_assignments",
-                    "tableTo": "users",
-                    "columnsFrom": ["created_by"],
-                    "columnsTo": ["id"],
-                    "onDelete": "set null",
-                    "onUpdate": "no action"
-                }
-            },
-            "compositePrimaryKeys": {
-                "complaint_tag_assignments_complaint_id_tag_id_pk": {
-                    "name": "complaint_tag_assignments_complaint_id_tag_id_pk",
-                    "columns": ["complaint_id", "tag_id"]
-                }
-            },
-            "uniqueConstraints": {},
-            "policies": {},
-            "checkConstraints": {},
-            "isRLSEnabled": false
-        },
-        "public.complaint_tags": {
-            "name": "complaint_tags",
-            "schema": "",
-            "columns": {
-                "id": {
-                    "name": "id",
-                    "type": "uuid",
-                    "primaryKey": true,
-                    "notNull": true
-                },
-                "organization_id": {
-                    "name": "organization_id",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": true
-                },
-                "name": {
-                    "name": "name",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true
-                },
-                "description": {
-                    "name": "description",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "color": {
-                    "name": "color",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "created_at": {
-                    "name": "created_at",
-                    "type": "timestamp with time zone",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "default": "now()"
-                },
-                "created_by": {
-                    "name": "created_by",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "updated_at": {
-                    "name": "updated_at",
-                    "type": "timestamp with time zone",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "updated_by": {
-                    "name": "updated_by",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": false
-                }
-            },
-            "indexes": {
-                "complaint_tags_organization_id_idx": {
-                    "name": "complaint_tags_organization_id_idx",
-                    "columns": [
-                        {
-                            "expression": "organization_id",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": false,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                },
-                "complaint_tags_organization_id_name_uidx": {
-                    "name": "complaint_tags_organization_id_name_uidx",
-                    "columns": [
-                        {
-                            "expression": "organization_id",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        },
-                        {
-                            "expression": "name",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": true,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                }
-            },
-            "foreignKeys": {
-                "complaint_tags_organization_id_organizations_id_fk": {
-                    "name": "complaint_tags_organization_id_organizations_id_fk",
-                    "tableFrom": "complaint_tags",
-                    "tableTo": "organizations",
-                    "columnsFrom": ["organization_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "cascade",
-                    "onUpdate": "no action"
-                },
-                "complaint_tags_created_by_users_id_fk": {
-                    "name": "complaint_tags_created_by_users_id_fk",
-                    "tableFrom": "complaint_tags",
-                    "tableTo": "users",
-                    "columnsFrom": ["created_by"],
-                    "columnsTo": ["id"],
-                    "onDelete": "set null",
-                    "onUpdate": "no action"
-                },
-                "complaint_tags_updated_by_users_id_fk": {
-                    "name": "complaint_tags_updated_by_users_id_fk",
-                    "tableFrom": "complaint_tags",
-                    "tableTo": "users",
-                    "columnsFrom": ["updated_by"],
-                    "columnsTo": ["id"],
-                    "onDelete": "set null",
-                    "onUpdate": "no action"
-                }
-            },
-            "compositePrimaryKeys": {},
-            "uniqueConstraints": {},
-            "policies": {},
-            "checkConstraints": {},
-            "isRLSEnabled": false
-        },
         "public.complaints": {
             "name": "complaints",
             "schema": "",
@@ -1265,6 +1166,12 @@
                 },
                 "reason_id": {
                     "name": "reason_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "category_id": {
+                    "name": "category_id",
                     "type": "uuid",
                     "primaryKey": false,
                     "notNull": false
@@ -1539,6 +1446,21 @@
                     "method": "btree",
                     "with": {}
                 },
+                "complaints_category_id_idx": {
+                    "name": "complaints_category_id_idx",
+                    "columns": [
+                        {
+                            "expression": "category_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
                 "complaints_status_idx": {
                     "name": "complaints_status_idx",
                     "columns": [
@@ -1747,6 +1669,15 @@
                     "tableFrom": "complaints",
                     "tableTo": "complaint_reasons",
                     "columnsFrom": ["reason_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
+                    "onUpdate": "no action"
+                },
+                "complaints_category_id_complaint_categories_id_fk": {
+                    "name": "complaints_category_id_complaint_categories_id_fk",
+                    "tableFrom": "complaints",
+                    "tableTo": "complaint_categories",
+                    "columnsFrom": ["category_id"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
                     "onUpdate": "no action"
@@ -2464,6 +2395,19 @@
                     "type": "text",
                     "primaryKey": false,
                     "notNull": false
+                },
+                "mcp_enabled_tools": {
+                    "name": "mcp_enabled_tools",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "mcp_show_sensitive_data": {
+                    "name": "mcp_show_sensitive_data",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": true
                 },
                 "created_at": {
                     "name": "created_at",
@@ -3585,6 +3529,19 @@
                     "primaryKey": false,
                     "notNull": true,
                     "default": "'complete'"
+                },
+                "is_super_admin": {
+                    "name": "is_super_admin",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "pending_organization_id": {
+                    "name": "pending_organization_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
                 },
                 "api_key": {
                     "name": "api_key",

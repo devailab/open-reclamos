@@ -61,6 +61,12 @@ export const sidebarNavItems: SidebarNavigationItem[] = [
 		permission: 'reasons.view',
 	},
 	{
+		label: 'Categorías',
+		href: '/dashboard/categories',
+		icon: BookOpen,
+		permission: 'categories.view',
+	},
+	{
 		label: 'Webhooks',
 		href: '/dashboard/webhooks',
 		icon: Webhook,

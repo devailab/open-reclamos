@@ -1,16 +1,16 @@
 import type { LanguageModel } from 'ai'
 import { generateText, NoOutputGeneratedError, Output } from 'ai'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/database/database'
 import {
+	complaintCategories,
 	complaintDetails,
 	complaintReasons,
 	complaints,
-	complaintTagAssignments,
-	complaintTags,
 } from '@/database/schema'
 import { inngest } from '@/lib/inngest'
+import { getComplaintCategoriesForOrganization } from '@/modules/categories/queries'
 
 type DbOrTx = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0]
 
@@ -35,24 +35,16 @@ export interface ComplaintClassificationContext {
 	request: string | null
 }
 
-export interface ComplaintExistingTag {
+export interface ComplaintExistingCategory {
 	id: string
 	name: string
-	color: string | null
-}
-
-export interface ComplaintClassificationTag {
-	name: string
-	reason: string
-	existingTagId?: string
-	color?: string | null
+	description: string | null
 }
 
 export interface ComplaintClassificationResult {
 	priority: ComplaintPriority
 	summary: string
-	priorityReason: string
-	tags: ComplaintClassificationTag[]
+	categoryId: string | null
 }
 
 const COMPLAINT_AI_CLASSIFICATION_SCHEMA = z.object({
@@ -69,42 +61,18 @@ const COMPLAINT_AI_CLASSIFICATION_SCHEMA = z.object({
 		.describe(
 			'Internal Spanish summary for operators. Explain what happened, the main impact, and what the consumer is requesting in 2 to 4 concise sentences.',
 		),
-	priorityReason: z
+	categoryId: z
 		.string()
 		.trim()
-		.min(1)
-		.max(280)
+		.nullable()
 		.describe(
-			'Brief explanation in Spanish for why this priority was selected.',
-		),
-	tags: z
-		.array(
-			z.object({
-				name: z
-					.string()
-					.trim()
-					.min(1)
-					.max(32)
-					.describe(
-						'Short Spanish tag in slug format. Lowercase only, use 0-9, a-z and hyphens, for example: riesgo-legal, cobro-indebido, mala-atencion.',
-					),
-				reason: z
-					.string()
-					.trim()
-					.min(1)
-					.max(180)
-					.describe(
-						'Brief explanation in Spanish of why this tag applies.',
-					),
-			}),
-		)
-		.describe(
-			`Suggested tags. Use only highly relevant tags, never filler tags, and return fewer tags when evidence is weak.`,
+			'ID of the best matching complaint category from the provided list. Return null only when none fits clearly.',
 		),
 })
 
 const COMPLAINT_AI_CLASSIFICATION_EVENT =
 	'app/complaints.ai-classification.requested'
+const MIN_DESCRIPTION_WORDS_FOR_AI_SUMMARY = 51
 
 function formatComplaintType(type: string) {
 	return type === 'claim' ? 'Reclamo' : 'Queja'
@@ -138,102 +106,34 @@ function cleanText(value: string | null | undefined) {
 	return trimmed.length > 0 ? trimmed : 'No especificado'
 }
 
-export function normalizeComplaintTagName(name: string) {
-	return name
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.replace(/-{2,}/g, '-')
-		.trim()
+export function countWords(value: string | null | undefined) {
+	if (!value) return 0
+
+	return value.trim().split(/\s+/).filter(Boolean).length
 }
 
-function getComplaintClassificationSignal(
-	complaint: ComplaintClassificationContext,
+export function shouldRunComplaintAiClassification(
+	description: string | null | undefined,
 ) {
-	const signalText = [
-		complaint.reasonLabel,
-		complaint.itemDescription,
-		complaint.description,
-		complaint.request,
-	]
-		.filter((value) => value && value.trim().length > 0)
-		.join(' ')
-
-	const contentLength = signalText.trim().length
-
-	if (contentLength === 0) {
-		return { contentLength, contentLevel: 'short', maxTags: 0 as const }
-	}
-
-	if (contentLength <= 140) {
-		return { contentLength, contentLevel: 'short', maxTags: 1 as const }
-	}
-
-	if (contentLength <= 320) {
-		return { contentLength, contentLevel: 'medium', maxTags: 2 as const }
-	}
-
-	return { contentLength, contentLevel: 'long', maxTags: 3 as const }
-}
-
-function dedupeClassificationTags(
-	tags: ComplaintClassificationTag[],
-	existingTags: ComplaintExistingTag[],
-	maxTags: number,
-) {
-	const existingTagsByNormalizedName = new Map(
-		existingTags.map((tag) => [normalizeComplaintTagName(tag.name), tag]),
-	)
-	const seenNames = new Set<string>()
-	const normalizedTags: ComplaintClassificationTag[] = []
-
-	if (maxTags <= 0) {
-		return normalizedTags
-	}
-
-	for (const tag of tags) {
-		const normalizedName = normalizeComplaintTagName(tag.name)
-		if (!normalizedName || seenNames.has(normalizedName)) {
-			continue
-		}
-
-		const existingTag = existingTagsByNormalizedName.get(normalizedName)
-		const nextTag: ComplaintClassificationTag = {
-			name: existingTag?.name ?? normalizedName,
-			reason: tag.reason.trim(),
-			existingTagId: existingTag?.id,
-			color: existingTag?.color ?? null,
-		}
-
-		if (!nextTag.name || !nextTag.reason) {
-			continue
-		}
-
-		seenNames.add(normalizedName)
-		normalizedTags.push(nextTag)
-
-		if (normalizedTags.length >= maxTags) {
-			break
-		}
-	}
-
-	return normalizedTags
+	return countWords(description) >= MIN_DESCRIPTION_WORDS_FOR_AI_SUMMARY
 }
 
 function buildComplaintClassificationPrompt(params: {
 	complaint: ComplaintClassificationContext
-	existingTags: ComplaintExistingTag[]
+	existingCategories: ComplaintExistingCategory[]
 	aiOrganizationContext?: string | null
 }) {
-	const { complaint, existingTags } = params
-	const classificationSignal = getComplaintClassificationSignal(complaint)
+	const { complaint, existingCategories } = params
 	const organizationContext = params.aiOrganizationContext?.trim() || null
-	const existingTagsLabel =
-		existingTags.length > 0
-			? existingTags.map((tag) => `- ${tag.name}`).join('\n')
-			: '- There are no existing tags in this organization.'
+	const categoriesLabel =
+		existingCategories.length > 0
+			? existingCategories
+					.map(
+						(category) =>
+							`- ${category.id}: ${category.name}${category.description?.trim() ? ` | ${category.description.trim()}` : ''}`,
+					)
+					.join('\n')
+			: '- No categories available.'
 	const organizationContextSection = organizationContext
 		? `
 
@@ -250,7 +150,7 @@ Classify the following consumer complaint for a company in Peru.
 Goals:
 1. Set the operational priority: low | medium | high | urgent.
 2. Write a concise internal summary in Spanish for operators.
-3. Suggest only the most relevant tags in Spanish.
+3. Choose exactly one existing category when there is a clear fit.
 
 Priority rules:
 - Default to medium when evidence is not strong enough.
@@ -265,34 +165,19 @@ Summary rules:
 - Do not invent facts that are not present in the complaint.
 - Keep it concise: usually 2 to 4 sentences, maximum 600 characters.
 
+Category rules:
+- You may only choose a category ID from the provided list.
+- Prefer the closest business category, not the consumer-facing reason label.
+- Return null if no category is a clear match.
+- Do not invent new categories.
+
 Privacy rules:
 - Personal identifiers are intentionally omitted.
 - Do not infer, reconstruct, or mention names, document numbers, emails, phone numbers, or addresses.
 - Base the classification only on the operational facts provided below.
 
-Tag rules:
-- Tags must be written in Spanish, but the prompt instructions are in English.
-- Tags must use slug format only: lowercase letters, numbers, and hyphens.
-- Valid examples: riesgo-legal, cobro-indebido, fraude, mala-atencion, incumplimiento-contractual.
-- Invalid examples: "riesgo legal", "servicio digital", "cliente", "soporte", "reclamo".
-- Tags must be short, specific, and operationally useful.
-- Use only tags that are truly important or closely related to the complaint.
-- Do not add filler tags just to reach a number.
-- Reuse the exact existing tag name when it is semantically equivalent.
-- Return 0 tags if there is no tag that adds real value.
-- Never return more than ${classificationSignal.maxTags} tags for this complaint.
-
-Tag count policy for this complaint:
-- Content density detected: ${classificationSignal.contentLevel}.
-- Approximate content length: ${classificationSignal.contentLength} characters.
-- Target tag count:
-  - short content -> 1 important tag maximum
-  - medium content -> 2 important tags maximum
-  - long content -> 3 important tags maximum
-- For this complaint specifically, do not exceed ${classificationSignal.maxTags} tags.
-
-Existing organization tags:
-${existingTagsLabel}
+Existing categories:
+${categoriesLabel}
 ${organizationContextSection}
 
 Complaint data:
@@ -314,28 +199,28 @@ Complaint data:
 export async function classifyComplaintCore(
 	params: {
 		complaint: ComplaintClassificationContext
-		existingTags: ComplaintExistingTag[]
+		existingCategories: ComplaintExistingCategory[]
 		aiOrganizationContext?: string | null
 	},
 	deps: {
 		model: LanguageModel
 	},
 ): Promise<ComplaintClassificationResult> {
-	const classificationSignal = getComplaintClassificationSignal(
-		params.complaint,
+	const validCategoryIds = new Set(
+		params.existingCategories.map((category) => category.id),
 	)
 	const output = Output.object({
 		schema: COMPLAINT_AI_CLASSIFICATION_SCHEMA,
 		name: 'complaint_classification',
 		description:
-			'Structured classification of priority and tags for a complaint.',
+			'Structured classification of priority and category for a complaint.',
 	})
 	const result = await generateText({
 		model: deps.model,
 		system: 'You are a senior operations analyst specialized in consumer complaints. Respond only with structured data and prioritize consistency, caution, and operational usefulness.',
 		prompt: buildComplaintClassificationPrompt(params),
 		temperature: 0,
-		maxOutputTokens: 400,
+		maxOutputTokens: 300,
 		output,
 	})
 	let structuredOutput: z.infer<typeof COMPLAINT_AI_CLASSIFICATION_SCHEMA>
@@ -355,12 +240,11 @@ export async function classifyComplaintCore(
 	return {
 		priority: structuredOutput.priority,
 		summary: structuredOutput.summary.trim(),
-		priorityReason: structuredOutput.priorityReason.trim(),
-		tags: dedupeClassificationTags(
-			structuredOutput.tags,
-			params.existingTags,
-			classificationSignal.maxTags,
-		),
+		categoryId:
+			structuredOutput.categoryId &&
+			validCategoryIds.has(structuredOutput.categoryId)
+				? structuredOutput.categoryId
+				: null,
 	}
 }
 
@@ -368,7 +252,7 @@ export async function getComplaintClassificationContext(params: {
 	complaintId: string
 	organizationId: string
 }) {
-	const [complaintRows, existingTags] = await Promise.all([
+	const [complaintRows, existingCategories] = await Promise.all([
 		db
 			.select({
 				reasonLabel: complaintReasons.reason,
@@ -395,7 +279,7 @@ export async function getComplaintClassificationContext(params: {
 				),
 			)
 			.limit(1),
-		getComplaintTagsForOrganization(params.organizationId),
+		getComplaintCategoriesForOrganization(params.organizationId),
 	])
 	const [complaint] = complaintRows
 
@@ -408,20 +292,8 @@ export async function getComplaintClassificationContext(params: {
 			...complaint,
 			incidentDate: complaint.incidentDate?.toISOString() ?? null,
 		},
-		existingTags,
+		existingCategories,
 	}
-}
-
-export async function getComplaintTagsForOrganization(organizationId: string) {
-	return db
-		.select({
-			id: complaintTags.id,
-			name: complaintTags.name,
-			color: complaintTags.color,
-		})
-		.from(complaintTags)
-		.where(eq(complaintTags.organizationId, organizationId))
-		.orderBy(complaintTags.name)
 }
 
 export async function applyComplaintClassificationResult(
@@ -441,14 +313,12 @@ export async function applyComplaintClassificationResult(
 			organizationId: params.organizationId,
 			complaintId: params.complaintId,
 			aiSummary: params.classification.summary,
-			aiPriorityReason: params.classification.priorityReason,
 		})
 		.onConflictDoUpdate({
 			target: complaintDetails.complaintId,
 			set: {
 				organizationId: params.organizationId,
 				aiSummary: params.classification.summary,
-				aiPriorityReason: params.classification.priorityReason,
 				updatedAt: now,
 			},
 		})
@@ -457,6 +327,7 @@ export async function applyComplaintClassificationResult(
 		.update(complaints)
 		.set({
 			priority: params.classification.priority,
+			categoryId: params.classification.categoryId,
 			updatedAt: now,
 			updatedBy: null,
 		})
@@ -469,80 +340,29 @@ export async function applyComplaintClassificationResult(
 		.returning({ id: complaints.id })
 
 	if (!updatedComplaint) {
-		throw new Error('No se pudo actualizar la prioridad del reclamo.')
+		throw new Error('No se pudo actualizar la clasificación del reclamo.')
 	}
 
-	if (params.classification.tags.length === 0) {
-		return []
+	if (!params.classification.categoryId) {
+		return null
 	}
 
-	const tagNames = params.classification.tags.map((tag) => tag.name)
-	const existingTags = await executor
+	const [category] = await executor
 		.select({
-			id: complaintTags.id,
-			name: complaintTags.name,
-			color: complaintTags.color,
+			id: complaintCategories.id,
+			name: complaintCategories.name,
+			description: complaintCategories.description,
 		})
-		.from(complaintTags)
+		.from(complaintCategories)
 		.where(
 			and(
-				eq(complaintTags.organizationId, params.organizationId),
-				inArray(complaintTags.name, tagNames),
+				eq(complaintCategories.id, params.classification.categoryId),
+				eq(complaintCategories.organizationId, params.organizationId),
 			),
 		)
+		.limit(1)
 
-	const existingTagNames = new Set(existingTags.map((tag) => tag.name))
-	const missingTags = params.classification.tags.filter(
-		(tag) => !existingTagNames.has(tag.name),
-	)
-
-	if (missingTags.length > 0) {
-		await executor
-			.insert(complaintTags)
-			.values(
-				missingTags.map((tag) => ({
-					organizationId: params.organizationId,
-					name: tag.name,
-					description: tag.reason,
-					color: null,
-					createdBy: null,
-					updatedAt: now,
-					updatedBy: null,
-				})),
-			)
-			.onConflictDoNothing()
-	}
-
-	const resolvedTags = await executor
-		.select({
-			id: complaintTags.id,
-			name: complaintTags.name,
-			color: complaintTags.color,
-		})
-		.from(complaintTags)
-		.where(
-			and(
-				eq(complaintTags.organizationId, params.organizationId),
-				inArray(complaintTags.name, tagNames),
-			),
-		)
-
-	if (resolvedTags.length === 0) {
-		return []
-	}
-
-	await executor
-		.insert(complaintTagAssignments)
-		.values(
-			resolvedTags.map((tag) => ({
-				complaintId: params.complaintId,
-				tagId: tag.id,
-				createdBy: null,
-			})),
-		)
-		.onConflictDoNothing()
-
-	return resolvedTags
+	return category ?? null
 }
 
 export async function enqueueComplaintAiClassification(

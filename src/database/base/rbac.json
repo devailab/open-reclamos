@@ -79,6 +79,20 @@
             "description": "Permite crear, editar y eliminar motivos."
         },
         {
+            "key": "categories.view",
+            "slug": "categories-view",
+            "module": "categories",
+            "name": "Ver categorías",
+            "description": "Permite consultar las categorías internas de reclamos."
+        },
+        {
+            "key": "categories.manage",
+            "slug": "categories-manage",
+            "module": "categories",
+            "name": "Gestionar categorías",
+            "description": "Permite crear, editar y eliminar categorías internas de reclamos."
+        },
+        {
             "key": "audit.view",
             "slug": "audit-view",
             "module": "audit",
@@ -194,6 +208,8 @@
                 "printable.view",
                 "reasons.view",
                 "reasons.manage",
+                "categories.view",
+                "categories.manage",
                 "audit.view",
                 "settings.view",
                 "settings.manage",
@@ -224,6 +240,7 @@
                 "notices.view",
                 "printable.view",
                 "reasons.view",
+                "categories.view",
                 "audit.view",
                 "settings.view",
                 "exports.view"
@@ -240,6 +257,7 @@
                 "notices.view",
                 "printable.view",
                 "reasons.view",
+                "categories.view",
                 "audit.view",
                 "settings.view"
             ]

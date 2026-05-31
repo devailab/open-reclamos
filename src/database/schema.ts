@@ -632,8 +632,8 @@ export const complaintReasons = pgTable('complaint_reasons', {
 	}),
 })
 
-export const complaintTags = pgTable(
-	'complaint_tags',
+export const complaintCategories = pgTable(
+	'complaint_categories',
 	{
 		id: uuid('id')
 			.primaryKey()
@@ -643,7 +643,6 @@ export const complaintTags = pgTable(
 			.references(() => organizations.id, { onDelete: 'cascade' }),
 		name: text('name').notNull(),
 		description: text('description'),
-		color: text('color'),
 		createdAt: timestamp('created_at', {
 			withTimezone: true,
 			mode: 'date',
@@ -662,8 +661,10 @@ export const complaintTags = pgTable(
 		}),
 	},
 	(table) => [
-		index('complaint_tags_organization_id_idx').on(table.organizationId),
-		uniqueIndex('complaint_tags_organization_id_name_uidx').on(
+		index('complaint_categories_organization_id_idx').on(
+			table.organizationId,
+		),
+		uniqueIndex('complaint_categories_organization_id_name_uidx').on(
 			table.organizationId,
 			table.name,
 		),
@@ -686,6 +687,12 @@ export const complaints = pgTable(
 		reasonId: uuid('reason_id').references(() => complaintReasons.id, {
 			onDelete: 'set null',
 		}),
+		categoryId: uuid('category_id').references(
+			() => complaintCategories.id,
+			{
+				onDelete: 'set null',
+			},
+		),
 		ubigeoId: uuid('ubigeo_id').references(() => ubigeos.id, {
 			onDelete: 'set null',
 		}),
@@ -763,6 +770,7 @@ export const complaints = pgTable(
 		index('complaints_organization_id_idx').on(table.organizationId),
 		index('complaints_store_id_idx').on(table.storeId),
 		index('complaints_reason_id_idx').on(table.reasonId),
+		index('complaints_category_id_idx').on(table.categoryId),
 		index('complaints_status_idx').on(table.status),
 		index('complaints_created_at_idx').on(table.createdAt),
 		index('complaints_response_deadline_idx').on(table.responseDeadline),
@@ -830,8 +838,6 @@ export const complaintDetails = pgTable(
 		}),
 		// resumen interno generado por IA para ayudar a la revisión operativa
 		aiSummary: text('ai_summary'),
-		// justificación de la prioridad asignada por IA
-		aiPriorityReason: text('ai_priority_reason'),
 		createdAt: timestamp('created_at', {
 			withTimezone: true,
 			mode: 'date',
@@ -913,31 +919,6 @@ export const complaintDeliveries = pgTable(
 		index('complaint_deliveries_response_status_idx').on(
 			table.responseDeliveryStatus,
 		),
-	],
-)
-
-export const complaintTagAssignments = pgTable(
-	'complaint_tag_assignments',
-	{
-		complaintId: uuid('complaint_id')
-			.notNull()
-			.references(() => complaints.id, { onDelete: 'cascade' }),
-		tagId: uuid('tag_id')
-			.notNull()
-			.references(() => complaintTags.id, { onDelete: 'cascade' }),
-		createdAt: timestamp('created_at', {
-			withTimezone: true,
-			mode: 'date',
-		})
-			.defaultNow()
-			.notNull(),
-		createdBy: uuid('created_by').references(() => users.id, {
-			onDelete: 'set null',
-		}),
-	},
-	(table) => [
-		primaryKey({ columns: [table.complaintId, table.tagId] }),
-		index('complaint_tag_assignments_tag_id_idx').on(table.tagId),
 	],
 )
 

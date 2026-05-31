@@ -6,6 +6,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from '@/components/ui/accordion'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { formatDateDisplay } from '@/lib/formatters'
@@ -13,7 +14,13 @@ import type {
 	ComplaintAttachment,
 	ComplaintDetail,
 } from '@/modules/complaints/detail-queries'
-import { InfoRow, ITEM_TYPE_LABEL, Section } from './shared'
+import {
+	COMPLAINT_PRIORITY_LABEL,
+	InfoRow,
+	ITEM_TYPE_LABEL,
+	PRIORITY_BADGE_CLASS,
+	Section,
+} from './shared'
 
 interface ComplaintDetailsCardProps {
 	complaint: ComplaintDetail
@@ -27,6 +34,8 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 	const handleDownload = (attachment: ComplaintAttachment) => {
 		window.open(`/api/files/${attachment.storageKey}`, '_blank')
 	}
+
+	const aiSummary = complaint.aiSummary?.trim() ?? ''
 
 	return (
 		<Section
@@ -75,7 +84,38 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 				{complaint.reasonLabel && (
 					<InfoRow label='Motivo' value={complaint.reasonLabel} />
 				)}
-
+				{complaint.category && (
+					<InfoRow
+						label='Categoría'
+						value={
+							<div className='space-y-0.5'>
+								<span className='block'>
+									{complaint.category.name}
+								</span>
+								{complaint.category.description && (
+									<span className='block text-xs text-muted-foreground font-normal'>
+										{complaint.category.description}
+									</span>
+								)}
+							</div>
+						}
+					/>
+				)}
+				<InfoRow
+					label='Prioridad'
+					value={
+						<Badge
+							variant='outline'
+							className={
+								PRIORITY_BADGE_CLASS[complaint.priority] ??
+								PRIORITY_BADGE_CLASS.medium
+							}
+						>
+							{COMPLAINT_PRIORITY_LABEL[complaint.priority] ??
+								complaint.priority}
+						</Badge>
+					}
+				/>
 				{complaint.description && (
 					<>
 						<Separator />
@@ -99,7 +139,7 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 						</p>
 					</div>
 				)}
-				{(complaint.aiSummary || complaint.aiPriorityReason) && (
+				{aiSummary && (
 					<>
 						<Separator />
 						<Accordion>
@@ -113,24 +153,9 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 									</p>
 								</AccordionTrigger>
 								<AccordionContent className='px-3 pt-3'>
-									<div className='space-y-3'>
-										{complaint.aiSummary && (
-											<p className='text-sm whitespace-pre-wrap text-foreground'>
-												{complaint.aiSummary}
-											</p>
-										)}
-										{complaint.aiPriorityReason && (
-											<div className='space-y-1'>
-												<p className='text-xs text-muted-foreground'>
-													Motivo de prioridad sugerido
-													por IA
-												</p>
-												<p className='text-sm whitespace-pre-wrap text-foreground'>
-													{complaint.aiPriorityReason}
-												</p>
-											</div>
-										)}
-									</div>
+									<p className='text-sm whitespace-pre-wrap text-foreground'>
+										{aiSummary}
+									</p>
 								</AccordionContent>
 							</AccordionItem>
 						</Accordion>

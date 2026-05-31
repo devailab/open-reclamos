@@ -11,6 +11,7 @@ import {
 	COMPLAINT_AI_CLASSIFICATION_EVENT,
 	classifyComplaintCore,
 	getComplaintClassificationContext,
+	shouldRunComplaintAiClassification,
 } from '../ai-classification'
 
 function getClassificationFailureMessage(error: unknown) {
@@ -53,6 +54,16 @@ export const processComplaintAiClassification = inngest.createFunction(
 			return { ok: false, reason: 'complaint-not-found' }
 		}
 
+		if (
+			!shouldRunComplaintAiClassification(payload.complaint.description)
+		) {
+			return { ok: true, skipped: 'description-too-short' }
+		}
+
+		if (payload.existingCategories.length === 0) {
+			return { ok: true, skipped: 'no-categories-configured' }
+		}
+
 		try {
 			const classification = await step.run('classify-complaint', () =>
 				classifyComplaintCore(
@@ -71,7 +82,7 @@ export const processComplaintAiClassification = inngest.createFunction(
 				),
 			)
 
-			const appliedTags = await step.run('apply-classification', () =>
+			const appliedCategory = await step.run('apply-classification', () =>
 				applyComplaintClassificationResult({
 					complaintId: event.data.complaintId,
 					organizationId: event.data.organizationId,
@@ -85,17 +96,16 @@ export const processComplaintAiClassification = inngest.createFunction(
 					action: AUDIT_LOG.COMPLAINT_AI_CLASSIFIED,
 					entityType: 'complaint',
 					entityId: event.data.complaintId,
-					description: classification.priorityReason,
 					newData: {
 						model: getAiClassificationModelId(),
 						priority: classification.priority,
 						summary: classification.summary,
-						priorityReason: classification.priorityReason,
-						tags: appliedTags.map((tag) => ({
-							id: tag.id,
-							name: tag.name,
-							color: tag.color,
-						})),
+						category: appliedCategory
+							? {
+									id: appliedCategory.id,
+									name: appliedCategory.name,
+								}
+							: null,
 					},
 				}),
 			)
@@ -103,7 +113,7 @@ export const processComplaintAiClassification = inngest.createFunction(
 			return {
 				ok: true,
 				priority: classification.priority,
-				tags: appliedTags.length,
+				categoryId: classification.categoryId,
 			}
 		} catch (error) {
 			const message = getClassificationFailureMessage(error)

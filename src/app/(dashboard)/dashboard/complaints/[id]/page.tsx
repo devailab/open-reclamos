@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
+import { getComplaintCategoriesForOrganization } from '@/modules/categories/queries'
 import {
 	getComplaintAttachments,
 	getComplaintAuditHistory,
@@ -39,9 +40,10 @@ const ComplaintDetailRoute: FC<Props> = async ({ params }) => {
 		redirect('/dashboard/complaints')
 	}
 
-	const [attachments, history] = await Promise.all([
+	const [attachments, history, availableCategories] = await Promise.all([
 		getComplaintAttachments(complaint.id),
 		getComplaintHistory(complaint.id, membership.organizationId),
+		getComplaintCategoriesForOrganization(membership.organizationId),
 	])
 
 	return (
@@ -50,6 +52,7 @@ const ComplaintDetailRoute: FC<Props> = async ({ params }) => {
 			auditHistory={auditHistory}
 			history={history}
 			attachments={attachments}
+			availableCategories={availableCategories}
 		/>
 	)
 }
