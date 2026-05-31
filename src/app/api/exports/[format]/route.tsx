@@ -1,7 +1,7 @@
 import { renderToBuffer } from '@react-pdf/renderer'
 import { format as formatDate } from 'date-fns'
 import { NextResponse } from 'next/server'
-import * as XLSX from 'xlsx'
+import writeXlsxFile from 'write-excel-file/node'
 import { getSession } from '@/lib/auth-server'
 import {
 	COMPLAINT_TYPE_OPTIONS,
@@ -176,11 +176,13 @@ function buildCsv(rows: ExportRow[]): string {
 	return `﻿${lines.join('\n')}`
 }
 
-function buildXlsx(rows: ExportRow[]): Buffer {
-	const worksheet = XLSX.utils.json_to_sheet(rows)
-	const workbook = XLSX.utils.book_new()
-	XLSX.utils.book_append_sheet(workbook, worksheet, 'Reclamos')
-	return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer
+async function buildXlsx(rows: ExportRow[]): Promise<Buffer> {
+	const headers = rows[0] ? (Object.keys(rows[0]) as (keyof ExportRow)[]) : []
+	const data = [
+		headers,
+		...rows.map((row) => headers.map((h) => row[h] ?? '')),
+	]
+	return writeXlsxFile(data, { sheet: 'Reclamos' }).toBuffer()
 }
 
 function buildFilename(
@@ -283,7 +285,7 @@ export async function POST(
 	}
 
 	if (format === 'xlsx') {
-		const xlsxBuf = buildXlsx(buildExportRows(complaints))
+		const xlsxBuf = await buildXlsx(buildExportRows(complaints))
 		return new NextResponse(toArrayBuffer(xlsxBuf), {
 			headers: {
 				'Content-Type':

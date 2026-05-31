@@ -98,14 +98,14 @@ export const useFeedbackDialogStore = create<FeedbackDialogStore>(
 		},
 		resolveConfirm: (accepted) => {
 			const currentDialog = get().dialog
-			if (!currentDialog || currentDialog.type !== 'confirm') return
+			if (currentDialog?.type !== 'confirm') return
 
 			currentDialog.resolve(accepted)
 			set({ dialog: null })
 		},
 		resolveAlert: () => {
 			const currentDialog = get().dialog
-			if (!currentDialog || currentDialog.type !== 'alert') return
+			if (currentDialog?.type !== 'alert') return
 
 			currentDialog.resolve()
 			set({ dialog: null })
