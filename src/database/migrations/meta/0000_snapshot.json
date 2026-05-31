@@ -1,12 +1,12 @@
 {
-    "id": "4cf0d8a0-60ec-4d89-8c67-301ed4ee14e4",
+    "id": "e07610fc-66ef-4c27-92e6-67f2fa052b9e",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
     "tables": {
-        "public.accounts": {
+        "auth.accounts": {
             "name": "accounts",
-            "schema": "",
+            "schema": "auth",
             "columns": {
                 "id": {
                     "name": "id",
@@ -110,6 +110,7 @@
                     "name": "accounts_user_id_users_id_fk",
                     "tableFrom": "accounts",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -122,211 +123,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.audit_logs": {
-            "name": "audit_logs",
-            "schema": "",
-            "columns": {
-                "id": {
-                    "name": "id",
-                    "type": "uuid",
-                    "primaryKey": true,
-                    "notNull": true
-                },
-                "organization_id": {
-                    "name": "organization_id",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "user_id": {
-                    "name": "user_id",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "action": {
-                    "name": "action",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true
-                },
-                "entity_type": {
-                    "name": "entity_type",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true
-                },
-                "entity_id": {
-                    "name": "entity_id",
-                    "type": "uuid",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "old_data": {
-                    "name": "old_data",
-                    "type": "jsonb",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "new_data": {
-                    "name": "new_data",
-                    "type": "jsonb",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "description": {
-                    "name": "description",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "ip_address": {
-                    "name": "ip_address",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "user_agent": {
-                    "name": "user_agent",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false
-                },
-                "created_at": {
-                    "name": "created_at",
-                    "type": "timestamp with time zone",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "default": "now()"
-                }
-            },
-            "indexes": {
-                "audit_logs_organization_id_idx": {
-                    "name": "audit_logs_organization_id_idx",
-                    "columns": [
-                        {
-                            "expression": "organization_id",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": false,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                },
-                "audit_logs_created_at_idx": {
-                    "name": "audit_logs_created_at_idx",
-                    "columns": [
-                        {
-                            "expression": "created_at",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": false,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                },
-                "audit_logs_action_idx": {
-                    "name": "audit_logs_action_idx",
-                    "columns": [
-                        {
-                            "expression": "action",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": false,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                },
-                "audit_logs_entity_type_idx": {
-                    "name": "audit_logs_entity_type_idx",
-                    "columns": [
-                        {
-                            "expression": "entity_type",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": false,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                },
-                "audit_logs_entity_id_idx": {
-                    "name": "audit_logs_entity_id_idx",
-                    "columns": [
-                        {
-                            "expression": "entity_id",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": false,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                },
-                "audit_logs_organization_created_at_idx": {
-                    "name": "audit_logs_organization_created_at_idx",
-                    "columns": [
-                        {
-                            "expression": "organization_id",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        },
-                        {
-                            "expression": "created_at",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": false,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                }
-            },
-            "foreignKeys": {
-                "audit_logs_organization_id_organizations_id_fk": {
-                    "name": "audit_logs_organization_id_organizations_id_fk",
-                    "tableFrom": "audit_logs",
-                    "tableTo": "organizations",
-                    "columnsFrom": ["organization_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "cascade",
-                    "onUpdate": "no action"
-                },
-                "audit_logs_user_id_users_id_fk": {
-                    "name": "audit_logs_user_id_users_id_fk",
-                    "tableFrom": "audit_logs",
-                    "tableTo": "users",
-                    "columnsFrom": ["user_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "set null",
-                    "onUpdate": "no action"
-                }
-            },
-            "compositePrimaryKeys": {},
-            "uniqueConstraints": {},
-            "policies": {},
-            "checkConstraints": {},
-            "isRLSEnabled": false
-        },
-        "public.complaint_attachments": {
+        "claims.complaint_attachments": {
             "name": "complaint_attachments",
-            "schema": "",
+            "schema": "claims",
             "columns": {
                 "id": {
                     "name": "id",
@@ -373,9 +172,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.complaint_categories": {
+        "claims.complaint_categories": {
             "name": "complaint_categories",
-            "schema": "",
+            "schema": "claims",
             "columns": {
                 "id": {
                     "name": "id",
@@ -470,6 +269,7 @@
                     "name": "complaint_categories_organization_id_organizations_id_fk",
                     "tableFrom": "complaint_categories",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -479,6 +279,7 @@
                     "name": "complaint_categories_created_by_users_id_fk",
                     "tableFrom": "complaint_categories",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -488,6 +289,7 @@
                     "name": "complaint_categories_updated_by_users_id_fk",
                     "tableFrom": "complaint_categories",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -500,9 +302,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.complaint_deliveries": {
+        "claims.complaint_deliveries": {
             "name": "complaint_deliveries",
-            "schema": "",
+            "schema": "claims",
             "columns": {
                 "id": {
                     "name": "id",
@@ -661,6 +463,7 @@
                     "name": "complaint_deliveries_organization_id_organizations_id_fk",
                     "tableFrom": "complaint_deliveries",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -670,6 +473,7 @@
                     "name": "complaint_deliveries_complaint_id_complaints_id_fk",
                     "tableFrom": "complaint_deliveries",
                     "tableTo": "complaints",
+                    "schemaTo": "claims",
                     "columnsFrom": ["complaint_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -688,9 +492,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.complaint_details": {
+        "claims.complaint_details": {
             "name": "complaint_details",
-            "schema": "",
+            "schema": "claims",
             "columns": {
                 "id": {
                     "name": "id",
@@ -840,6 +644,7 @@
                     "name": "complaint_details_organization_id_organizations_id_fk",
                     "tableFrom": "complaint_details",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -849,6 +654,7 @@
                     "name": "complaint_details_complaint_id_complaints_id_fk",
                     "tableFrom": "complaint_details",
                     "tableTo": "complaints",
+                    "schemaTo": "claims",
                     "columnsFrom": ["complaint_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -858,6 +664,7 @@
                     "name": "complaint_details_draft_saved_by_users_id_fk",
                     "tableFrom": "complaint_details",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["draft_saved_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -867,6 +674,7 @@
                     "name": "complaint_details_responded_by_users_id_fk",
                     "tableFrom": "complaint_details",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["responded_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -885,9 +693,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.complaint_history": {
+        "claims.complaint_history": {
             "name": "complaint_history",
-            "schema": "",
+            "schema": "claims",
             "columns": {
                 "id": {
                     "name": "id",
@@ -1010,6 +818,7 @@
                     "name": "complaint_history_complaint_id_complaints_id_fk",
                     "tableFrom": "complaint_history",
                     "tableTo": "complaints",
+                    "schemaTo": "claims",
                     "columnsFrom": ["complaint_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -1019,6 +828,7 @@
                     "name": "complaint_history_performed_by_users_id_fk",
                     "tableFrom": "complaint_history",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["performed_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -1031,9 +841,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.complaint_reasons": {
+        "claims.complaint_reasons": {
             "name": "complaint_reasons",
-            "schema": "",
+            "schema": "claims",
             "columns": {
                 "id": {
                     "name": "id",
@@ -1103,6 +913,7 @@
                     "name": "complaint_reasons_organization_id_organizations_id_fk",
                     "tableFrom": "complaint_reasons",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -1112,6 +923,7 @@
                     "name": "complaint_reasons_deleted_by_users_id_fk",
                     "tableFrom": "complaint_reasons",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["deleted_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -1121,6 +933,7 @@
                     "name": "complaint_reasons_created_by_users_id_fk",
                     "tableFrom": "complaint_reasons",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -1130,6 +943,7 @@
                     "name": "complaint_reasons_updated_by_users_id_fk",
                     "tableFrom": "complaint_reasons",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -1142,9 +956,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.complaints": {
+        "claims.complaints": {
             "name": "complaints",
-            "schema": "",
+            "schema": "claims",
             "columns": {
                 "id": {
                     "name": "id",
@@ -1650,6 +1464,7 @@
                     "name": "complaints_organization_id_organizations_id_fk",
                     "tableFrom": "complaints",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -1659,6 +1474,7 @@
                     "name": "complaints_store_id_stores_id_fk",
                     "tableFrom": "complaints",
                     "tableTo": "stores",
+                    "schemaTo": "org",
                     "columnsFrom": ["store_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -1668,6 +1484,7 @@
                     "name": "complaints_reason_id_complaint_reasons_id_fk",
                     "tableFrom": "complaints",
                     "tableTo": "complaint_reasons",
+                    "schemaTo": "claims",
                     "columnsFrom": ["reason_id"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -1677,6 +1494,7 @@
                     "name": "complaints_category_id_complaint_categories_id_fk",
                     "tableFrom": "complaints",
                     "tableTo": "complaint_categories",
+                    "schemaTo": "claims",
                     "columnsFrom": ["category_id"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -1686,6 +1504,7 @@
                     "name": "complaints_ubigeo_id_ubigeos_id_fk",
                     "tableFrom": "complaints",
                     "tableTo": "ubigeos",
+                    "schemaTo": "core",
                     "columnsFrom": ["ubigeo_id"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -1695,6 +1514,7 @@
                     "name": "complaints_updated_by_users_id_fk",
                     "tableFrom": "complaints",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -1707,9 +1527,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.countries": {
+        "core.countries": {
             "name": "countries",
-            "schema": "",
+            "schema": "core",
             "columns": {
                 "id": {
                     "name": "id",
@@ -1767,9 +1587,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.organization_invitation_stores": {
+        "org.organization_invitation_stores": {
             "name": "organization_invitation_stores",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "invitation_id": {
                     "name": "invitation_id",
@@ -1813,6 +1633,7 @@
                     "name": "organization_invitation_stores_invitation_id_organization_invitations_id_fk",
                     "tableFrom": "organization_invitation_stores",
                     "tableTo": "organization_invitations",
+                    "schemaTo": "org",
                     "columnsFrom": ["invitation_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -1822,6 +1643,7 @@
                     "name": "organization_invitation_stores_store_id_stores_id_fk",
                     "tableFrom": "organization_invitation_stores",
                     "tableTo": "stores",
+                    "schemaTo": "org",
                     "columnsFrom": ["store_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -1839,9 +1661,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.organization_invitations": {
+        "org.organization_invitations": {
             "name": "organization_invitations",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "id": {
                     "name": "id",
@@ -1976,6 +1798,7 @@
                     "name": "organization_invitations_organization_id_organizations_id_fk",
                     "tableFrom": "organization_invitations",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -1985,6 +1808,7 @@
                     "name": "organization_invitations_role_id_roles_id_fk",
                     "tableFrom": "organization_invitations",
                     "tableTo": "roles",
+                    "schemaTo": "org",
                     "columnsFrom": ["role_id"],
                     "columnsTo": ["id"],
                     "onDelete": "restrict",
@@ -1994,6 +1818,7 @@
                     "name": "organization_invitations_created_by_users_id_fk",
                     "tableFrom": "organization_invitations",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2003,6 +1828,7 @@
                     "name": "organization_invitations_accepted_by_users_id_fk",
                     "tableFrom": "organization_invitations",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["accepted_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2012,6 +1838,7 @@
                     "name": "organization_invitations_revoked_by_users_id_fk",
                     "tableFrom": "organization_invitations",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["revoked_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2030,9 +1857,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.organization_member_permissions": {
+        "org.organization_member_permissions": {
             "name": "organization_member_permissions",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "user_id": {
                     "name": "user_id",
@@ -2088,6 +1915,7 @@
                     "name": "organization_member_permissions_permission_id_permissions_id_fk",
                     "tableFrom": "organization_member_permissions",
                     "tableTo": "permissions",
+                    "schemaTo": "org",
                     "columnsFrom": ["permission_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -2097,6 +1925,7 @@
                     "name": "organization_member_permissions_created_by_users_id_fk",
                     "tableFrom": "organization_member_permissions",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2106,6 +1935,7 @@
                     "name": "organization_member_permissions_member_fk",
                     "tableFrom": "organization_member_permissions",
                     "tableTo": "organization_members",
+                    "schemaTo": "org",
                     "columnsFrom": ["user_id", "organization_id"],
                     "columnsTo": ["user_id", "organization_id"],
                     "onDelete": "cascade",
@@ -2123,9 +1953,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.organization_member_stores": {
+        "org.organization_member_stores": {
             "name": "organization_member_stores",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "user_id": {
                     "name": "user_id",
@@ -2181,6 +2011,7 @@
                     "name": "organization_member_stores_store_id_stores_id_fk",
                     "tableFrom": "organization_member_stores",
                     "tableTo": "stores",
+                    "schemaTo": "org",
                     "columnsFrom": ["store_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -2190,6 +2021,7 @@
                     "name": "organization_member_stores_created_by_users_id_fk",
                     "tableFrom": "organization_member_stores",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2199,6 +2031,7 @@
                     "name": "organization_member_stores_member_fk",
                     "tableFrom": "organization_member_stores",
                     "tableTo": "organization_members",
+                    "schemaTo": "org",
                     "columnsFrom": ["user_id", "organization_id"],
                     "columnsTo": ["user_id", "organization_id"],
                     "onDelete": "cascade",
@@ -2216,9 +2049,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.organization_members": {
+        "org.organization_members": {
             "name": "organization_members",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "user_id": {
                     "name": "user_id",
@@ -2300,6 +2133,7 @@
                     "name": "organization_members_user_id_users_id_fk",
                     "tableFrom": "organization_members",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -2309,6 +2143,7 @@
                     "name": "organization_members_organization_id_organizations_id_fk",
                     "tableFrom": "organization_members",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -2318,6 +2153,7 @@
                     "name": "organization_members_role_id_roles_id_fk",
                     "tableFrom": "organization_members",
                     "tableTo": "roles",
+                    "schemaTo": "org",
                     "columnsFrom": ["role_id"],
                     "columnsTo": ["id"],
                     "onDelete": "restrict",
@@ -2327,6 +2163,7 @@
                     "name": "organization_members_created_by_users_id_fk",
                     "tableFrom": "organization_members",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2336,6 +2173,7 @@
                     "name": "organization_members_updated_by_users_id_fk",
                     "tableFrom": "organization_members",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2353,9 +2191,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.organization_settings": {
+        "org.organization_settings": {
             "name": "organization_settings",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "id": {
                     "name": "id",
@@ -2441,6 +2279,7 @@
                     "name": "organization_settings_organization_id_organizations_id_fk",
                     "tableFrom": "organization_settings",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -2450,6 +2289,7 @@
                     "name": "organization_settings_created_by_users_id_fk",
                     "tableFrom": "organization_settings",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2459,6 +2299,7 @@
                     "name": "organization_settings_updated_by_users_id_fk",
                     "tableFrom": "organization_settings",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2477,9 +2318,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.organizations": {
+        "org.organizations": {
             "name": "organizations",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "id": {
                     "name": "id",
@@ -2591,6 +2432,7 @@
                     "name": "organizations_ubigeo_id_ubigeos_id_fk",
                     "tableFrom": "organizations",
                     "tableTo": "ubigeos",
+                    "schemaTo": "core",
                     "columnsFrom": ["ubigeo_id"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2600,6 +2442,7 @@
                     "name": "organizations_created_by_users_id_fk",
                     "tableFrom": "organizations",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2609,6 +2452,7 @@
                     "name": "organizations_updated_by_users_id_fk",
                     "tableFrom": "organizations",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2632,9 +2476,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.permissions": {
+        "org.permissions": {
             "name": "permissions",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "id": {
                     "name": "id",
@@ -2775,6 +2619,7 @@
                     "name": "permissions_organization_id_organizations_id_fk",
                     "tableFrom": "permissions",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -2784,6 +2629,7 @@
                     "name": "permissions_deleted_by_users_id_fk",
                     "tableFrom": "permissions",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["deleted_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2793,6 +2639,7 @@
                     "name": "permissions_created_by_users_id_fk",
                     "tableFrom": "permissions",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2802,6 +2649,7 @@
                     "name": "permissions_updated_by_users_id_fk",
                     "tableFrom": "permissions",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2820,9 +2668,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.role_permissions": {
+        "org.role_permissions": {
             "name": "role_permissions",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "role_id": {
                     "name": "role_id",
@@ -2872,6 +2720,7 @@
                     "name": "role_permissions_role_id_roles_id_fk",
                     "tableFrom": "role_permissions",
                     "tableTo": "roles",
+                    "schemaTo": "org",
                     "columnsFrom": ["role_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -2881,6 +2730,7 @@
                     "name": "role_permissions_permission_id_permissions_id_fk",
                     "tableFrom": "role_permissions",
                     "tableTo": "permissions",
+                    "schemaTo": "org",
                     "columnsFrom": ["permission_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -2890,6 +2740,7 @@
                     "name": "role_permissions_created_by_users_id_fk",
                     "tableFrom": "role_permissions",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -2907,9 +2758,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.roles": {
+        "org.roles": {
             "name": "roles",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "id": {
                     "name": "id",
@@ -3071,6 +2922,7 @@
                     "name": "roles_organization_id_organizations_id_fk",
                     "tableFrom": "roles",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -3080,6 +2932,7 @@
                     "name": "roles_deleted_by_users_id_fk",
                     "tableFrom": "roles",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["deleted_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -3089,6 +2942,7 @@
                     "name": "roles_created_by_users_id_fk",
                     "tableFrom": "roles",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -3098,6 +2952,7 @@
                     "name": "roles_updated_by_users_id_fk",
                     "tableFrom": "roles",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -3110,9 +2965,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.sessions": {
+        "auth.sessions": {
             "name": "sessions",
-            "schema": "",
+            "schema": "auth",
             "columns": {
                 "id": {
                     "name": "id",
@@ -3186,6 +3041,7 @@
                     "name": "sessions_user_id_users_id_fk",
                     "tableFrom": "sessions",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -3204,9 +3060,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.store_correlatives": {
+        "org.store_correlatives": {
             "name": "store_correlatives",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "id": {
                     "name": "id",
@@ -3241,6 +3097,7 @@
                     "name": "store_correlatives_store_id_stores_id_fk",
                     "tableFrom": "store_correlatives",
                     "tableTo": "stores",
+                    "schemaTo": "org",
                     "columnsFrom": ["store_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -3259,9 +3116,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.stores": {
+        "org.stores": {
             "name": "stores",
-            "schema": "",
+            "schema": "org",
             "columns": {
                 "id": {
                     "name": "id",
@@ -3368,6 +3225,7 @@
                     "name": "stores_organization_id_organizations_id_fk",
                     "tableFrom": "stores",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -3377,6 +3235,7 @@
                     "name": "stores_ubigeo_id_ubigeos_id_fk",
                     "tableFrom": "stores",
                     "tableTo": "ubigeos",
+                    "schemaTo": "core",
                     "columnsFrom": ["ubigeo_id"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -3386,6 +3245,7 @@
                     "name": "stores_deleted_by_users_id_fk",
                     "tableFrom": "stores",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["deleted_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -3395,6 +3255,7 @@
                     "name": "stores_created_by_users_id_fk",
                     "tableFrom": "stores",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -3404,6 +3265,7 @@
                     "name": "stores_updated_by_users_id_fk",
                     "tableFrom": "stores",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -3422,9 +3284,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.ubigeos": {
+        "core.ubigeos": {
             "name": "ubigeos",
-            "schema": "",
+            "schema": "core",
             "columns": {
                 "id": {
                     "name": "id",
@@ -3488,9 +3350,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.users": {
+        "auth.users": {
             "name": "users",
-            "schema": "",
+            "schema": "auth",
             "columns": {
                 "id": {
                     "name": "id",
@@ -3589,9 +3451,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.verifications": {
+        "auth.verifications": {
             "name": "verifications",
-            "schema": "",
+            "schema": "auth",
             "columns": {
                 "id": {
                     "name": "id",
@@ -3656,9 +3518,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.webhook_deliveries": {
+        "integrations.webhook_deliveries": {
             "name": "webhook_deliveries",
-            "schema": "",
+            "schema": "integrations",
             "columns": {
                 "id": {
                     "name": "id",
@@ -3839,6 +3701,7 @@
                     "name": "webhook_deliveries_organization_id_organizations_id_fk",
                     "tableFrom": "webhook_deliveries",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -3848,6 +3711,7 @@
                     "name": "webhook_deliveries_endpoint_id_webhook_endpoints_id_fk",
                     "tableFrom": "webhook_deliveries",
                     "tableTo": "webhook_endpoints",
+                    "schemaTo": "integrations",
                     "columnsFrom": ["endpoint_id"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -3860,9 +3724,9 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
-        "public.webhook_endpoints": {
+        "integrations.webhook_endpoints": {
             "name": "webhook_endpoints",
-            "schema": "",
+            "schema": "integrations",
             "columns": {
                 "id": {
                     "name": "id",
@@ -4023,6 +3887,7 @@
                     "name": "webhook_endpoints_organization_id_organizations_id_fk",
                     "tableFrom": "webhook_endpoints",
                     "tableTo": "organizations",
+                    "schemaTo": "org",
                     "columnsFrom": ["organization_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
@@ -4032,6 +3897,7 @@
                     "name": "webhook_endpoints_deleted_by_users_id_fk",
                     "tableFrom": "webhook_endpoints",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["deleted_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -4041,6 +3907,7 @@
                     "name": "webhook_endpoints_created_by_users_id_fk",
                     "tableFrom": "webhook_endpoints",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["created_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -4050,6 +3917,7 @@
                     "name": "webhook_endpoints_updated_by_users_id_fk",
                     "tableFrom": "webhook_endpoints",
                     "tableTo": "users",
+                    "schemaTo": "auth",
                     "columnsFrom": ["updated_by"],
                     "columnsTo": ["id"],
                     "onDelete": "set null",
@@ -4064,7 +3932,13 @@
         }
     },
     "enums": {},
-    "schemas": {},
+    "schemas": {
+        "auth": "auth",
+        "claims": "claims",
+        "core": "core",
+        "integrations": "integrations",
+        "org": "org"
+    },
     "sequences": {},
     "roles": {},
     "policies": {},

@@ -171,17 +171,14 @@ export async function $createStoreAction(
 				})
 				.returning({ id: stores.id })
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.STORE_CREATED,
-					entityType: 'store',
-					entityId: store.id,
-					newData: persistenceInput,
-				},
-				tx,
-			)
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.STORE_CREATED,
+				entityType: 'store',
+				entityId: store.id,
+				newData: persistenceInput,
+			})
 		})
 	} catch {
 		return { error: 'No se pudo crear la tienda. Inténtalo nuevamente.' }
@@ -241,25 +238,22 @@ export async function $updateStoreAction(
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.STORE_UPDATED,
-					entityType: 'store',
-					entityId: input.id,
-					oldData: {
-						name: currentStore.name,
-						type: currentStore.type,
-						ubigeoId: currentStore.ubigeoId,
-						addressType: currentStore.addressType,
-						address: currentStore.address,
-						url: currentStore.url,
-					},
-					newData,
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.STORE_UPDATED,
+				entityType: 'store',
+				entityId: input.id,
+				oldData: {
+					name: currentStore.name,
+					type: currentStore.type,
+					ubigeoId: currentStore.ubigeoId,
+					addressType: currentStore.addressType,
+					address: currentStore.address,
+					url: currentStore.url,
 				},
-				tx,
-			)
+				newData,
+			})
 		})
 	} catch {
 		return {
@@ -321,18 +315,15 @@ export async function $deactivateStoreAction(
 				throw new AlreadyInactiveError()
 			}
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.STORE_DEACTIVATED,
-					entityType: 'store',
-					entityId: id,
-					oldData: { deletedAt: null },
-					newData: { deletedAt: now.toISOString() },
-				},
-				tx,
-			)
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.STORE_DEACTIVATED,
+				entityType: 'store',
+				entityId: id,
+				oldData: { deletedAt: null },
+				newData: { deletedAt: now.toISOString() },
+			})
 		})
 	} catch (e) {
 		if (e instanceof AlreadyInactiveError) {
@@ -399,20 +390,17 @@ export async function $setStoreFormEnabledAction(
 				throw new Error('store form toggle failed')
 			}
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: formEnabled
-						? AUDIT_LOG.STORE_FORM_ENABLED
-						: AUDIT_LOG.STORE_FORM_DISABLED,
-					entityType: 'store_form',
-					entityId: id,
-					oldData: { formEnabled: currentStore.formEnabled },
-					newData: { formEnabled },
-				},
-				tx,
-			)
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: formEnabled
+					? AUDIT_LOG.STORE_FORM_ENABLED
+					: AUDIT_LOG.STORE_FORM_DISABLED,
+				entityType: 'store_form',
+				entityId: id,
+				oldData: { formEnabled: currentStore.formEnabled },
+				newData: { formEnabled },
+			})
 		})
 	} catch {
 		return {

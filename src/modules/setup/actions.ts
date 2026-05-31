@@ -272,22 +272,19 @@ export async function $setupOrganizationAction(
 					.where(eq(users.id, session.user.id))
 			}
 
-			await createAuditLog(
-				{
-					organizationId: org.id,
-					userId: session.user.id,
-					action: AUDIT_LOG.ORGANIZATION_CREATED,
-					entityType: 'organization',
-					entityId: org.id,
-					newData: {
-						taxId: input.ruc,
-						name: input.name,
-						legalName: input.legalName,
-						slug: input.slug,
-					},
+			await createAuditLog({
+				organizationId: org.id,
+				userId: session.user.id,
+				action: AUDIT_LOG.ORGANIZATION_CREATED,
+				entityType: 'organization',
+				entityId: org.id,
+				newData: {
+					taxId: input.ruc,
+					name: input.name,
+					legalName: input.legalName,
+					slug: input.slug,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return {
@@ -392,21 +389,18 @@ export async function $setupStoreAction(
 					.where(eq(users.id, session.user.id))
 			}
 
-			await createAuditLog(
-				{
+			await createAuditLog({
+				organizationId,
+				userId: session.user.id,
+				action: AUDIT_LOG.STORE_CREATED,
+				entityType: 'store',
+				entityId: store.id,
+				newData: {
+					name: input.name,
+					type: input.type,
 					organizationId,
-					userId: session.user.id,
-					action: AUDIT_LOG.STORE_CREATED,
-					entityType: 'store',
-					entityId: store.id,
-					newData: {
-						name: input.name,
-						type: input.type,
-						organizationId,
-					},
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return { error: 'Error al guardar la tienda. Inténtalo de nuevo.' }

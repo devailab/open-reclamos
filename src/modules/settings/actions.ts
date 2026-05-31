@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { type DbTransaction, db } from '@/database/database'
+import { db } from '@/database/database'
 import { organizationSettings, organizations } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { getSession } from '@/lib/auth-server'
@@ -55,31 +55,25 @@ function hasRequiredOrganizationFields(
 	)
 }
 
-async function createOrganizationFormAvailabilityAuditLog(
-	params: {
-		organizationId: string
-		userId: string
-		previousValue: boolean
-		nextValue: boolean
-	},
-	tx: DbTransaction,
-) {
+async function createOrganizationFormAvailabilityAuditLog(params: {
+	organizationId: string
+	userId: string
+	previousValue: boolean
+	nextValue: boolean
+}) {
 	if (params.previousValue === params.nextValue) return
 
-	await createAuditLog(
-		{
-			organizationId: params.organizationId,
-			userId: params.userId,
-			action: params.nextValue
-				? AUDIT_LOG.ORGANIZATION_FORM_ENABLED
-				: AUDIT_LOG.ORGANIZATION_FORM_DISABLED,
-			entityType: 'organization_form',
-			entityId: params.organizationId,
-			oldData: { formEnabled: params.previousValue },
-			newData: { formEnabled: params.nextValue },
-		},
-		tx,
-	)
+	await createAuditLog({
+		organizationId: params.organizationId,
+		userId: params.userId,
+		action: params.nextValue
+			? AUDIT_LOG.ORGANIZATION_FORM_ENABLED
+			: AUDIT_LOG.ORGANIZATION_FORM_DISABLED,
+		entityType: 'organization_form',
+		entityId: params.organizationId,
+		oldData: { formEnabled: params.previousValue },
+		newData: { formEnabled: params.nextValue },
+	})
 }
 
 function getEmailTestErrorMessage(error: unknown) {
@@ -217,62 +211,54 @@ export async function $updateOrganizationSettingsAction(
 					},
 				})
 
-			await createAuditLog(
-				{
-					organizationId: org.id,
-					userId: session.user.id,
-					action: AUDIT_LOG.ORGANIZATION_UPDATED,
-					entityType: 'organization',
-					entityId: org.id,
-					oldData: {
-						name: org.name,
-						legalName: org.legalName,
-						ubigeoId: org.ubigeoId,
-						addressType: org.addressType,
-						address: org.address,
-						phoneCode: org.phoneCode,
-						phone: org.phone,
-						website: org.website,
-						formEnabled: org.formEnabled,
-						aiClassificationEnabled: org.aiClassificationEnabled,
-						aiOrganizationContext: org.aiOrganizationContext,
-						responseDeadlineDays: org.responseDeadlineDays,
-						mcpEnabledTools: org.mcpEnabledTools,
-						mcpShowSensitiveData: org.mcpShowSensitiveData,
-					},
-					newData: {
-						name: normalizedInput.name,
-						legalName: normalizedInput.legalName,
-						ubigeoId: normalizedInput.ubigeoId,
-						addressType: normalizedInput.addressType,
-						address: normalizedInput.address,
-						phoneCode: normalizedInput.phoneCode,
-						phone: normalizedInput.phone,
-						website: normalizedInput.website,
-						formEnabled: normalizedInput.formEnabled,
-						aiClassificationEnabled:
-							normalizedInput.aiClassificationEnabled,
-						aiOrganizationContext:
-							normalizedInput.aiOrganizationContext,
-						responseDeadlineDays:
-							normalizedInput.responseDeadlineDays,
-						mcpEnabledTools: normalizedInput.mcpEnabledTools,
-						mcpShowSensitiveData:
-							normalizedInput.mcpShowSensitiveData,
-					},
+			await createAuditLog({
+				organizationId: org.id,
+				userId: session.user.id,
+				action: AUDIT_LOG.ORGANIZATION_UPDATED,
+				entityType: 'organization',
+				entityId: org.id,
+				oldData: {
+					name: org.name,
+					legalName: org.legalName,
+					ubigeoId: org.ubigeoId,
+					addressType: org.addressType,
+					address: org.address,
+					phoneCode: org.phoneCode,
+					phone: org.phone,
+					website: org.website,
+					formEnabled: org.formEnabled,
+					aiClassificationEnabled: org.aiClassificationEnabled,
+					aiOrganizationContext: org.aiOrganizationContext,
+					responseDeadlineDays: org.responseDeadlineDays,
+					mcpEnabledTools: org.mcpEnabledTools,
+					mcpShowSensitiveData: org.mcpShowSensitiveData,
 				},
-				tx,
-			)
+				newData: {
+					name: normalizedInput.name,
+					legalName: normalizedInput.legalName,
+					ubigeoId: normalizedInput.ubigeoId,
+					addressType: normalizedInput.addressType,
+					address: normalizedInput.address,
+					phoneCode: normalizedInput.phoneCode,
+					phone: normalizedInput.phone,
+					website: normalizedInput.website,
+					formEnabled: normalizedInput.formEnabled,
+					aiClassificationEnabled:
+						normalizedInput.aiClassificationEnabled,
+					aiOrganizationContext:
+						normalizedInput.aiOrganizationContext,
+					responseDeadlineDays: normalizedInput.responseDeadlineDays,
+					mcpEnabledTools: normalizedInput.mcpEnabledTools,
+					mcpShowSensitiveData: normalizedInput.mcpShowSensitiveData,
+				},
+			})
 
-			await createOrganizationFormAvailabilityAuditLog(
-				{
-					organizationId: org.id,
-					userId: session.user.id,
-					previousValue: org.formEnabled,
-					nextValue: normalizedInput.formEnabled,
-				},
-				tx,
-			)
+			await createOrganizationFormAvailabilityAuditLog({
+				organizationId: org.id,
+				userId: session.user.id,
+				previousValue: org.formEnabled,
+				nextValue: normalizedInput.formEnabled,
+			})
 		})
 	} catch {
 		return {

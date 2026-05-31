@@ -92,16 +92,13 @@ export async function $generateApiKeyAction(): Promise<ApiKeyActionResult> {
 				.set({ apiKey, apiKeyCreatedAt: new Date() })
 				.where(eq(users.id, session.user.id))
 
-			await createAuditLog(
-				{
-					userId: session.user.id,
-					action: AUDIT_LOG.API_KEY_GENERATED,
-					entityType: 'user',
-					entityId: session.user.id,
-					description: 'API key generada',
-				},
-				tx,
-			)
+			await createAuditLog({
+				userId: session.user.id,
+				action: AUDIT_LOG.API_KEY_GENERATED,
+				entityType: 'user',
+				entityId: session.user.id,
+				description: 'API key generada',
+			})
 		})
 	} catch {
 		return { error: 'No se pudo generar la API key. Intenta de nuevo.' }
@@ -124,16 +121,13 @@ export async function $regenerateApiKeyAction(): Promise<ApiKeyActionResult> {
 				.set({ apiKey, apiKeyCreatedAt: new Date() })
 				.where(eq(users.id, session.user.id))
 
-			await createAuditLog(
-				{
-					userId: session.user.id,
-					action: AUDIT_LOG.API_KEY_REGENERATED,
-					entityType: 'user',
-					entityId: session.user.id,
-					description: 'API key regenerada',
-				},
-				tx,
-			)
+			await createAuditLog({
+				userId: session.user.id,
+				action: AUDIT_LOG.API_KEY_REGENERATED,
+				entityType: 'user',
+				entityId: session.user.id,
+				description: 'API key regenerada',
+			})
 		})
 	} catch {
 		return { error: 'No se pudo regenerar la API key. Intenta de nuevo.' }

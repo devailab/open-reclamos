@@ -1,17 +1,7 @@
-import {
-	and,
-	count,
-	desc,
-	eq,
-	gte,
-	ilike,
-	lte,
-	or,
-	type SQL,
-	sql,
-} from 'drizzle-orm'
+import { and, eq, ilike, inArray, or, type SQL } from 'drizzle-orm'
 import { db } from '@/database/database'
-import { auditLogs, organizationMembers, users } from '@/database/schema'
+import { organizationMembers, users } from '@/database/schema'
+import { auditLogger } from '@/lib/audit-logger'
 import type { AuditTableFilters } from './validation'
 
 export interface AuditLogTableRow {
@@ -45,33 +35,8 @@ export interface AuditUserAutocompleteOption {
 	userEmail: string
 }
 
-const buildAuditTableConditions = (
-	organizationId: string,
-	filters: AuditTableFilters,
-): SQL<unknown>[] => {
-	const conditions: SQL<unknown>[] = [
-		eq(auditLogs.organizationId, organizationId),
-		gte(auditLogs.createdAt, filters.createdAtStart),
-		lte(auditLogs.createdAt, filters.createdAtEnd),
-	]
-
-	if (filters.action) {
-		conditions.push(ilike(auditLogs.action, `%${filters.action}%`))
-	}
-
-	if (filters.entityType) {
-		conditions.push(ilike(auditLogs.entityType, `%${filters.entityType}%`))
-	}
-
-	if (filters.entityId) {
-		conditions.push(eq(auditLogs.entityId, filters.entityId))
-	}
-
-	if (filters.userId) {
-		conditions.push(eq(auditLogs.userId, filters.userId))
-	}
-
-	return conditions
+function toNullableFilter(value: string): string | null {
+	return value.trim() === '' ? null : value.trim()
 }
 
 export async function getOrganizationForUser(userId: string) {
@@ -93,49 +58,62 @@ export async function getAuditLogsTableForOrganization({
 	rows: AuditLogTableRow[]
 	totalItems: number
 }> {
-	const whereClause = and(
-		...buildAuditTableConditions(organizationId, filters),
-	)
+	const result = await auditLogger.getPaginated({
+		page,
+		pageSize,
+		filters: {
+			organizationId,
+			action: toNullableFilter(filters.action),
+			entityType: toNullableFilter(filters.entityType),
+			entityId: toNullableFilter(filters.entityId),
+			userId: toNullableFilter(filters.userId),
+			createdAtStart: filters.createdAtStart,
+			createdAtEnd: filters.createdAtEnd,
+		},
+	})
 
-	if (!whereClause) {
-		return { rows: [], totalItems: 0 }
+	const userIds = [
+		...new Set(
+			result.items
+				.map((item) => item.userId)
+				.filter((id): id is string => id !== null && id !== undefined),
+		),
+	]
+
+	const userMap = new Map<string, { name: string; email: string }>()
+
+	if (userIds.length > 0) {
+		const userRows = await db
+			.select({ id: users.id, name: users.name, email: users.email })
+			.from(users)
+			.where(inArray(users.id, userIds))
+
+		for (const user of userRows) {
+			userMap.set(user.id, { name: user.name, email: user.email })
+		}
 	}
 
-	const offset = (page - 1) * pageSize
+	const rows: AuditLogTableRow[] = result.items.map((item) => {
+		const user = item.userId ? userMap.get(item.userId) : undefined
+		return {
+			id: item.id,
+			organizationId: item.organizationId ?? null,
+			userId: item.userId ?? null,
+			userName: user?.name ?? 'Sistema',
+			userEmail: user?.email ?? '—',
+			action: item.action,
+			entityType: item.entityType,
+			entityId: item.entityId ?? null,
+			oldData: item.oldData,
+			newData: item.newData,
+			description: item.description ?? null,
+			ipAddress: item.ipAddress ?? null,
+			userAgent: item.userAgent ?? null,
+			createdAt: item.createdAt,
+		}
+	})
 
-	const rows = await db
-		.select({
-			id: auditLogs.id,
-			organizationId: auditLogs.organizationId,
-			userId: auditLogs.userId,
-			userName: sql<string>`coalesce(${users.name}, 'Sistema')`,
-			userEmail: sql<string>`coalesce(${users.email}, '—')`,
-			action: auditLogs.action,
-			entityType: auditLogs.entityType,
-			entityId: auditLogs.entityId,
-			oldData: auditLogs.oldData,
-			newData: auditLogs.newData,
-			description: auditLogs.description,
-			ipAddress: auditLogs.ipAddress,
-			userAgent: auditLogs.userAgent,
-			createdAt: auditLogs.createdAt,
-		})
-		.from(auditLogs)
-		.leftJoin(users, eq(auditLogs.userId, users.id))
-		.where(whereClause)
-		.orderBy(desc(auditLogs.createdAt))
-		.limit(pageSize)
-		.offset(offset)
-
-	const [total] = await db
-		.select({ total: count() })
-		.from(auditLogs)
-		.where(whereClause)
-
-	return {
-		rows,
-		totalItems: total?.total ?? 0,
-	}
+	return { rows, totalItems: result.total }
 }
 
 export async function searchAuditUsersForOrganization(

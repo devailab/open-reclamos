@@ -1,7 +1,6 @@
-import { and, asc, desc, eq } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
-	auditLogs,
 	complaintAttachments,
 	complaintCategories,
 	complaintDeliveries,
@@ -12,6 +11,7 @@ import {
 	stores,
 	users,
 } from '@/database/schema'
+import { auditLogger } from '@/lib/audit-logger'
 
 export interface ComplaintCategorySummary {
 	id: string
@@ -242,28 +242,47 @@ export async function getComplaintAuditHistory(
 	complaintId: string,
 	organizationId: string,
 ): Promise<ComplaintAuditEntry[]> {
-	return db
-		.select({
-			id: auditLogs.id,
-			action: auditLogs.action,
-			userId: auditLogs.userId,
-			userName: users.name,
-			oldData: auditLogs.oldData,
-			newData: auditLogs.newData,
-			description: auditLogs.description,
-			createdAt: auditLogs.createdAt,
-		})
-		.from(auditLogs)
-		.leftJoin(users, eq(auditLogs.userId, users.id))
-		.where(
-			and(
-				eq(auditLogs.entityId, complaintId),
-				eq(auditLogs.entityType, 'complaint'),
-				eq(auditLogs.organizationId, organizationId),
-			),
-		)
-		.orderBy(desc(auditLogs.createdAt))
-		.limit(50)
+	const result = await auditLogger.getPaginated({
+		page: 1,
+		pageSize: 50,
+		filters: {
+			organizationId,
+			entityId: complaintId,
+			entityType: 'complaint',
+		},
+	})
+
+	const userIds = [
+		...new Set(
+			result.items
+				.map((item) => item.userId)
+				.filter((id): id is string => id !== null && id !== undefined),
+		),
+	]
+
+	const userMap = new Map<string, string>()
+
+	if (userIds.length > 0) {
+		const userRows = await db
+			.select({ id: users.id, name: users.name })
+			.from(users)
+			.where(inArray(users.id, userIds))
+
+		for (const user of userRows) {
+			userMap.set(user.id, user.name)
+		}
+	}
+
+	return result.items.map((item) => ({
+		id: item.id,
+		action: item.action,
+		userId: item.userId ?? null,
+		userName: item.userId ? (userMap.get(item.userId) ?? null) : null,
+		oldData: item.oldData,
+		newData: item.newData,
+		description: item.description ?? null,
+		createdAt: item.createdAt,
+	}))
 }
 
 export interface ComplaintHistoryEntry {

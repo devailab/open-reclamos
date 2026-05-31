@@ -167,22 +167,19 @@ export async function $createWebhookAction(
 				})
 				.returning({ id: webhookEndpoints.id })
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.WEBHOOK_CREATED,
-					entityType: 'webhook',
-					entityId: endpoint.id,
-					newData: {
-						name: normalized.name,
-						targetUrl: normalized.targetUrl,
-						events: normalized.events,
-						status: normalized.status,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.WEBHOOK_CREATED,
+				entityType: 'webhook',
+				entityId: endpoint.id,
+				newData: {
+					name: normalized.name,
+					targetUrl: normalized.targetUrl,
+					events: normalized.events,
+					status: normalized.status,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return { error: 'No se pudo crear el webhook. Inténtalo nuevamente.' }
@@ -241,28 +238,25 @@ export async function $updateWebhookAction(
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.WEBHOOK_UPDATED,
-					entityType: 'webhook',
-					entityId: input.id,
-					oldData: {
-						name: current.name,
-						targetUrl: current.targetUrl,
-						events: current.events,
-						status: current.status,
-					},
-					newData: {
-						name: normalized.name,
-						targetUrl: normalized.targetUrl,
-						events: normalized.events,
-						status: normalized.status,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.WEBHOOK_UPDATED,
+				entityType: 'webhook',
+				entityId: input.id,
+				oldData: {
+					name: current.name,
+					targetUrl: current.targetUrl,
+					events: current.events,
+					status: current.status,
 				},
-				tx,
-			)
+				newData: {
+					name: normalized.name,
+					targetUrl: normalized.targetUrl,
+					events: normalized.events,
+					status: normalized.status,
+				},
+			})
 		})
 	} catch {
 		return {
@@ -321,18 +315,15 @@ export async function $deleteWebhookAction(
 
 			if (!deleted) throw new AlreadyDeletedError()
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.WEBHOOK_DELETED,
-					entityType: 'webhook',
-					entityId: id,
-					oldData: { deletedAt: null },
-					newData: { deletedAt: now.toISOString() },
-				},
-				tx,
-			)
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.WEBHOOK_DELETED,
+				entityType: 'webhook',
+				entityId: id,
+				oldData: { deletedAt: null },
+				newData: { deletedAt: now.toISOString() },
+			})
 		})
 	} catch (e) {
 		if (e instanceof AlreadyDeletedError)

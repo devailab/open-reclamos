@@ -180,23 +180,20 @@ export async function $createRoleAction(
 				tx,
 			)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.ROLE_CREATED,
-					entityType: 'role',
-					entityId: role.id,
-					newData: {
-						key,
-						slug: normalizedInput.slug,
-						name: normalizedInput.name,
-						description: normalizedInput.description,
-						permissionIds: normalizedInput.permissionIds,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.ROLE_CREATED,
+				entityType: 'role',
+				entityId: role.id,
+				newData: {
+					key,
+					slug: normalizedInput.slug,
+					name: normalizedInput.name,
+					description: normalizedInput.description,
+					permissionIds: normalizedInput.permissionIds,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return { error: 'No se pudo crear el rol. Inténtalo nuevamente.' }
@@ -284,30 +281,27 @@ export async function $updateRoleAction(
 				tx,
 			)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.ROLE_UPDATED,
-					entityType: 'role',
-					entityId: role.id,
-					oldData: {
-						key: role.key,
-						slug: role.slug,
-						name: role.name,
-						description: role.description,
-						permissionIds: role.permissionIds,
-					},
-					newData: {
-						key: nextKey,
-						slug: normalizedInput.slug,
-						name: normalizedInput.name,
-						description: normalizedInput.description,
-						permissionIds: normalizedInput.permissionIds,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.ROLE_UPDATED,
+				entityType: 'role',
+				entityId: role.id,
+				oldData: {
+					key: role.key,
+					slug: role.slug,
+					name: role.name,
+					description: role.description,
+					permissionIds: role.permissionIds,
 				},
-				tx,
-			)
+				newData: {
+					key: nextKey,
+					slug: normalizedInput.slug,
+					name: normalizedInput.name,
+					description: normalizedInput.description,
+					permissionIds: normalizedInput.permissionIds,
+				},
+			})
 		})
 	} catch {
 		return { error: 'No se pudo actualizar el rol. Inténtalo nuevamente.' }
@@ -367,22 +361,19 @@ export async function $deleteRoleAction(id: string): Promise<RoleActionResult> {
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.ROLE_DELETED,
-					entityType: 'role',
-					entityId: role.id,
-					oldData: {
-						key: role.key,
-						slug: role.slug,
-						name: role.name,
-						description: role.description,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.ROLE_DELETED,
+				entityType: 'role',
+				entityId: role.id,
+				oldData: {
+					key: role.key,
+					slug: role.slug,
+					name: role.name,
+					description: role.description,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return { error: 'No se pudo eliminar el rol. Inténtalo nuevamente.' }

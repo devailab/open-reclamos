@@ -1,9 +1,9 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/bun-sql'
+import { auditLogger } from '@/lib/audit-logger'
 import { DATABASE_URL } from '@/lib/config'
 import countriesData from './base/countries.json'
 import rbacData from './base/rbac.json'
-
 import ubigeosData from './base/ubigeos.json'
 import {
 	countries,
@@ -206,8 +206,10 @@ async function main() {
 		await seedCountries(db)
 		await seedUbigeos(db)
 		await seedRbac(db)
+		await auditLogger.ensureReady()
 		console.log('[seed] completed.')
 	} finally {
+		await auditLogger.close()
 		db.$client.close()
 	}
 }

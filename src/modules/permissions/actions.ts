@@ -126,22 +126,19 @@ export async function $createPermissionAction(
 				})
 				.returning({ id: permissions.id })
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.PERMISSION_CREATED,
-					entityType: 'permission',
-					entityId: permission.id,
-					newData: {
-						name: normalizedInput.name,
-						module: normalizedInput.module,
-						description: normalizedInput.description,
-						slug: normalizedInput.slug,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.PERMISSION_CREATED,
+				entityType: 'permission',
+				entityId: permission.id,
+				newData: {
+					name: normalizedInput.name,
+					module: normalizedInput.module,
+					description: normalizedInput.description,
+					slug: normalizedInput.slug,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return {
@@ -213,29 +210,26 @@ export async function $updatePermissionAction(
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.PERMISSION_UPDATED,
-					entityType: 'permission',
-					entityId: permission.id,
-					oldData: {
-						key: permission.key,
-						slug: permission.slug,
-						module: permission.module,
-						name: permission.name,
-						description: permission.description,
-					},
-					newData: {
-						name: normalizedInput.name,
-						module: normalizedInput.module,
-						description: normalizedInput.description,
-						slug: normalizedInput.slug,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.PERMISSION_UPDATED,
+				entityType: 'permission',
+				entityId: permission.id,
+				oldData: {
+					key: permission.key,
+					slug: permission.slug,
+					module: permission.module,
+					name: permission.name,
+					description: permission.description,
 				},
-				tx,
-			)
+				newData: {
+					name: normalizedInput.name,
+					module: normalizedInput.module,
+					description: normalizedInput.description,
+					slug: normalizedInput.slug,
+				},
+			})
 		})
 	} catch {
 		return {
@@ -297,21 +291,18 @@ export async function $deletePermissionAction(
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.PERMISSION_DELETED,
-					entityType: 'permission',
-					entityId: permission.id,
-					oldData: {
-						name: permission.name,
-						module: permission.module,
-						usageCount,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.PERMISSION_DELETED,
+				entityType: 'permission',
+				entityId: permission.id,
+				oldData: {
+					name: permission.name,
+					module: permission.module,
+					usageCount,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return {

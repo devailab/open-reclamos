@@ -300,26 +300,23 @@ export async function $submitComplaintAction(
 				)
 			}
 
-			await createAuditLog(
-				{
-					organizationId: input.organizationId,
-					action: AUDIT_LOG.COMPLAINT_SUBMITTED,
-					entityType: 'complaint',
-					entityId: inserted.id,
-					newData: {
-						correlative,
-						trackingCode,
-						type: input.type,
-						status: 'open',
-						storeId: input.storeId,
-					},
-					ipAddress:
-						reqHeaders.get('x-forwarded-for') ??
-						reqHeaders.get('x-real-ip'),
-					userAgent: reqHeaders.get('user-agent'),
+			await createAuditLog({
+				organizationId: input.organizationId,
+				action: AUDIT_LOG.COMPLAINT_SUBMITTED,
+				entityType: 'complaint',
+				entityId: inserted.id,
+				newData: {
+					correlative,
+					trackingCode,
+					type: input.type,
+					status: 'open',
+					storeId: input.storeId,
 				},
-				tx,
-			)
+				ipAddress:
+					reqHeaders.get('x-forwarded-for') ??
+					reqHeaders.get('x-real-ip'),
+				userAgent: reqHeaders.get('user-agent'),
+			})
 
 			await createComplaintHistoryEntry(
 				{

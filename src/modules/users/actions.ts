@@ -287,22 +287,19 @@ export async function $createUserInvitationAction(
 				)
 			}
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.USER_INVITED,
-					entityType: 'invitation',
-					entityId: invitation.id,
-					newData: {
-						email: normalizedInput.email,
-						roleId: normalizedInput.roleId,
-						storeAccessMode: normalizedInput.storeAccessMode,
-						storeIds: roleAndStores.validStoreIds,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.USER_INVITED,
+				entityType: 'invitation',
+				entityId: invitation.id,
+				newData: {
+					email: normalizedInput.email,
+					roleId: normalizedInput.roleId,
+					storeAccessMode: normalizedInput.storeAccessMode,
+					storeIds: roleAndStores.validStoreIds,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return {
@@ -452,26 +449,23 @@ export async function $updateUserAccessAction(
 				tx,
 			)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.USER_ACCESS_UPDATED,
-					entityType: 'user',
-					entityId: normalizedInput.userId,
-					oldData: {
-						roleId: member.roleId,
-						storeAccessMode: member.storeAccessMode,
-						storeIds: member.storeIds,
-					},
-					newData: {
-						roleId: normalizedInput.roleId,
-						storeAccessMode: normalizedInput.storeAccessMode,
-						storeIds: roleAndStores.validStoreIds,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.USER_ACCESS_UPDATED,
+				entityType: 'user',
+				entityId: normalizedInput.userId,
+				oldData: {
+					roleId: member.roleId,
+					storeAccessMode: member.storeAccessMode,
+					storeIds: member.storeIds,
 				},
-				tx,
-			)
+				newData: {
+					roleId: normalizedInput.roleId,
+					storeAccessMode: normalizedInput.storeAccessMode,
+					storeIds: roleAndStores.validStoreIds,
+				},
+			})
 		})
 	} catch {
 		return {
@@ -531,20 +525,17 @@ export async function $revokeInvitationAction(
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.INVITATION_REVOKED,
-					entityType: 'invitation',
-					entityId: invitation.id,
-					oldData: {
-						email: invitation.email,
-						roleId: invitation.roleId,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.INVITATION_REVOKED,
+				entityType: 'invitation',
+				entityId: invitation.id,
+				oldData: {
+					email: invitation.email,
+					roleId: invitation.roleId,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return { error: 'No se pudo revocar la invitación.' }
@@ -601,22 +592,19 @@ export async function $removeUserFromOrganizationAction(
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.USER_REMOVED,
-					entityType: 'user',
-					entityId: userId,
-					oldData: {
-						email: member.email,
-						roleId: member.roleId,
-						storeAccessMode: member.storeAccessMode,
-						storeIds: member.storeIds,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.USER_REMOVED,
+				entityType: 'user',
+				entityId: userId,
+				oldData: {
+					email: member.email,
+					roleId: member.roleId,
+					storeAccessMode: member.storeAccessMode,
+					storeIds: member.storeIds,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		return {
@@ -736,37 +724,31 @@ export async function $acceptInvitationAction(
 				})
 				.where(eq(users.id, userId))
 
-			await createAuditLog(
-				{
-					organizationId: invitation.organizationId,
+			await createAuditLog({
+				organizationId: invitation.organizationId,
+				userId,
+				action: AUDIT_LOG.INVITATION_ACCEPTED,
+				entityType: 'invitation',
+				entityId: invitation.id,
+				newData: {
+					email: invitation.email,
+					roleId: invitation.roleId,
 					userId,
-					action: AUDIT_LOG.INVITATION_ACCEPTED,
-					entityType: 'invitation',
-					entityId: invitation.id,
-					newData: {
-						email: invitation.email,
-						roleId: invitation.roleId,
-						userId,
-					},
 				},
-				tx,
-			)
+			})
 
-			await createAuditLog(
-				{
-					organizationId: invitation.organizationId,
-					userId,
-					action: AUDIT_LOG.USER_JOINED_ORGANIZATION,
-					entityType: 'organization_member',
-					entityId: userId,
-					newData: {
-						invitationId: invitation.id,
-						email: invitation.email,
-						roleId: invitation.roleId,
-					},
+			await createAuditLog({
+				organizationId: invitation.organizationId,
+				userId,
+				action: AUDIT_LOG.USER_JOINED_ORGANIZATION,
+				entityType: 'organization_member',
+				entityId: userId,
+				newData: {
+					invitationId: invitation.id,
+					email: invitation.email,
+					roleId: invitation.roleId,
 				},
-				tx,
-			)
+			})
 		})
 	} catch {
 		if (createdUserId) {

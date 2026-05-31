@@ -278,24 +278,21 @@ export async function $updateComplaintClassificationAction(
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.COMPLAINT_UPDATED,
-					entityType: 'complaint',
-					entityId: input.id,
-					oldData: {
-						priority: existing.priority,
-						categoryId: existing.categoryId,
-					},
-					newData: {
-						priority: input.priority,
-						categoryId: input.categoryId,
-					},
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.COMPLAINT_UPDATED,
+				entityType: 'complaint',
+				entityId: input.id,
+				oldData: {
+					priority: existing.priority,
+					categoryId: existing.categoryId,
 				},
-				tx,
-			)
+				newData: {
+					priority: input.priority,
+					categoryId: input.categoryId,
+				},
+			})
 
 			return {
 				priority: input.priority,
@@ -443,31 +440,28 @@ export async function $respondToComplaintAction(
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.COMPLAINT_RESPONDED,
-					entityType: 'complaint',
-					entityId: input.id,
-					oldData: {
-						status: existing.status,
-						priority: existing.priority,
-						categoryId: existing.categoryId,
-						officialResponse: null,
-					},
-					newData: {
-						status: 'resolved',
-						priority: input.priority,
-						categoryId: input.categoryId,
-						officialResponse: response,
-						respondedAt: now.toISOString(),
-					},
-					ipAddress,
-					userAgent,
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.COMPLAINT_RESPONDED,
+				entityType: 'complaint',
+				entityId: input.id,
+				oldData: {
+					status: existing.status,
+					priority: existing.priority,
+					categoryId: existing.categoryId,
+					officialResponse: null,
 				},
-				tx,
-			)
+				newData: {
+					status: 'resolved',
+					priority: input.priority,
+					categoryId: input.categoryId,
+					officialResponse: response,
+					respondedAt: now.toISOString(),
+				},
+				ipAddress,
+				userAgent,
+			})
 
 			await createComplaintHistoryEntry(
 				{
@@ -626,22 +620,19 @@ export async function $changeComplaintStatusAction(
 					),
 				)
 
-			await createAuditLog(
-				{
-					organizationId: access.membership.organizationId,
-					userId: access.session.user.id,
-					action: AUDIT_LOG.COMPLAINT_STATUS_CHANGED,
-					entityType: 'complaint',
-					entityId: input.id,
-					oldData: { status: existing.status },
-					newData: { status: input.status },
-					ipAddress:
-						reqHeaders.get('x-forwarded-for') ??
-						reqHeaders.get('x-real-ip'),
-					userAgent: reqHeaders.get('user-agent'),
-				},
-				tx,
-			)
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.COMPLAINT_STATUS_CHANGED,
+				entityType: 'complaint',
+				entityId: input.id,
+				oldData: { status: existing.status },
+				newData: { status: input.status },
+				ipAddress:
+					reqHeaders.get('x-forwarded-for') ??
+					reqHeaders.get('x-real-ip'),
+				userAgent: reqHeaders.get('user-agent'),
+			})
 
 			await createComplaintHistoryEntry(
 				{

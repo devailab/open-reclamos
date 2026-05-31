@@ -10,7 +10,7 @@ const databaseUrl = `postgresql://${user}:${password}@${host}:${port}/${dbName}`
 
 export default defineConfig({
 	dialect: 'postgresql',
-	schema: './src/database/schema.ts',
+	schema: './src/database/schema/index.ts',
 	out: './src/database/migrations',
 	dbCredentials: {
 		url: databaseUrl,
