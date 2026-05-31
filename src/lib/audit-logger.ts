@@ -614,9 +614,24 @@ export class AuditLogger {
 	}
 }
 
-export const auditLogger = new AuditLogger({
-	connectionString: process.env.AUDIT_DATABASE_URL ?? DATABASE_URL,
-	onBackgroundError: (error) => {
-		console.error('[audit] Error en prewarm de partición:', error)
+let _auditLogger: AuditLogger | undefined
+
+function getAuditLoggerInstance(): AuditLogger {
+	if (!_auditLogger) {
+		_auditLogger = new AuditLogger({
+			connectionString: process.env.AUDIT_DATABASE_URL ?? DATABASE_URL,
+			onBackgroundError: (error) => {
+				console.error('[audit] Error en prewarm de partición:', error)
+			},
+		})
+	}
+	return _auditLogger
+}
+
+export const auditLogger = new Proxy({} as AuditLogger, {
+	get(_, prop) {
+		const instance = getAuditLoggerInstance()
+		const value = Reflect.get(instance, prop)
+		return typeof value === 'function' ? value.bind(instance) : value
 	},
 })
