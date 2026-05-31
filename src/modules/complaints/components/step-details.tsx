@@ -232,7 +232,7 @@ export const StepDetails: FC<StepDetailsProps> = ({
 			{/* Confirmación */}
 			<BooleanField
 				{...register('confirmationCheck')}
-				label='Confirmo y acredito que toda la información ingresada es correcta y me encuentro conforme con los términos del reclamo o queja.'
+				label='Declaro ser titular de la información proporcionada, que los datos son veraces y autorizo el tratamiento de mis datos personales únicamente para atender mi reclamo.'
 				variant='checkbox'
 				validate={validateConfirmation}
 				disabled={disabled}
