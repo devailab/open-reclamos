@@ -62,8 +62,8 @@ const THEME_META: Record<
 }
 
 const BUTTON_STYLES: Record<WidgetTheme, string> = {
-	light: 'border-slate-200 bg-white text-slate-900 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.45)]',
-	dark: 'border-white/12 bg-slate-950 text-slate-50 shadow-[0_20px_46px_-24px_rgba(2,6,23,0.85)]',
+	light: 'bg-white text-slate-900 border border-slate-200',
+	dark: 'bg-slate-950 text-slate-50 border border-slate-800',
 }
 
 function escapeHtml(value: string) {
@@ -76,7 +76,7 @@ function escapeHtml(value: string) {
 }
 
 function claimBookSvgMarkup() {
-	return `<svg aria-hidden="true" viewBox="0 0 363 145" width="50" height="20" style="display:block;width:50px;height:20px;flex-shrink:0;color:inherit"><path fill="currentColor" fill-rule="evenodd" d="m179.613 43.838 3.044 71.845c48.401-39.661 93.538-58.253 135.167-54.188L264.244 0c-33.725 1.729-62.108 15.939-84.631 43.838M24.354 84.631l62.104-59.059c30.126-6.49 59.983-1.583 89.502 17.657l.609 70.019C147.442 89.24 94.967 80.864 24.354 84.632Z"/><path fill="currentColor" d="M196.661 112.639c39.147-30.108 80.645-42.735 121.163-42.62l12.786 11.568c-27.993-2.38-56.549.876-85.849 11.568 37.367-7.094 78.804-11.361 87.676 2.435-48.057-1.012-96.469-2.875-135.776 17.048M22.528 99.853v-6.697c58.07-5.885 108.069.305 146.126 24.354-48.629-19.034-97.347-23.394-146.126-17.657"/><path fill="currentColor" d="M204.577 119.336c37.565-12.446 80.993-18.585 132.122-16.439v20.701c-36.794-6.626-81.882-7.295-132.122-4.262M22.528 105.333v19.483c48.474-2.674 96.396-3.76 143.691-3.044C121.678 104.168 73.75 98.8 22.528 105.333"/><path fill="currentColor" fill-rule="evenodd" d="M17.657 122.99v7.915l146.735-5.48c11.249 5.705 21.695 6.309 31.052 0l149.779 6.089V117.51l17.657 27.399-163.174-10.351c-10.399 7.858-22.64 8.972-37.14 1.827L.001 144.909z"/></svg>`
+	return `<svg aria-hidden="true" viewBox="0 0 363 145" width="90" height="36" style="display:block;width:90px;height:36px;flex-shrink:0;color:inherit"><path fill="currentColor" fill-rule="evenodd" d="m179.613 43.838 3.044 71.845c48.401-39.661 93.538-58.253 135.167-54.188L264.244 0c-33.725 1.729-62.108 15.939-84.631 43.838M24.354 84.631l62.104-59.059c30.126-6.49 59.983-1.583 89.502 17.657l.609 70.019C147.442 89.24 94.967 80.864 24.354 84.632Z"/><path fill="currentColor" d="M196.661 112.639c39.147-30.108 80.645-42.735 121.163-42.62l12.786 11.568c-27.993-2.38-56.549.876-85.849 11.568 37.367-7.094 78.804-11.361 87.676 2.435-48.057-1.012-96.469-2.875-135.776 17.048M22.528 99.853v-6.697c58.07-5.885 108.069.305 146.126 24.354-48.629-19.034-97.347-23.394-146.126-17.657"/><path fill="currentColor" d="M204.577 119.336c37.565-12.446 80.993-18.585 132.122-16.439v20.701c-36.794-6.626-81.882-7.295-132.122-4.262M22.528 105.333v19.483c48.474-2.674 96.396-3.76 143.691-3.044C121.678 104.168 73.75 98.8 22.528 105.333"/><path fill="currentColor" fill-rule="evenodd" d="M17.657 122.99v7.915l146.735-5.48c11.249 5.705 21.695 6.309 31.052 0l149.779 6.089V117.51l17.657 27.399-163.174-10.351c-10.399 7.858-22.64 8.972-37.14 1.827L.001 144.909z"/></svg>`
 }
 
 function buildWidgetSnippet({
@@ -89,14 +89,9 @@ function buildWidgetSnippet({
 	const escapedHref = escapeHtml(href)
 	const color = theme === 'dark' ? '#f8fafc' : '#0f172a'
 	const background = theme === 'dark' ? '#020617' : '#ffffff'
-	const borderColor =
-		theme === 'dark' ? 'rgba(248,250,252,0.12)' : 'rgba(15,23,42,0.12)'
-	const shadow =
-		theme === 'dark'
-			? '0 20px 40px -28px rgba(2,6,23,0.85)'
-			: '0 16px 32px -24px rgba(15,23,42,0.45)'
+	const border = theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0'
 
-	return `<a href="${escapedHref}" target="_blank" rel="noopener noreferrer" aria-label="Abrir Libro de Reclamaciones" title="Libro de Reclamaciones" style="display:inline-flex;align-items:center;gap:12px;padding:12px 18px;border:1px solid ${borderColor};border-radius:12px;background:${background};color:${color};font:600 15px/1.2 system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;text-decoration:none;box-shadow:${shadow};">${claimBookSvgMarkup()}<span>Libro de Reclamaciones</span></a>`
+	return `<a href="${escapedHref}" target="_blank" rel="noopener noreferrer" aria-label="Abrir Libro de Reclamaciones" title="Libro de Reclamaciones" style="display:inline-flex;width:200px;flex-direction:column;align-items:center;gap:14px;padding:16px 0;border-radius:16px;border:${border};background:${background};color:${color};font:700 20px/1.2 system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;text-decoration:none;text-align:center;"><span>Libro de Reclamaciones</span>${claimBookSvgMarkup()}</a>`
 }
 
 function ClaimBookIcon({ className }: { className?: string }) {
@@ -138,12 +133,14 @@ function WidgetPreview({ url, theme }: { url: string; theme: WidgetTheme }) {
 				aria-label='Abrir Libro de Reclamaciones'
 				title='Libro de Reclamaciones'
 				className={cn(
-					'inline-flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-semibold focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-blue-500/40',
+					'inline-flex w-50 flex-col items-center gap-4 rounded-2xl py-4 text-center font-bold',
 					BUTTON_STYLES[theme],
 				)}
 			>
-				<ClaimBookIcon />
-				<span>Libro de Reclamaciones</span>
+				<span className='text-xl leading-5'>
+					Libro de Reclamaciones
+				</span>
+				<ClaimBookIcon className='h-9 w-22.5' />
 			</a>
 		</div>
 	)
