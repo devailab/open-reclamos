@@ -117,8 +117,8 @@ const DateField: FC<DateFieldProps> = ({
 						selected={value || undefined}
 						onSelect={handleSelect}
 						captionLayout='dropdown'
-						fromDate={minDate}
-						toDate={maxDate}
+						startMonth={minDate}
+						endMonth={maxDate}
 						disabled={(date) => {
 							if (minDate && date < minDate) return true
 							if (maxDate && date > maxDate) return true
