@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { ChevronsUpDown } from 'lucide-react'
 import {
 	type FC,
 	type ReactNode,
@@ -135,7 +135,10 @@ const ComboboxField: FC<ComboboxFieldProps> = ({
 						</Button>
 					}
 				/>
-				<PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+				<PopoverContent
+					className='w-(--anchor-width) p-0'
+					align='start'
+				>
 					<Command>
 						<CommandInput
 							placeholder={searchPlaceholder || 'Buscar...'}
@@ -151,19 +154,16 @@ const ComboboxField: FC<ComboboxFieldProps> = ({
 									<CommandItem
 										key={option.value}
 										value={option.label}
+										data-checked={
+											value?.value === option.value
+												? 'true'
+												: undefined
+										}
 										onSelect={() =>
 											handleSelect(option.value)
 										}
 									>
 										{option.label}
-										<Check
-											className={cn(
-												'ml-auto h-4 w-4',
-												value?.value === option.value
-													? 'opacity-100'
-													: 'opacity-0',
-											)}
-										/>
 									</CommandItem>
 								))}
 							</CommandGroup>

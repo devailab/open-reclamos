@@ -1,13 +1,13 @@
 import type { Metadata, NextPage } from 'next'
 import { notFound } from 'next/navigation'
-import { Separator } from '@/components/ui/separator'
 import { ComplaintForm } from '@/modules/complaints/components/complaint-form'
+import { ComplaintPageLayout } from '@/modules/complaints/components/complaint-page-layout'
 import { FormUnavailableCard } from '@/modules/complaints/components/form-unavailable-card'
-import { TrackingPanel } from '@/modules/complaints/components/tracking-panel'
 import {
 	getComplaintReasonsForOrg,
 	getOrganizationById,
 	getStoreBySlug,
+	getStoresByOrganizationId,
 } from '@/modules/complaints/queries'
 import { getCountries } from '@/modules/setup/queries'
 
@@ -39,9 +39,10 @@ const StoreComplaintPage: NextPage<PageProps> = async ({ params }) => {
 
 	if (!store) notFound()
 
-	const [org, reasons] = await Promise.all([
+	const [org, reasons, orgStores] = await Promise.all([
 		getOrganizationById(store.organizationId),
 		getComplaintReasonsForOrg(store.organizationId),
+		getStoresByOrganizationId(store.organizationId),
 	])
 
 	if (!org) notFound()
@@ -55,57 +56,21 @@ const StoreComplaintPage: NextPage<PageProps> = async ({ params }) => {
 			: 'No existe un formulario de reclamos disponible para esta tienda.'
 
 	return (
-		<main className='min-h-screen bg-muted/30'>
-			<div className='mx-auto max-w-2xl px-4 py-8'>
-				{/* Header */}
-				<div className='mb-8 text-center'>
-					<h1 className='text-2xl font-semibold tracking-tight'>
-						Libro de Reclamaciones
-					</h1>
-					<p className='mt-1 text-sm text-muted-foreground'>
-						{org.name} — {store.name}
-					</p>
-				</div>
-
-				{isFormUnavailable ? (
-					<FormUnavailableCard description={unavailableDescription} />
-				) : (
-					<ComplaintForm
-						organizationId={org.id}
-						organizationName={org.name}
-						preselectedStore={store}
-						countries={countries}
-						reasons={reasons}
-						turnstileSiteKey={process.env.TURNSTILE_SITE_KEY ?? ''}
-					/>
-				)}
-
-				<TrackingPanel organizationId={org.id} />
-
-				<Separator className='mt-5' />
-
-				<div className='mt-6 space-y-2 text-xs text-muted-foreground'>
-					<p>
-						El proveedor debe atender y responder el reclamo o queja
-						dentro del plazo aplicable según la normativa vigente.
-						Para esta organización, el plazo informado es de{' '}
-						{org.responseDeadlineDays} días calendario. La
-						presentación de un reclamo o queja no limita el acceso a
-						otras vías de solución de controversias ni constituye un
-						requisito previo para acudir al INDECOPI.
-					</p>
-					<p>
-						El Libro de Reclamaciones virtual de {org.name} se
-						encuentra disponible a través de Open Reclamos, que
-						actúa como intermediario tecnológico en el marco del
-						Código de Protección y Defensa del Consumidor. Open
-						Reclamos no gestiona ni responde los reclamos o quejas
-						presentados. Los datos personales serán conservados
-						durante el tiempo exigido por la normativa aplicable.
-					</p>
-				</div>
-			</div>
-		</main>
+		<ComplaintPageLayout org={org} storeName={store.name}>
+			{isFormUnavailable ? (
+				<FormUnavailableCard description={unavailableDescription} />
+			) : (
+				<ComplaintForm
+					organizationId={org.id}
+					organizationName={org.name}
+					preselectedStore={store}
+					totalStores={orgStores.length}
+					countries={countries}
+					reasons={reasons}
+					turnstileSiteKey={process.env.TURNSTILE_SITE_KEY ?? ''}
+				/>
+			)}
+		</ComplaintPageLayout>
 	)
 }
 

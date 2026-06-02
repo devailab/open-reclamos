@@ -1,12 +1,23 @@
 'use client'
 
-import { ArrowBigRight, ChevronLeft, Loader2, Send } from 'lucide-react'
+import {
+	ArrowBigRight,
+	ChevronLeft,
+	Globe,
+	Loader2,
+	MapPin,
+	Send,
+	Store,
+} from 'lucide-react'
 import type { FC } from 'react'
 import Turnstile from 'react-turnstile'
-import SelectField, { type SelectOption } from '@/components/forms/select-field'
+import ComboboxField, {
+	type ComboboxOption,
+} from '@/components/forms/combobox-field'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { ADDRESS_TYPE_OPTIONS } from '@/lib/constants'
 import { ComplaintStepper } from './complaint-stepper'
 import { ComplaintSuccess } from './complaint-success'
 import type { FlatReason } from './reason-tree-field'
@@ -22,6 +33,10 @@ interface StoreOption {
 	id: string
 	name: string
 	slug: string
+	type: string
+	address: string | null
+	addressType: string | null
+	url: string | null
 }
 
 interface ComplaintFormProps {
@@ -31,9 +46,52 @@ interface ComplaintFormProps {
 	stores?: StoreOption[]
 	// Store mode: pre-selected store
 	preselectedStore?: StoreOption
+	totalStores?: number
 	countries: CountryOption[]
 	reasons: FlatReason[]
 	turnstileSiteKey: string
+}
+
+function StoreInfo({
+	store,
+	addressLabel,
+}: {
+	store: StoreOption
+	addressLabel: string | null
+}) {
+	const isPhysical = store.type === 'physical'
+	return (
+		<div className='flex items-start gap-3 text-sm'>
+			<div className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground'>
+				{isPhysical ? (
+					<Store className='size-4' />
+				) : (
+					<Globe className='size-4' />
+				)}
+			</div>
+			<div className='space-y-0.5'>
+				<div className='flex items-center gap-2'>
+					<span className='font-medium'>{store.name}</span>
+				</div>
+				{isPhysical && addressLabel && (
+					<p className='flex items-center gap-1 text-muted-foreground'>
+						<MapPin className='size-3 shrink-0' />
+						{addressLabel}
+					</p>
+				)}
+				{!isPhysical && store.url && (
+					<a
+						href={store.url}
+						target='_blank'
+						rel='noopener noreferrer'
+						className='flex items-center gap-1 text-muted-foreground underline underline-offset-2'
+					>
+						{store.url}
+					</a>
+				)}
+			</div>
+		</div>
+	)
 }
 
 export const ComplaintForm: FC<ComplaintFormProps> = ({
@@ -41,6 +99,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 	organizationName,
 	stores,
 	preselectedStore,
+	totalStores,
 	countries,
 	reasons,
 	turnstileSiteKey,
@@ -53,7 +112,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 		storeId: defaultStoreId,
 		defaultDialCodeOption,
 	})
-	const storeOptions: SelectOption[] =
+	const storeOptions: ComboboxOption[] =
 		stores?.map((store) => ({
 			value: store.id,
 			label: store.name,
@@ -63,14 +122,23 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 		null
 
 	const activeStoreId = defaultStoreId ?? form.selectedStoreId ?? null
+	const activeStore =
+		preselectedStore ??
+		stores?.find((s) => s.id === form.selectedStoreId) ??
+		null
+
+	const storeAddressLabel =
+		activeStore?.type === 'physical' && activeStore.address
+			? `${ADDRESS_TYPE_OPTIONS.find((o) => o.value === activeStore.addressType)?.label ?? activeStore.addressType} ${activeStore.address}`
+			: null
 
 	return (
 		<div className='space-y-6'>
 			{/* Store selector (org mode only) */}
 			{stores && stores.length > 0 && !preselectedStore && (
 				<Card>
-					<CardContent>
-						<SelectField
+					<CardContent className='space-y-4'>
+						<ComboboxField
 							label='Seleccione la tienda o sucursal'
 							value={selectedStoreOption}
 							onValueChange={(option) =>
@@ -79,6 +147,34 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 							options={storeOptions}
 							placeholder='Selecciona una tienda'
 							disabled={form.isSubmitting}
+							className='w-full'
+						/>
+						{stores && stores.length > 1 && activeStore && (
+							<>
+								<Separator />
+								<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+									Detalles de la sucursal
+								</p>
+								<StoreInfo
+									store={activeStore}
+									addressLabel={storeAddressLabel}
+								/>
+							</>
+						)}
+					</CardContent>
+				</Card>
+			)}
+
+			{/* Pre-selected store info — only when org has multiple stores */}
+			{preselectedStore && totalStores && totalStores > 1 && (
+				<Card>
+					<CardContent className='space-y-3'>
+						<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+							Detalles de la sucursal
+						</p>
+						<StoreInfo
+							store={preselectedStore}
+							addressLabel={storeAddressLabel}
 						/>
 					</CardContent>
 				</Card>

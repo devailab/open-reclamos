@@ -209,6 +209,14 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 
 	const columns = defineColumns([
 		{
+			header: { render: () => 'Tienda' },
+			cell: ({ row }) => (
+				<span className='text-sm text-muted-foreground'>
+					{row.storeName}
+				</span>
+			),
+		},
+		{
 			header: { render: () => 'Correlativo' },
 			cell: ({ row }) => (
 				<span className='font-mono text-xs font-medium'>
@@ -229,14 +237,6 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 			cell: ({ row }) => (
 				<span className='text-sm'>
 					{row.firstName} {row.lastName}
-				</span>
-			),
-		},
-		{
-			header: { render: () => 'Tienda' },
-			cell: ({ row }) => (
-				<span className='text-sm text-muted-foreground'>
-					{row.storeName}
 				</span>
 			),
 		},
