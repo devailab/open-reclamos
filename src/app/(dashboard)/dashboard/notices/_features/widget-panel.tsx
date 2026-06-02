@@ -91,7 +91,7 @@ function buildWidgetSnippet({
 	const background = theme === 'dark' ? '#020617' : '#ffffff'
 	const border = theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0'
 
-	return `<a href="${escapedHref}" target="_blank" rel="noopener noreferrer" aria-label="Abrir Libro de Reclamaciones" title="Libro de Reclamaciones" style="display:inline-flex;width:200px;flex-direction:column;align-items:center;gap:14px;padding:16px 0;border-radius:16px;border:${border};background:${background};color:${color};font:700 20px/1.2 system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;text-decoration:none;text-align:center;"><span>Libro de Reclamaciones</span>${claimBookSvgMarkup()}</a>`
+	return `<a href="${escapedHref}" target="_blank" rel="noopener noreferrer" aria-label="Abrir Libro de Reclamaciones" title="Libro de Reclamaciones" style="display:inline-flex;width:200px;flex-direction:column;align-items:center;gap:14px;padding:16px 0;border-radius:16px;border:${border};background:${background};color:${color};font-family:inherit;font-size:20px;font-weight:700;line-height:1.2;text-decoration:none;text-align:center;"><span>Libro de Reclamaciones</span>${claimBookSvgMarkup()}</a>`
 }
 
 function ClaimBookIcon({ className }: { className?: string }) {
