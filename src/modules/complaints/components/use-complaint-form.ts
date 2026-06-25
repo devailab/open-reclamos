@@ -127,12 +127,14 @@ export function useComplaintForm({
 				storeId: selectedStoreId,
 				turnstileToken,
 				personType: step1Values.personType,
-				// Para jurídica: documentType = RUC (empresa), documentNumber = RUC empresa
-				// Para natural: documentType = tipo doc persona, documentNumber = número doc persona
+				// Para jurídica: documentType/documentNumber = documento del representante o contacto
+				// Para natural: documentType/documentNumber = documento de la persona
 				documentType: isJuridical
-					? 'RUC'
+					? (step1Values.contactDocumentType?.value ?? '')
 					: (step1Values.documentType?.value ?? ''),
-				documentNumber: step1Values.documentNumber ?? '',
+				documentNumber: isJuridical
+					? (step1Values.contactDocumentNumber ?? '')
+					: (step1Values.documentNumber ?? ''),
 				// Para jurídica: firstName/lastName = datos del contacto/representante
 				// Para natural: firstName/lastName = datos de la persona
 				firstName: isJuridical

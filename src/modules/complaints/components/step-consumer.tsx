@@ -27,7 +27,7 @@ export interface CountryOption {
 
 export interface Step1Values {
 	personType: 'natural' | 'juridical'
-	// Natural + Juridical company doc (documentType = company doc for juridical, person doc for natural)
+	// Natural only: documento de la persona. Para jurídica, el documento persistido es el del contacto.
 	documentType: SelectOption | null
 	documentNumber: string | null
 	// Natural person
