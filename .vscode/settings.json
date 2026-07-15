@@ -38,9 +38,5 @@
     ],
     "javascript.preferences.autoImportFileExcludePatterns": [
         "**/node_modules/@base-ui"
-    ],
-    "files.exclude": {
-        "**/.agent": true,
-        "**/.claude": true
-    }
+    ]
 }

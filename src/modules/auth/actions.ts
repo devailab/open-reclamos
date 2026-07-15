@@ -8,8 +8,9 @@ import { db } from '@/database/database'
 import { organizationMembers, users } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
-import { ALLOW_PUBLIC_REGISTRATION } from '@/lib/config'
+import { ALLOW_PUBLIC_REGISTRATION, SSO_ENABLED } from '@/lib/config'
 import { hasAnyUser } from '@/modules/auth/queries'
+import { buildSsoLogoutRedirectUrl } from '@/modules/auth/sso-logout'
 import {
 	clearActiveOrganizationCookie,
 	getActiveOrganizationCookie,
@@ -90,6 +91,12 @@ export async function $loginAction(
 	email: string,
 	password: string,
 ): Promise<AuthActionResult> {
+	if (SSO_ENABLED) {
+		return {
+			error: 'El acceso con correo y contraseña está deshabilitado.',
+		}
+	}
+
 	const reqHeaders = await headers()
 	const ipAddress =
 		reqHeaders.get('x-forwarded-for') ?? reqHeaders.get('x-real-ip')
@@ -188,6 +195,12 @@ export async function $registerAction(
 	email: string,
 	password: string,
 ): Promise<AuthActionResult> {
+	if (SSO_ENABLED) {
+		return {
+			error: 'El registro local está deshabilitado. Usa el acceso SSO.',
+		}
+	}
+
 	const anyUser = await hasAnyUser()
 	if (!ALLOW_PUBLIC_REGISTRATION && anyUser) {
 		return { error: 'El registro de nuevas cuentas no está disponible.' }
@@ -223,11 +236,20 @@ export async function $registerAction(
 }
 
 export async function $logoutAction(): Promise<void> {
+	const reqHeaders = await headers()
+	const session = await auth.api.getSession({
+		headers: reqHeaders,
+	})
+	const logoutRedirectUrl =
+		SSO_ENABLED && session?.user.id
+			? await buildSsoLogoutRedirectUrl(session.user.id, reqHeaders)
+			: null
+
 	await clearActiveOrganizationCookie()
 	await auth.api.signOut({
-		headers: await headers(),
+		headers: reqHeaders,
 	})
-	redirect('/login')
+	redirect(logoutRedirectUrl ?? '/login')
 }
 
 export async function $sendRegistrationVerificationAction(
@@ -235,6 +257,12 @@ export async function $sendRegistrationVerificationAction(
 	email: string,
 	password: string,
 ): Promise<AuthActionResult> {
+	if (SSO_ENABLED) {
+		return {
+			error: 'El registro local está deshabilitado. Usa el acceso SSO.',
+		}
+	}
+
 	const anyUser = await hasAnyUser()
 	if (!ALLOW_PUBLIC_REGISTRATION && anyUser) {
 		return { error: 'El registro de nuevas cuentas no está disponible.' }
@@ -305,6 +333,12 @@ export async function $verifyAndRegisterAction(
 	email: string,
 	code: string,
 ): Promise<AuthActionResult> {
+	if (SSO_ENABLED) {
+		return {
+			error: 'El registro local está deshabilitado. Usa el acceso SSO.',
+		}
+	}
+
 	const anyUser = await hasAnyUser()
 	const normalizedEmail = email.trim().toLowerCase()
 

@@ -1,9 +1,18 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { nextCookies } from 'better-auth/next-js'
-import { emailOTP } from 'better-auth/plugins'
+import { emailOTP, genericOAuth } from 'better-auth/plugins'
 import { db } from '@/database/database'
 import * as schema from '@/database/schema'
+import {
+	BETTER_AUTH_URL,
+	SSO_CLIENT_ID,
+	SSO_CLIENT_SECRET,
+	SSO_DISCOVERY_URL,
+	SSO_ENABLED,
+	SSO_PROVIDER_ID,
+	SSO_SCOPES,
+} from '@/lib/config'
 import { sendEmail } from '@/lib/email'
 
 function buildOtpEmailHtml(otp: string): string {
@@ -44,26 +53,47 @@ export const auth = betterAuth({
 		},
 	}),
 	emailAndPassword: {
-		enabled: true,
+		enabled: !SSO_ENABLED,
 	},
 	plugins: [
-		emailOTP({
-			sendVerificationOnSignUp: false,
-			otpLength: 6,
-			expiresIn: 600,
-			allowedAttempts: 5,
-			resendStrategy: 'rotate',
-			storeOTP: 'hashed',
-			sendVerificationOTP: async ({ email, otp, type }) => {
-				if (type !== 'email-verification') return
-				await sendEmail({
-					to: email,
-					subject: 'Tu código de verificación',
-					text: buildOtpEmailText(otp),
-					html: buildOtpEmailHtml(otp),
-				})
-			},
-		}),
+		...(SSO_ENABLED
+			? [
+					genericOAuth({
+						config: [
+							{
+								providerId: SSO_PROVIDER_ID,
+								clientId: SSO_CLIENT_ID,
+								clientSecret: SSO_CLIENT_SECRET,
+								discoveryUrl: SSO_DISCOVERY_URL,
+								scopes: SSO_SCOPES,
+								pkce: true,
+								redirectURI: `${BETTER_AUTH_URL}/api/auth/callback/${SSO_PROVIDER_ID}`,
+							},
+						],
+					}),
+				]
+			: []),
+		...(!SSO_ENABLED
+			? [
+					emailOTP({
+						sendVerificationOnSignUp: false,
+						otpLength: 6,
+						expiresIn: 600,
+						allowedAttempts: 5,
+						resendStrategy: 'rotate',
+						storeOTP: 'hashed',
+						sendVerificationOTP: async ({ email, otp, type }) => {
+							if (type !== 'email-verification') return
+							await sendEmail({
+								to: email,
+								subject: 'Tu código de verificación',
+								text: buildOtpEmailText(otp),
+								html: buildOtpEmailHtml(otp),
+							})
+						},
+					}),
+				]
+			: []),
 		nextCookies(),
 	],
 })

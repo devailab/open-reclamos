@@ -15,6 +15,7 @@ import {
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { getSession } from '@/lib/auth-server'
+import { SSO_ENABLED } from '@/lib/config'
 import { sendEmail } from '@/lib/email'
 import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
 import {
@@ -619,6 +620,12 @@ export async function $removeUserFromOrganizationAction(
 export async function $acceptInvitationAction(
 	input: AcceptInvitationInput,
 ): Promise<UserActionResult> {
+	if (SSO_ENABLED) {
+		return {
+			error: 'La creación de cuentas con contraseña está deshabilitada.',
+		}
+	}
+
 	const normalizedInput = {
 		...input,
 		confirmPassword: input.confirmPassword ?? input.password,
@@ -760,6 +767,131 @@ export async function $acceptInvitationAction(
 			error: 'No se pudo completar el registro. Inténtalo nuevamente.',
 		}
 	}
+
+	revalidatePath('/dashboard/users')
+	await setActiveOrganizationCookie(invitation.organizationId)
+	redirect('/dashboard')
+}
+
+export async function $acceptSsoInvitationAction(
+	token: string,
+): Promise<UserActionResult> {
+	if (!SSO_ENABLED) return { error: 'El acceso SSO no está habilitado.' }
+
+	const session = await getSession()
+	if (!session) redirect('/login')
+
+	const invitation = await getOpenInvitationByToken(token.trim())
+	if (!invitation) return { error: 'La invitación no fue encontrada.' }
+	if (invitation.acceptedAt || invitation.revokedAt) {
+		return { error: 'La invitación ya no está disponible.' }
+	}
+	if (invitation.expiresAt < new Date()) {
+		return { error: 'La invitación ha expirado.' }
+	}
+	if (session.user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+		return {
+			error: `Debes acceder con la cuenta ${invitation.email}.`,
+		}
+	}
+
+	const invitationStores =
+		invitation.storeAccessMode === 'selected'
+			? await db
+					.select({ storeId: organizationInvitationStores.storeId })
+					.from(organizationInvitationStores)
+					.where(
+						eq(
+							organizationInvitationStores.invitationId,
+							invitation.id,
+						),
+					)
+			: []
+
+	try {
+		await db.transaction(async (tx) => {
+			await tx.insert(organizationMembers).values({
+				userId: session.user.id,
+				organizationId: invitation.organizationId,
+				role: invitation.roleSlug,
+				roleId: invitation.roleId,
+				storeAccessMode: invitation.storeAccessMode,
+				createdBy: session.user.id,
+			})
+
+			await assignDefaultMemberPermissionsForRole(
+				{
+					userId: session.user.id,
+					organizationId: invitation.organizationId,
+					roleKey: invitation.roleKey,
+					createdBy: session.user.id,
+				},
+				tx,
+			)
+
+			if (
+				invitation.storeAccessMode === 'selected' &&
+				invitationStores.length > 0
+			) {
+				await tx.insert(organizationMemberStores).values(
+					invitationStores.map((store) => ({
+						userId: session.user.id,
+						organizationId: invitation.organizationId,
+						storeId: store.storeId,
+						createdBy: session.user.id,
+					})),
+				)
+			}
+
+			await tx
+				.update(organizationInvitations)
+				.set({ acceptedAt: new Date(), acceptedBy: session.user.id })
+				.where(
+					and(
+						eq(organizationInvitations.id, invitation.id),
+						isNull(organizationInvitations.acceptedAt),
+						isNull(organizationInvitations.revokedAt),
+					),
+				)
+
+			await tx
+				.update(users)
+				.set({ setupStatus: 'complete' })
+				.where(eq(users.id, session.user.id))
+		})
+	} catch {
+		return {
+			error: 'No se pudo aceptar la invitación. Inténtalo nuevamente.',
+		}
+	}
+
+	await Promise.all([
+		createAuditLog({
+			organizationId: invitation.organizationId,
+			userId: session.user.id,
+			action: AUDIT_LOG.INVITATION_ACCEPTED,
+			entityType: 'invitation',
+			entityId: invitation.id,
+			newData: {
+				email: invitation.email,
+				roleId: invitation.roleId,
+				userId: session.user.id,
+				method: 'oidc',
+			},
+		}),
+		createAuditLog({
+			organizationId: invitation.organizationId,
+			userId: session.user.id,
+			action: AUDIT_LOG.USER_JOINED_ORGANIZATION,
+			entityType: 'organization_member',
+			entityId: session.user.id,
+			newData: {
+				invitationId: invitation.id,
+				email: invitation.email,
+				roleId: invitation.roleId,
+			},
+		}),
+	])
 
 	revalidatePath('/dashboard/users')
 	await setActiveOrganizationCookie(invitation.organizationId)

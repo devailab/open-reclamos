@@ -1,14 +1,15 @@
-import { headers } from 'next/headers'
-import { cache } from 'react'
+import { cookies, headers } from 'next/headers'
 import { auth } from './auth'
 
-/**
- * Obtiene la sesión del usuario actual.
- * Usa React.cache para deduplicar llamadas dentro del mismo request,
- * evitando múltiples consultas a la base de datos desde layout y page.
- */
-export const getSession = cache(async () => {
+export async function getSession() {
+	const requestHeaders = new Headers(await headers())
+	const cookieHeader = (await cookies()).toString()
+
+	if (cookieHeader) {
+		requestHeaders.set('cookie', cookieHeader)
+	}
+
 	return auth.api.getSession({
-		headers: await headers(),
+		headers: requestHeaders,
 	})
-})
+}

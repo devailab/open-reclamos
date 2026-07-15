@@ -13,9 +13,11 @@ import {
 import { db } from '@/database/database'
 import { users } from '@/database/schema'
 import { getSession } from '@/lib/auth-server'
+import { SSO_ENABLED, SSO_PROVIDER_ID, SSO_PROVIDER_NAME } from '@/lib/config'
 import { hashInvitationToken } from '@/modules/users/lib'
 import { getInvitationDetailsByTokenHash } from '@/modules/users/queries'
 import { InviteAcceptanceForm } from './_features/invite-acceptance-form'
+import { SsoInviteAcceptance } from './_features/sso-invite-acceptance'
 
 interface InvitePageProps {
 	params: Promise<{ token: string }>
@@ -23,17 +25,6 @@ interface InvitePageProps {
 
 const InvitePage: FC<InvitePageProps> = async ({ params }) => {
 	const session = await getSession()
-	if (session) {
-		const [userData] = await db
-			.select({ setupStatus: users.setupStatus })
-			.from(users)
-			.where(eq(users.id, session.user.id))
-			.limit(1)
-		if (userData?.setupStatus === 'complete') {
-			redirect('/dashboard')
-		}
-	}
-
 	const { token } = await params
 	const invitation = await getInvitationDetailsByTokenHash(
 		hashInvitationToken(token),
@@ -64,6 +55,17 @@ const InvitePage: FC<InvitePageProps> = async ({ params }) => {
 				</Card>
 			</div>
 		)
+	}
+
+	if (session && !SSO_ENABLED) {
+		const [userData] = await db
+			.select({ setupStatus: users.setupStatus })
+			.from(users)
+			.where(eq(users.id, session.user.id))
+			.limit(1)
+		if (userData?.setupStatus === 'complete') {
+			redirect('/dashboard')
+		}
 	}
 
 	const isExpired = invitation.expiresAt.getTime() < Date.now()
@@ -118,11 +120,22 @@ const InvitePage: FC<InvitePageProps> = async ({ params }) => {
 				</Card>
 
 				<div>
-					<InviteAcceptanceForm
-						token={token}
-						email={invitation.email}
-						isDisabled={isBlocked}
-					/>
+					{SSO_ENABLED ? (
+						<SsoInviteAcceptance
+							token={token}
+							invitationEmail={invitation.email}
+							sessionEmail={session?.user.email ?? null}
+							providerId={SSO_PROVIDER_ID}
+							providerName={SSO_PROVIDER_NAME}
+							isDisabled={isBlocked}
+						/>
+					) : (
+						<InviteAcceptanceForm
+							token={token}
+							email={invitation.email}
+							isDisabled={isBlocked}
+						/>
+					)}
 				</div>
 			</div>
 		</div>
