@@ -4,8 +4,10 @@ import {
 	BookOpen,
 	ChevronRight,
 	ChevronsUpDown,
+	ExternalLink,
 	FileText,
 	FlaskConical,
+	KeyRound,
 	LogOut,
 	ShieldCheck,
 	UserRound,
@@ -71,6 +73,7 @@ export interface AppSidebarProps {
 	isSuperAdmin?: boolean
 	organizations: UserOrganizationOption[]
 	activeOrganization: UserOrganizationOption | null
+	ssoAccountUrl?: string | null
 }
 
 export function AppSidebar({
@@ -79,6 +82,7 @@ export function AppSidebar({
 	isSuperAdmin = false,
 	organizations,
 	activeOrganization,
+	ssoAccountUrl = null,
 }: AppSidebarProps) {
 	const pathname = usePathname()
 	const searchParams = useSearchParams()
@@ -413,12 +417,41 @@ export function AppSidebar({
 
 								<DropdownMenuSeparator />
 
-								<DropdownMenuItem
-									render={<Link href='/dashboard/account' />}
-								>
-									<UserRound />
-									Administrar cuenta
-								</DropdownMenuItem>
+								{ssoAccountUrl ? (
+									<>
+										<DropdownMenuItem
+											render={
+												// biome-ignore lint/a11y/useAnchorContent: el contenido lo inyecta DropdownMenuItem vía render prop
+												<a
+													href={ssoAccountUrl}
+													target='_blank'
+													rel='noopener noreferrer'
+												/>
+											}
+										>
+											<UserRound />
+											Administrar cuenta
+											<ExternalLink className='ml-auto size-3.5 opacity-60' />
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											render={
+												<Link href='/dashboard/account' />
+											}
+										>
+											<KeyRound />
+											Claves API
+										</DropdownMenuItem>
+									</>
+								) : (
+									<DropdownMenuItem
+										render={
+											<Link href='/dashboard/account' />
+										}
+									>
+										<UserRound />
+										Administrar cuenta
+									</DropdownMenuItem>
+								)}
 
 								<DropdownMenuSeparator />
 

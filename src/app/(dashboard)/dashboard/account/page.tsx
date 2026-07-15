@@ -3,9 +3,11 @@ import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { users } from '@/database/schema'
 import { getSession } from '@/lib/auth-server'
+import { SSO_ACCOUNT_URL, SSO_ENABLED, SSO_PROVIDER_NAME } from '@/lib/config'
 import { ApiKeySection } from './_features/api-key-section'
 import { ChangePasswordForm } from './_features/change-password-form'
 import { ProfileForm } from './_features/profile-form'
+import { SsoAccountCard } from './_features/sso-account-card'
 
 const AccountPage = async () => {
 	const session = await getSession()
@@ -25,13 +27,24 @@ const AccountPage = async () => {
 			<div>
 				<h1 className='text-2xl font-semibold'>Mi cuenta</h1>
 				<p className='mt-1 text-sm text-muted-foreground'>
-					Administra tu perfil y preferencias de cuenta.
+					{SSO_ENABLED
+						? 'Tu cuenta se administra desde el proveedor de identidad.'
+						: 'Administra tu perfil y preferencias de cuenta.'}
 				</p>
 			</div>
 
 			<div className='max-w-3xl space-y-6'>
-				<ProfileForm user={session.user} />
-				<ChangePasswordForm />
+				{SSO_ENABLED ? (
+					<SsoAccountCard
+						providerName={SSO_PROVIDER_NAME}
+						accountUrl={SSO_ACCOUNT_URL || null}
+					/>
+				) : (
+					<>
+						<ProfileForm user={session.user} />
+						<ChangePasswordForm />
+					</>
+				)}
 				<ApiKeySection
 					hasApiKey={!!userRow?.apiKey}
 					apiKeyCreatedAt={userRow?.apiKeyCreatedAt ?? null}

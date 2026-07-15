@@ -12,6 +12,7 @@ import {
 import { db } from '@/database/database'
 import { users } from '@/database/schema'
 import { getSession } from '@/lib/auth-server'
+import { SSO_ACCOUNT_URL, SSO_ENABLED } from '@/lib/config'
 import {
 	getMembershipContext,
 	getUserOrganizationOptions,
@@ -39,6 +40,16 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 		getMembershipContext(session.user.id),
 		getUserOrganizationOptions(session.user.id),
 	])
+
+	// Usuario retirado de todas sus organizaciones: pierde acceso al dashboard
+	if (organizations.length === 0) {
+		await db
+			.update(users)
+			.set({ setupStatus: 'organization', pendingOrganizationId: null })
+			.where(eq(users.id, session.user.id))
+		redirect('/setup')
+	}
+
 	const activeOrganization = organizations.find(
 		(organization) => organization.id === membership?.organizationId,
 	)
@@ -54,6 +65,7 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 				isSuperAdmin={userData?.isSuperAdmin ?? false}
 				organizations={organizations}
 				activeOrganization={activeOrganization ?? null}
+				ssoAccountUrl={SSO_ENABLED ? SSO_ACCOUNT_URL || null : null}
 			/>
 			<SidebarInset>
 				<header className='flex h-12 shrink-0 items-center gap-2 border-b px-4'>

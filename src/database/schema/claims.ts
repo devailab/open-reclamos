@@ -216,7 +216,6 @@ export const complaintDetails = claimsSchema.table(
 		respondedBy: uuid('responded_by').references(() => users.id, {
 			onDelete: 'set null',
 		}),
-		aiSummary: text('ai_summary'),
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 			.defaultNow()
 			.notNull(),

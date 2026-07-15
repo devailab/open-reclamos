@@ -10,7 +10,6 @@ import {
 	complaints,
 	storeCorrelatives,
 } from '@/database/schema'
-import { isAiClassificationConfigured } from '@/lib/ai'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { moveS3Object } from '@/lib/s3'
 import { verifyTurnstileToken } from '@/lib/turnstile'
@@ -18,10 +17,6 @@ import { WEBHOOK_EVENT } from '@/lib/webhook-events'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
 import { dispatchWebhookEvent } from '../webhooks/dispatch'
 import { enqueueComplaintAdminNotification } from './admin-notifications'
-import {
-	enqueueComplaintAiClassification,
-	shouldRunComplaintAiClassification,
-} from './ai-classification'
 import {
 	enqueueComplaintReceiptDelivery,
 	getComplaintDeliveryFailure,
@@ -362,24 +357,6 @@ export async function $submitComplaintAction(
 	}
 
 	if (complaintId) {
-		if (
-			organizationSettings.aiClassificationEnabled &&
-			isAiClassificationConfigured() &&
-			shouldRunComplaintAiClassification(input.description)
-		) {
-			try {
-				await enqueueComplaintAiClassification({
-					complaintId,
-					organizationId: input.organizationId,
-				})
-			} catch (error) {
-				console.error(
-					'[complaints] No se pudo encolar la clasificación con IA:',
-					error,
-				)
-			}
-		}
-
 		try {
 			await enqueueComplaintReceiptDelivery({
 				complaintId,

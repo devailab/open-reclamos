@@ -11,14 +11,31 @@ import {
 	Text,
 } from '@react-email/components'
 
+export type InvitationAccessMode = 'credentials' | 'sso'
+
 interface InvitationEmailProps {
 	organizationName: string
 	inviteUrl: string
+	accessMode: InvitationAccessMode
+	providerName?: string
+}
+
+function getInstructionsParagraph({
+	accessMode,
+	providerName,
+}: Pick<InvitationEmailProps, 'accessMode' | 'providerName'>): string {
+	if (accessMode === 'sso') {
+		return `Haz clic en el botón de abajo e inicia sesión con ${providerName ?? 'tu cuenta corporativa'} para aceptar la invitación. El enlace es válido por 7 días.`
+	}
+
+	return 'Haz clic en el botón de abajo para crear tu cuenta y comenzar a gestionar reclamos. El enlace es válido por 7 días.'
 }
 
 export function InvitationEmail({
 	organizationName,
 	inviteUrl,
+	accessMode,
+	providerName,
 }: InvitationEmailProps) {
 	return (
 		<Html lang='es'>
@@ -45,9 +62,10 @@ export function InvitationEmail({
 							Reclamaciones Virtual.
 						</Text>
 						<Text style={styles.paragraph}>
-							Haz clic en el botón de abajo para crear tu cuenta y
-							comenzar a gestionar reclamos. El enlace es válido
-							por <strong>7 días</strong>.
+							{getInstructionsParagraph({
+								accessMode,
+								providerName,
+							})}
 						</Text>
 
 						<Section style={styles.buttonContainer}>

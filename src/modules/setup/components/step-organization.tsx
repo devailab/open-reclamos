@@ -24,7 +24,7 @@ import { feedback } from '@/lib/feedback'
 import {
 	$getSlugSuggestionAction,
 	$lookupRucAction,
-	$setupOrganizationAction,
+	type SetupOrganizationInput,
 } from '@/modules/setup/actions'
 import type { RucData } from '@/modules/setup/document-lookup'
 import {
@@ -45,6 +45,7 @@ export interface SetupCountryData {
 
 type StepOrganizationProps = {
 	countries: SetupCountryData[]
+	onNext: (data: SetupOrganizationInput) => void
 }
 
 type OrgFormValues = {
@@ -94,7 +95,10 @@ function guessAddressType(address: string): SelectOption | null {
 	return null
 }
 
-export function SetupStepOrganization({ countries }: StepOrganizationProps) {
+export function SetupStepOrganization({
+	countries,
+	onNext,
+}: StepOrganizationProps) {
 	const [ruc, setRuc] = useState('')
 	const [rucData, setRucData] = useState<RucData | null>(null)
 	const [ubigeoId, setUbigeoId] = useState<string | null>(null)
@@ -102,7 +106,6 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 	const rucFieldRef = useRef<FormFieldRef>(null)
 
 	const [isLookingUp, startLookupTransition] = useTransition()
-	const [isPending, startTransition] = useTransition()
 
 	const [values, setValues] = useState<OrgFormValues>(INITIAL_VALUES)
 	const { register, validate } = useForm({
@@ -158,7 +161,7 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 		})
 	}
 
-	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 
 		if (!rucData || !ubigeoId) {
@@ -171,42 +174,25 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 		const errors = validate({ focus: 'first' })
 		if (errors.length > 0) return
 
-		const confirmed = await feedback.confirm({
-			title: '¿Crear esta organización?',
-			description: `Se registrará "${values.name}" con RUC ${ruc}. Una vez creada no podrás modificar el RUC.`,
-			confirmText: 'Sí, crear organización',
-			cancelText: 'Revisar datos',
-		})
-		if (!confirmed) return
+		const selectedCountry = countries.find(
+			(country) => country.iso2 === values.phoneCodeOption?.value,
+		)
 
-		startTransition(async () => {
-			const selectedCountry = countries.find(
-				(country) => country.iso2 === values.phoneCodeOption?.value,
-			)
-
-			const result = await $setupOrganizationAction({
-				ruc,
-				name: values.name ?? '',
-				legalName: values.legalName ?? '',
-				slug: values.slug ?? '',
-				ubigeoId,
-				addressType: values.addressType?.value ?? '',
-				address: values.address ?? '',
-				phoneCode: selectedCountry?.phoneCode ?? null,
-				phone: values.phone ?? null,
-				website: values.website ?? null,
-			})
-
-			if (result?.error) {
-				feedback.alert.error({
-					title: 'Error al guardar organización',
-					description: result.error,
-				})
-			}
+		onNext({
+			ruc,
+			name: values.name ?? '',
+			legalName: values.legalName ?? '',
+			slug: values.slug ?? '',
+			ubigeoId,
+			addressType: values.addressType?.value ?? '',
+			address: values.address ?? '',
+			phoneCode: selectedCountry?.phoneCode ?? null,
+			phone: values.phone ?? null,
+			website: values.website ?? null,
 		})
 	}
 
-	const isLoading = isLookingUp || isPending
+	const isLoading = isLookingUp
 
 	return (
 		<form onSubmit={handleSubmit} className='space-y-4'>
@@ -275,7 +261,7 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 								label='Nombre comercial'
 								placeholder='Mi Empresa S.A.C.'
 								validate={validateOrgName}
-								disabled={isPending}
+								disabled={isLookingUp}
 							/>
 							<TextField
 								{...register('legalName')}
@@ -291,7 +277,7 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 								label='Identificador único'
 								placeholder='mi-empresa'
 								validate={validateSlug}
-								disabled={isPending}
+								disabled={isLookingUp}
 							/>
 							<p className='text-xs text-muted-foreground'>
 								Se usa en la URL de tu libro de reclamaciones.
@@ -312,7 +298,7 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 									placeholder='Selecciona...'
 									options={ADDRESS_TYPE_OPTIONS}
 									validate={validateAddressType}
-									disabled={isPending}
+									disabled={isLookingUp}
 								/>
 								<div className='sm:col-span-2'>
 									<TextField
@@ -320,7 +306,7 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 										label='Dirección'
 										placeholder='Av. Principal 123'
 										validate={validateAddress}
-										disabled={isPending}
+										disabled={isLookingUp}
 									/>
 								</div>
 							</div>
@@ -347,7 +333,7 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 										placeholder='Selecciona...'
 										searchPlaceholder='Buscar país...'
 										options={phoneCodeOptions}
-										disabled={isPending}
+										disabled={isLookingUp}
 									/>
 									<div className='sm:col-span-2'>
 										<TextField
@@ -355,7 +341,7 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 											label='Teléfono'
 											placeholder='987 654 321'
 											type='tel'
-											disabled={isPending}
+											disabled={isLookingUp}
 											prepend={
 												values.phoneCodeOption ? (
 													<Phone className='h-4 w-4 text-muted-foreground' />
@@ -369,7 +355,7 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 									label='Sitio web'
 									placeholder='https://www.mi-empresa.com'
 									type='url'
-									disabled={isPending}
+									disabled={isLookingUp}
 								/>
 							</div>
 						</div>
@@ -382,16 +368,9 @@ export function SetupStepOrganization({ countries }: StepOrganizationProps) {
 					type='submit'
 					className='w-full'
 					size='lg'
-					disabled={isPending}
+					disabled={isLookingUp}
 				>
-					{isPending ? (
-						<>
-							<Spinner className='mr-2' />
-							Guardando...
-						</>
-					) : (
-						'Continuar con la tienda →'
-					)}
+					Continuar con la tienda →
 				</Button>
 			)}
 		</form>

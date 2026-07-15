@@ -374,10 +374,6 @@ export const organizationSettings = orgSchema.table('organization_settings', {
 		.notNull()
 		.default(15),
 	formEnabled: boolean('form_enabled').notNull().default(true),
-	aiClassificationEnabled: boolean('ai_classification_enabled')
-		.notNull()
-		.default(false),
-	aiOrganizationContext: text('ai_organization_context'),
 	mcpEnabledTools: text('mcp_enabled_tools'),
 	mcpShowSensitiveData: boolean('mcp_show_sensitive_data')
 		.notNull()

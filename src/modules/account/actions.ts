@@ -9,6 +9,10 @@ import { users } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { getSession } from '@/lib/auth-server'
+import { SSO_ENABLED } from '@/lib/config'
+
+const SSO_MANAGED_ACCOUNT_ERROR =
+	'Tu cuenta se administra desde el proveedor de identidad de tu organización.'
 
 export type AccountActionResult = { error: string } | { success: true }
 
@@ -23,6 +27,8 @@ function generateApiKeyValue(): string {
 export async function $updateProfileAction(input: {
 	name: string | null
 }): Promise<AccountActionResult> {
+	if (SSO_ENABLED) return { error: SSO_MANAGED_ACCOUNT_ERROR }
+
 	const session = await getSession()
 	if (!session) return { error: 'No estás autenticado' }
 
@@ -45,6 +51,8 @@ export async function $changePasswordAction(input: {
 	currentPassword: string | null
 	newPassword: string | null
 }): Promise<AccountActionResult> {
+	if (SSO_ENABLED) return { error: SSO_MANAGED_ACCOUNT_ERROR }
+
 	const session = await getSession()
 	if (!session) return { error: 'No estás autenticado' }
 

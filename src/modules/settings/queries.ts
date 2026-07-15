@@ -18,8 +18,6 @@ export interface OrganizationSettings {
 	phone: string | null
 	website: string | null
 	formEnabled: boolean
-	aiClassificationEnabled: boolean
-	aiOrganizationContext: string | null
 	responseDeadlineDays: number
 	mcpEnabledTools: string | null
 	mcpShowSensitiveData: boolean
@@ -32,8 +30,6 @@ export interface UbigeoOption {
 
 export interface OrganizationComplaintSettings {
 	formEnabled: boolean
-	aiClassificationEnabled: boolean
-	aiOrganizationContext: string | null
 	responseDeadlineDays: number
 }
 
@@ -64,9 +60,6 @@ export async function getOrganizationSettingsForOrganization(
 			phone: organizations.phone,
 			website: organizations.website,
 			formEnabled: organizationSettings.formEnabled,
-			aiClassificationEnabled:
-				organizationSettings.aiClassificationEnabled,
-			aiOrganizationContext: organizationSettings.aiOrganizationContext,
 			responseDeadlineDays: organizationSettings.responseDeadlineDays,
 			mcpEnabledTools: organizationSettings.mcpEnabledTools,
 			mcpShowSensitiveData: organizationSettings.mcpShowSensitiveData,
@@ -84,8 +77,6 @@ export async function getOrganizationSettingsForOrganization(
 	return {
 		...result,
 		formEnabled: result.formEnabled ?? true,
-		aiClassificationEnabled: result.aiClassificationEnabled ?? false,
-		aiOrganizationContext: result.aiOrganizationContext ?? null,
 		responseDeadlineDays:
 			result.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
 		mcpEnabledTools: result.mcpEnabledTools ?? null,
@@ -99,9 +90,6 @@ export async function getOrganizationComplaintSettingsForOrganization(
 	const [result] = await db
 		.select({
 			formEnabled: organizationSettings.formEnabled,
-			aiClassificationEnabled:
-				organizationSettings.aiClassificationEnabled,
-			aiOrganizationContext: organizationSettings.aiOrganizationContext,
 			responseDeadlineDays: organizationSettings.responseDeadlineDays,
 		})
 		.from(organizationSettings)
@@ -110,8 +98,6 @@ export async function getOrganizationComplaintSettingsForOrganization(
 
 	return {
 		formEnabled: result?.formEnabled ?? true,
-		aiClassificationEnabled: result?.aiClassificationEnabled ?? false,
-		aiOrganizationContext: result?.aiOrganizationContext ?? null,
 		responseDeadlineDays:
 			result?.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
 	}

@@ -1,11 +1,5 @@
 import { Download, FileText } from 'lucide-react'
 import type { FC } from 'react'
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -34,8 +28,6 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 	const handleDownload = (attachment: ComplaintAttachment) => {
 		window.open(`/api/files/${attachment.storageKey}`, '_blank')
 	}
-
-	const aiSummary = complaint.aiSummary?.trim() ?? ''
 
 	return (
 		<Section
@@ -138,28 +130,6 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 							{complaint.request}
 						</p>
 					</div>
-				)}
-				{aiSummary && (
-					<>
-						<Separator />
-						<Accordion>
-							<AccordionItem
-								value='ai-summary'
-								className='border-none'
-							>
-								<AccordionTrigger className='rounded-lg border border-sky-200/70 bg-sky-50/70 px-3 py-2.5 hover:no-underline dark:border-sky-900/40 dark:bg-sky-950/20'>
-									<p className='text-xs font-medium text-sky-800 dark:text-sky-300'>
-										Resumen IA
-									</p>
-								</AccordionTrigger>
-								<AccordionContent className='px-3 pt-3'>
-									<p className='text-sm whitespace-pre-wrap text-foreground'>
-										{aiSummary}
-									</p>
-								</AccordionContent>
-							</AccordionItem>
-						</Accordion>
-					</>
 				)}
 			</div>
 

@@ -11,9 +11,11 @@ import {
 	count,
 	desc,
 	eq,
+	gte,
 	ilike,
 	inArray,
 	isNull,
+	lte,
 	or,
 	type SQL,
 	sql,
@@ -275,8 +277,8 @@ export async function getComplaintsDailyTrendForOrganization(
 		.where(
 			and(
 				eq(complaints.organizationId, organizationId),
-				sql`${complaints.createdAt} >= ${startDate}`,
-				sql`${complaints.createdAt} <= ${endDate}`,
+				gte(complaints.createdAt, startDate),
+				lte(complaints.createdAt, endDate),
 				storeCondition,
 			),
 		)

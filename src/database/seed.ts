@@ -1,5 +1,6 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/bun-sql'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 import { auditLogger } from '@/lib/audit-logger'
 import { DATABASE_URL } from '@/lib/config'
 import countriesData from './base/countries.json'
@@ -200,7 +201,8 @@ async function seedRbac(db: ReturnType<typeof drizzle>) {
 }
 
 async function main() {
-	const db = drizzle(DATABASE_URL)
+	const client = postgres(DATABASE_URL)
+	const db = drizzle({ client })
 
 	try {
 		await seedCountries(db)
@@ -210,7 +212,7 @@ async function main() {
 		console.log('[seed] completed.')
 	} finally {
 		await auditLogger.close()
-		db.$client.close()
+		await client.end()
 	}
 }
 

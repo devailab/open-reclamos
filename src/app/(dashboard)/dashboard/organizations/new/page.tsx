@@ -5,7 +5,7 @@ import { users } from '@/database/schema'
 import { getSession } from '@/lib/auth-server'
 import { getPendingOrganizationId } from '@/modules/rbac/queries'
 import { SetupFlow } from '@/modules/setup/components/setup-flow'
-import { getCountries } from '@/modules/setup/queries'
+import { getCountries, getOrganizationById } from '@/modules/setup/queries'
 
 const NewOrganizationPage = async () => {
 	const session = await getSession()
@@ -22,15 +22,20 @@ const NewOrganizationPage = async () => {
 	}
 
 	const countries = await getCountries()
+
+	// Organización creada con el flujo anterior que quedó sin tienda: retoma ese paso
 	const pendingOrganizationId = await getPendingOrganizationId(
 		session.user.id,
 	)
+	const pendingOrganization = pendingOrganizationId
+		? await getOrganizationById(pendingOrganizationId)
+		: null
 
 	return (
 		<SetupFlow
-			step={pendingOrganizationId ? 'store' : 'organization'}
 			countries={countries}
 			mode='dashboard'
+			pendingOrganizationName={pendingOrganization?.name}
 		/>
 	)
 }

@@ -7,6 +7,7 @@ import { db } from '@/database/database'
 import {
 	organizationInvitationStores,
 	organizationInvitations,
+	organizationMemberPermissions,
 	organizationMemberStores,
 	organizationMembers,
 	organizations,
@@ -15,7 +16,7 @@ import {
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { getSession } from '@/lib/auth-server'
-import { SSO_ENABLED } from '@/lib/config'
+import { SSO_ENABLED, SSO_PROVIDER_NAME } from '@/lib/config'
 import { sendEmail } from '@/lib/email'
 import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
 import {
@@ -217,10 +218,14 @@ export async function $createUserInvitationAction(
 		return { error: 'Ese correo ya pertenece a esta organización.' }
 	}
 
-	const existingUser = await getExistingUserByEmail(normalizedInput.email)
-	if (existingUser) {
-		return {
-			error: 'Ese correo ya tiene una cuenta registrada. Por ahora solo se admiten usuarios nuevos por invitación.',
+	// Con SSO la cuenta vive en el IdP: un usuario existente puede aceptar
+	// la invitación iniciando sesión. Sin SSO solo se admiten usuarios nuevos.
+	if (!SSO_ENABLED) {
+		const existingUser = await getExistingUserByEmail(normalizedInput.email)
+		if (existingUser) {
+			return {
+				error: 'Ese correo ya tiene una cuenta registrada. Por ahora solo se admiten usuarios nuevos por invitación.',
+			}
 		}
 	}
 
@@ -582,6 +587,18 @@ export async function $removeUserFromOrganizationAction(
 				)
 
 			await tx
+				.delete(organizationMemberPermissions)
+				.where(
+					and(
+						eq(organizationMemberPermissions.userId, userId),
+						eq(
+							organizationMemberPermissions.organizationId,
+							access.membership.organizationId,
+						),
+					),
+				)
+
+			await tx
 				.delete(organizationMembers)
 				.where(
 					and(
@@ -795,6 +812,14 @@ export async function $acceptSsoInvitationAction(
 		}
 	}
 
+	const existingMembership = await getUserMembershipByEmail(
+		invitation.email,
+		invitation.organizationId,
+	)
+	if (existingMembership) {
+		return { error: 'Ya perteneces a esta organización.' }
+	}
+
 	const invitationStores =
 		invitation.storeAccessMode === 'selected'
 			? await db
@@ -925,16 +950,21 @@ export async function $sendInvitationEmailAction(
 		.limit(1)
 
 	const organizationName = org?.name ?? 'tu organización'
+	const accessMode = SSO_ENABLED ? 'sso' : 'credentials'
 
 	const html = await renderInvitationEmail({
 		organizationName,
 		inviteUrl: input.inviteUrl,
+		accessMode,
+		providerName: SSO_ENABLED ? SSO_PROVIDER_NAME : undefined,
 	})
 
 	const text = [
 		`Has sido invitado a unirte a ${organizationName} en Open Reclamos.`,
 		'',
-		'Acepta tu invitación en el siguiente enlace:',
+		accessMode === 'sso'
+			? `Inicia sesión con ${SSO_PROVIDER_NAME} y acepta tu invitación en el siguiente enlace:`
+			: 'Acepta tu invitación en el siguiente enlace:',
 		input.inviteUrl,
 		'',
 		'El enlace es válido por 7 días.',

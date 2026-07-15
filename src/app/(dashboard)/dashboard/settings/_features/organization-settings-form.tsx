@@ -1,7 +1,6 @@
 'use client'
 
 import {
-	Bot,
 	Building2,
 	CalendarClock,
 	Check,
@@ -24,7 +23,6 @@ import BooleanField from '@/components/forms/boolean-field'
 import NumberField from '@/components/forms/number-field'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import TextField from '@/components/forms/text-field'
-import TextAreaField from '@/components/forms/textarea-field'
 import { OrganizationLogo } from '@/components/organization-logo'
 import { PublicFormLink } from '@/components/public-form-link'
 import { Button } from '@/components/ui/button'
@@ -62,8 +60,6 @@ interface OrgFormValues {
 	phone: string | null
 	website: string | null
 	formEnabled: boolean
-	aiClassificationEnabled: boolean
-	aiOrganizationContext: string | null
 	responseDeadlineDays: number | null
 	mcpShowSensitiveData: boolean
 }
@@ -97,8 +93,6 @@ export function OrganizationSettingsForm({
 		phone: org.phone,
 		website: org.website,
 		formEnabled: org.formEnabled,
-		aiClassificationEnabled: org.aiClassificationEnabled,
-		aiOrganizationContext: org.aiOrganizationContext,
 		responseDeadlineDays: org.responseDeadlineDays,
 		mcpShowSensitiveData: org.mcpShowSensitiveData,
 	}
@@ -219,8 +213,6 @@ export function OrganizationSettingsForm({
 				phone: values.phone,
 				website: values.website,
 				formEnabled: values.formEnabled,
-				aiClassificationEnabled: values.aiClassificationEnabled,
-				aiOrganizationContext: values.aiOrganizationContext,
 				responseDeadlineDays: values.responseDeadlineDays,
 				mcpEnabledTools: allEnabled ? null : mcpEnabledTools.join(','),
 				mcpShowSensitiveData: values.mcpShowSensitiveData,
@@ -485,50 +477,6 @@ export function OrganizationSettingsForm({
 					<Separator />
 
 					<PublicFormLink path={`/c/${org.slug}`} />
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle className='flex items-center gap-2 text-base'>
-						<Bot className='size-4' />
-						Automatización IA
-					</CardTitle>
-					<CardDescription>
-						Clasifica automáticamente la prioridad del reclamo y
-						sugiere un resumen interno y una categoría según su
-						contenido.
-					</CardDescription>
-				</CardHeader>
-				<CardContent className='space-y-4'>
-					<BooleanField
-						{...register('aiClassificationEnabled')}
-						label='Clasificación automática habilitada'
-						description='La IA se ejecuta en segundo plano después de registrar el reclamo. Si falla, el reclamo sigue creado normalmente.'
-						disabled={disabled}
-					/>
-
-					<TextAreaField
-						{...register('aiOrganizationContext')}
-						label='Contexto de la organización para la IA'
-						placeholder='Ej. Somos una clínica privada, priorizamos casos de salud, menores de edad y posibles riesgos regulatorios.'
-						rows={6}
-						emptyAsNull
-						disabled={disabled}
-					/>
-
-					<p className='text-sm text-muted-foreground'>
-						Este contexto ayuda a la IA a entender mejor tu negocio,
-						criterios de atención y señales que deberían influir en
-						la clasificación.
-					</p>
-
-					{values.aiClassificationEnabled && (
-						<div className='rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800'>
-							Los nuevos reclamos se clasificarán automáticamente
-							con prioridad operativa y categoría sugerida.
-						</div>
-					)}
 				</CardContent>
 			</Card>
 

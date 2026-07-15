@@ -22,6 +22,7 @@ export async function completeSsoSignIn(
 				email: users.email,
 				setupStatus: users.setupStatus,
 				isSuperAdmin: users.isSuperAdmin,
+				emailVerified: users.emailVerified,
 			})
 			.from(users)
 			.where(eq(users.id, userId))
@@ -32,6 +33,14 @@ export async function completeSsoSignIn(
 	const user = userRows[0]
 
 	if (!user) return '/setup'
+
+	// El IdP ya validó el correo: cuentas preexistentes también quedan verificadas
+	if (!user.emailVerified) {
+		await db
+			.update(users)
+			.set({ emailVerified: true })
+			.where(eq(users.id, userId))
+	}
 
 	let destination: '/setup' | '/dashboard'
 	if (user.setupStatus !== 'complete') {

@@ -14,18 +14,11 @@ import {
 	hasOrganizationStores,
 } from '@/modules/setup/queries'
 
-type Props = {
-	searchParams: Promise<{ continued?: string }>
-}
-
-const SetupPage: NextPage<Props> = async ({ searchParams }) => {
+const SetupPage: NextPage = async () => {
 	const session = await getSession()
 	if (!session) {
 		redirect('/login')
 	}
-
-	const { continued } = await searchParams
-	const isDirectContinuation = continued === '1'
 
 	// Obtiene el usuario, para saber el estado actual de la configuración inicial
 	const [userData] = await db
@@ -38,12 +31,13 @@ const SetupPage: NextPage<Props> = async ({ searchParams }) => {
 	}
 
 	const countries = await getCountries()
-	const pendingOrganizationId = await getPendingOrganizationId(
-		session.user.id,
-	)
 
-	// nos movemos al paso de configuración de la tienda, si el usuario ya completó el paso de organización
+	// Usuarios con una organización creada pero sin tienda (flujo anterior o interrumpido)
+	// retoman solo el paso de la tienda
 	if (userData?.setupStatus === 'store') {
+		const pendingOrganizationId = await getPendingOrganizationId(
+			session.user.id,
+		)
 		const organization = pendingOrganizationId
 			? await getOrganizationById(pendingOrganizationId)
 			: await getUserOrganization(session.user.id)
@@ -62,17 +56,14 @@ const SetupPage: NextPage<Props> = async ({ searchParams }) => {
 
 		return (
 			<SetupFlow
-				step='store'
 				countries={countries}
 				mode='setup'
-				organizationName={
-					isDirectContinuation ? undefined : organization.name
-				}
+				pendingOrganizationName={organization.name}
 			/>
 		)
 	}
 
-	return <SetupFlow step='organization' countries={countries} mode='setup' />
+	return <SetupFlow countries={countries} mode='setup' />
 }
 
 export default SetupPage

@@ -68,6 +68,10 @@ export const auth = betterAuth({
 								scopes: SSO_SCOPES,
 								pkce: true,
 								redirectURI: `${BETTER_AUTH_URL}/api/auth/callback/${SSO_PROVIDER_ID}`,
+								// El IdP corporativo es la fuente de verdad del correo
+								mapProfileToUser: () => ({
+									emailVerified: true,
+								}),
 							},
 						],
 					}),

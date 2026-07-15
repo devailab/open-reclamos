@@ -15,7 +15,6 @@ import { getPresignedDownloadUrl } from '@/lib/s3'
 import { WEBHOOK_EVENT } from '@/lib/webhook-events'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { dispatchWebhookEvent } from '@/modules/webhooks/dispatch'
-import type { ComplaintPriority } from './ai-classification'
 import type { ChangeableStatus } from './dashboard-validation'
 import {
 	enqueueComplaintResponseDelivery,
@@ -70,6 +69,8 @@ function canAccessStore(
 }
 
 const COMPLAINT_PRIORITY_VALUES = ['low', 'medium', 'high', 'urgent'] as const
+
+type ComplaintPriority = (typeof COMPLAINT_PRIORITY_VALUES)[number]
 
 function isComplaintPriority(value: string): value is ComplaintPriority {
 	return COMPLAINT_PRIORITY_VALUES.includes(value as ComplaintPriority)

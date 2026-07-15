@@ -1,4 +1,4 @@
-import { SQL } from 'bun'
+import postgres, { type Sql } from 'postgres'
 import { DATABASE_URL } from '@/lib/config'
 
 type JsonPrimitive = string | number | boolean | null
@@ -54,7 +54,7 @@ export interface AuditLogPaginatedResult {
 
 export interface AuditLoggerOptions {
 	connectionString?: string | URL
-	sql?: SQL
+	sql?: Sql
 	schemaName?: string
 	tableName?: string
 	onBackgroundError?: (error: unknown) => void
@@ -181,7 +181,7 @@ function mapAuditLogRow(row: AuditLogRow): AuditLogRecord {
 }
 
 export class AuditLogger {
-	private readonly sql: SQL
+	private readonly sql: Sql
 	private readonly ownsConnection: boolean
 	private readonly schemaName: string
 	private readonly tableName: string
@@ -204,8 +204,8 @@ export class AuditLogger {
 		this.sql =
 			normalizedOptions.sql ??
 			(normalizedOptions.connectionString
-				? new SQL(normalizedOptions.connectionString)
-				: new SQL())
+				? postgres(normalizedOptions.connectionString.toString())
+				: postgres())
 		this.ownsConnection = !normalizedOptions.sql
 		this.schemaName = assertIdentifier(
 			normalizedOptions.schemaName ?? DEFAULT_SCHEMA_NAME,
@@ -282,8 +282,8 @@ export class AuditLogger {
 				record.action,
 				record.entityType,
 				record.entityId,
-				record.oldData,
-				record.newData,
+				record.oldData === null ? null : JSON.stringify(record.oldData),
+				record.newData === null ? null : JSON.stringify(record.newData),
 				record.description,
 				record.ipAddress,
 				record.userAgent,
@@ -400,7 +400,7 @@ export class AuditLogger {
 			return
 		}
 
-		await this.sql.close(options)
+		await this.sql.end(options)
 	}
 
 	private async ensureBaseSetup(): Promise<void> {

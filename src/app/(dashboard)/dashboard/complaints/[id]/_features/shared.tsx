@@ -60,8 +60,6 @@ export const AUDIT_ACTION_LABEL: Record<string, string> = {
 	[AUDIT_LOG.COMPLAINT_TRACKING_VIEWED]: 'Seguimiento consultado',
 	[AUDIT_LOG.COMPLAINT_RECEIPT_DELIVERY_FAILED]: 'Error al enviar constancia',
 	[AUDIT_LOG.COMPLAINT_RESPONSE_DELIVERY_FAILED]: 'Error al enviar respuesta',
-	[AUDIT_LOG.COMPLAINT_AI_CLASSIFIED]: 'Clasificación IA aplicada',
-	[AUDIT_LOG.COMPLAINT_AI_CLASSIFICATION_FAILED]: 'Error en clasificación IA',
 	'complaint.updated': 'Información actualizada',
 }
 

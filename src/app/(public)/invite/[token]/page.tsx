@@ -85,8 +85,9 @@ const InvitePage: FC<InvitePageProps> = async ({ params }) => {
 							Únete a {invitation.organizationName}
 						</CardTitle>
 						<CardDescription className='text-base'>
-							Completa tu registro para acceder con el rol de{' '}
-							{invitation.roleName}.
+							{SSO_ENABLED
+								? `Inicia sesión con ${SSO_PROVIDER_NAME} para acceder con el rol de ${invitation.roleName}.`
+								: `Completa tu registro para acceder con el rol de ${invitation.roleName}.`}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className='space-y-3 text-sm text-muted-foreground'>

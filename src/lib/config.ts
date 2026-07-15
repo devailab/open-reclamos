@@ -40,3 +40,5 @@ export const SSO_SCOPES = (process.env.SSO_SCOPES ?? 'openid,email,profile')
 	.split(',')
 	.map((scope) => scope.trim())
 	.filter(Boolean)
+// URL del proveedor de identidad donde el usuario administra su cuenta (perfil, contraseña, MFA)
+export const SSO_ACCOUNT_URL = process.env.SSO_ACCOUNT_URL?.trim() || ''

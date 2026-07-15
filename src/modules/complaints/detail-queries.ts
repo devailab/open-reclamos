@@ -63,7 +63,6 @@ export interface ComplaintDetail {
 	reasonLabel: string | null
 	// borrador de respuesta
 	draftResponse: string | null
-	aiSummary: string | null
 	category: ComplaintCategorySummary | null
 	// respuesta oficial
 	officialResponse: string | null
@@ -128,7 +127,6 @@ export async function getComplaintDetailById(
 			request: complaints.request,
 			reasonLabel: complaintReasons.reason,
 			draftResponse: complaintDetails.draftResponse,
-			aiSummary: complaintDetails.aiSummary,
 			category: {
 				id: complaintCategories.id,
 				name: complaintCategories.name,

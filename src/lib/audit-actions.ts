@@ -7,8 +7,6 @@ export const AUDIT_LOG = {
 	COMPLAINT_RESPONSE_DELIVERY_FAILED: 'complaint.response_delivery_failed',
 	COMPLAINT_ADMIN_NOTIFICATION_FAILED: 'complaint.admin_notification_failed',
 	COMPLAINT_UPDATED: 'complaint.updated',
-	COMPLAINT_AI_CLASSIFIED: 'complaint.ai_classified',
-	COMPLAINT_AI_CLASSIFICATION_FAILED: 'complaint.ai_classification_failed',
 	USER_INVITED: 'user.invited',
 	USER_ACCESS_UPDATED: 'user.access_updated',
 	USER_REMOVED: 'user.removed',

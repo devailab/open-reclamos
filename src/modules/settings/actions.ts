@@ -182,10 +182,6 @@ export async function $updateOrganizationSettingsAction(
 				.values({
 					organizationId: org.id,
 					formEnabled: normalizedInput.formEnabled,
-					aiClassificationEnabled:
-						normalizedInput.aiClassificationEnabled,
-					aiOrganizationContext:
-						normalizedInput.aiOrganizationContext,
 					responseDeadlineDays: normalizedInput.responseDeadlineDays,
 					mcpEnabledTools: normalizedInput.mcpEnabledTools,
 					mcpShowSensitiveData: normalizedInput.mcpShowSensitiveData,
@@ -197,10 +193,6 @@ export async function $updateOrganizationSettingsAction(
 					target: organizationSettings.organizationId,
 					set: {
 						formEnabled: normalizedInput.formEnabled,
-						aiClassificationEnabled:
-							normalizedInput.aiClassificationEnabled,
-						aiOrganizationContext:
-							normalizedInput.aiOrganizationContext,
 						responseDeadlineDays:
 							normalizedInput.responseDeadlineDays,
 						mcpEnabledTools: normalizedInput.mcpEnabledTools,
@@ -227,8 +219,6 @@ export async function $updateOrganizationSettingsAction(
 					phone: org.phone,
 					website: org.website,
 					formEnabled: org.formEnabled,
-					aiClassificationEnabled: org.aiClassificationEnabled,
-					aiOrganizationContext: org.aiOrganizationContext,
 					responseDeadlineDays: org.responseDeadlineDays,
 					mcpEnabledTools: org.mcpEnabledTools,
 					mcpShowSensitiveData: org.mcpShowSensitiveData,
@@ -243,10 +233,6 @@ export async function $updateOrganizationSettingsAction(
 					phone: normalizedInput.phone,
 					website: normalizedInput.website,
 					formEnabled: normalizedInput.formEnabled,
-					aiClassificationEnabled:
-						normalizedInput.aiClassificationEnabled,
-					aiOrganizationContext:
-						normalizedInput.aiOrganizationContext,
 					responseDeadlineDays: normalizedInput.responseDeadlineDays,
 					mcpEnabledTools: normalizedInput.mcpEnabledTools,
 					mcpShowSensitiveData: normalizedInput.mcpShowSensitiveData,

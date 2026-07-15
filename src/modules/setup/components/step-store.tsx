@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { ArrowLeft } from 'lucide-react'
+import { useState } from 'react'
 import AutocompleteField, {
 	type AutocompleteOption,
 } from '@/components/forms/autocomplete-field'
@@ -18,10 +19,9 @@ import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { useForm } from '@/hooks/use-form'
 import { ADDRESS_TYPE_OPTIONS, STORE_TYPE_OPTIONS } from '@/lib/constants'
-import { feedback } from '@/lib/feedback'
 import {
 	$searchUbigeosAction,
-	$setupStoreAction,
+	type SetupStoreInput,
 } from '@/modules/setup/actions'
 import {
 	validateStoreAddress,
@@ -51,10 +51,17 @@ const INITIAL_VALUES: StoreFormValues = {
 
 type SetupStepStoreProps = {
 	organizationName?: string
+	onSubmit: (data: SetupStoreInput) => void
+	onBack?: () => void
+	isPending: boolean
 }
 
-export function SetupStepStore({ organizationName }: SetupStepStoreProps) {
-	const [isPending, startTransition] = useTransition()
+export function SetupStepStore({
+	organizationName,
+	onSubmit,
+	onBack,
+	isPending,
+}: SetupStepStoreProps) {
 	const [values, setValues] = useState<StoreFormValues>(INITIAL_VALUES)
 	const { register, validate } = useForm({
 		values,
@@ -70,26 +77,15 @@ export function SetupStepStore({ organizationName }: SetupStepStoreProps) {
 		const errors = validate({ focus: 'first' })
 		if (errors.length > 0) return
 
-		startTransition(async () => {
-			const result = await $setupStoreAction({
-				name: values.name ?? '',
-				type: values.type?.value ?? '',
-				ubigeoId: isPhysical
-					? (values.ubigeoOption?.value ?? null)
-					: null,
-				addressType: isPhysical
-					? (values.addressType?.value ?? null)
-					: null,
-				address: isPhysical ? (values.address ?? null) : null,
-				url: !isPhysical ? (values.url ?? null) : null,
-			})
-
-			if (result?.error) {
-				feedback.alert.error({
-					title: 'Error al guardar tienda',
-					description: result.error,
-				})
-			}
+		onSubmit({
+			name: values.name ?? '',
+			type: values.type?.value ?? '',
+			ubigeoId: isPhysical ? (values.ubigeoOption?.value ?? null) : null,
+			addressType: isPhysical
+				? (values.addressType?.value ?? null)
+				: null,
+			address: isPhysical ? (values.address ?? null) : null,
+			url: !isPhysical ? (values.url ?? null) : null,
 		})
 	}
 
@@ -192,21 +188,36 @@ export function SetupStepStore({ organizationName }: SetupStepStoreProps) {
 				</CardContent>
 			</Card>
 
-			<Button
-				type='submit'
-				className='w-full'
-				size='lg'
-				disabled={isPending || !values.type}
-			>
-				{isPending ? (
-					<>
-						<Spinner className='mr-2' />
-						Guardando...
-					</>
-				) : (
-					'Completar registro'
+			<div className='flex flex-col gap-2 sm:flex-row'>
+				{onBack && (
+					<Button
+						type='button'
+						variant='outline'
+						size='lg'
+						className='sm:w-auto'
+						disabled={isPending}
+						onClick={onBack}
+					>
+						<ArrowLeft className='mr-1.5 h-4 w-4' />
+						Volver a la organización
+					</Button>
 				)}
-			</Button>
+				<Button
+					type='submit'
+					className='flex-1'
+					size='lg'
+					disabled={isPending || !values.type}
+				>
+					{isPending ? (
+						<>
+							<Spinner className='mr-2' />
+							Guardando...
+						</>
+					) : (
+						'Completar registro'
+					)}
+				</Button>
+			</div>
 		</form>
 	)
 }

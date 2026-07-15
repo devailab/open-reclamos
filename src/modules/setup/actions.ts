@@ -5,23 +5,11 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { AutocompleteOption } from '@/components/forms/autocomplete-field'
 import { db } from '@/database/database'
-import {
-	organizationMembers,
-	organizationSettings,
-	organizations,
-	stores,
-	users,
-} from '@/database/schema'
-import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
+import { organizations, users } from '@/database/schema'
 import { auth } from '@/lib/auth'
 import { DOCUMENT_LOOKUP_PROVIDER } from '@/lib/config'
 import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
-import {
-	assignDefaultMemberPermissionsForRole,
-	ensureOrganizationRoles,
-	findRoleByKeyForOrganization,
-	getMembershipContext,
-} from '@/modules/rbac/queries'
+import { getMembershipContext } from '@/modules/rbac/queries'
 import {
 	getDocumentLookupProvider,
 	type RucData,
@@ -34,6 +22,10 @@ import {
 	getUserOrganization,
 	searchUbigeos,
 } from './queries'
+import {
+	createOrganizationWithAdmin,
+	createStoreForOrganization,
+} from './service'
 
 export type LookupRucResult =
 	| { success: true; data: RucData; ubigeoId: string }
@@ -179,8 +171,13 @@ async function getUserSetupStatus(userId: string) {
 	)
 }
 
-export async function $setupOrganizationAction(
-	input: SetupOrganizationInput,
+export type CompleteSetupInput = {
+	organization: SetupOrganizationInput
+	store: SetupStoreInput
+}
+
+export async function $completeSetupAction(
+	input: CompleteSetupInput,
 ): Promise<SetupActionResult> {
 	const session = await auth.api.getSession({ headers: await headers() })
 
@@ -188,103 +185,44 @@ export async function $setupOrganizationAction(
 		redirect('/login')
 	}
 
-	if (await checkSlugExists(input.slug)) {
+	if (await checkSlugExists(input.organization.slug)) {
 		return { error: 'Este identificador ya está en uso. Elige otro.' }
 	}
 
-	const userState = await getUserSetupStatus(session.user.id)
-	const isOnboardingFlow = userState.setupStatus !== 'complete'
-	let createdOrganizationId: string | null = null
+	const [existingRuc] = await db
+		.select({ id: organizations.id })
+		.from(organizations)
+		.where(eq(organizations.taxId, input.organization.ruc))
+		.limit(1)
+	if (existingRuc) {
+		return { error: 'Este RUC ya está registrado en la plataforma.' }
+	}
+
+	const storeSlug = await $getStoreSlugSuggestionAction(input.store.name)
+	let organizationId: string | null = null
 
 	try {
-		await db.transaction(async (tx) => {
-			const [org] = await tx
-				.insert(organizations)
-				.values({
-					taxId: input.ruc,
-					name: input.name,
-					legalName: input.legalName,
-					slug: input.slug,
-					ubigeoId: input.ubigeoId,
-					addressType: input.addressType,
-					address: input.address,
-					phoneCode: input.phoneCode,
-					phone: input.phone,
-					website: input.website,
-					createdBy: session.user.id,
-				})
-				.returning({ id: organizations.id })
-
-			createdOrganizationId = org.id
-
-			await ensureOrganizationRoles(
-				{
-					organizationId: org.id,
-					userId: session.user.id,
-				},
+		organizationId = await db.transaction(async (tx) => {
+			const createdOrganizationId = await createOrganizationWithAdmin(
 				tx,
+				input.organization,
+				session.user.id,
 			)
 
-			const adminRole = await findRoleByKeyForOrganization(
-				'organization-admin',
-				org.id,
+			await createStoreForOrganization(
 				tx,
-			)
-			if (!adminRole) {
-				throw new Error('Base admin role not found for organization')
-			}
-
-			await tx.insert(organizationMembers).values({
-				userId: session.user.id,
-				organizationId: org.id,
-				role: adminRole.slug,
-				roleId: adminRole.id,
-				createdBy: session.user.id,
-			})
-
-			await assignDefaultMemberPermissionsForRole(
-				{
-					userId: session.user.id,
-					organizationId: org.id,
-					roleKey: adminRole.key,
-					createdBy: session.user.id,
-				},
-				tx,
+				createdOrganizationId,
+				input.store,
+				storeSlug,
+				session.user.id,
 			)
 
-			await tx.insert(organizationSettings).values({
-				organizationId: org.id,
-				createdBy: session.user.id,
-			})
+			await tx
+				.update(users)
+				.set({ setupStatus: 'complete', pendingOrganizationId: null })
+				.where(eq(users.id, session.user.id))
 
-			if (isOnboardingFlow) {
-				await tx
-					.update(users)
-					.set({
-						setupStatus: 'store',
-						pendingOrganizationId: org.id,
-					})
-					.where(eq(users.id, session.user.id))
-			} else {
-				await tx
-					.update(users)
-					.set({ pendingOrganizationId: org.id })
-					.where(eq(users.id, session.user.id))
-			}
-
-			await createAuditLog({
-				organizationId: org.id,
-				userId: session.user.id,
-				action: AUDIT_LOG.ORGANIZATION_CREATED,
-				entityType: 'organization',
-				entityId: org.id,
-				newData: {
-					taxId: input.ruc,
-					name: input.name,
-					legalName: input.legalName,
-					slug: input.slug,
-				},
-			})
+			return createdOrganizationId
 		})
 	} catch {
 		return {
@@ -292,17 +230,14 @@ export async function $setupOrganizationAction(
 		}
 	}
 
-	if (!createdOrganizationId) {
+	if (!organizationId) {
 		return {
 			error: 'Error al guardar la organización. Inténtalo de nuevo.',
 		}
 	}
 
-	if (isOnboardingFlow) {
-		redirect('/setup?continued=1')
-	}
-
-	redirect('/dashboard/organizations/new')
+	await setActiveOrganizationCookie(organizationId)
+	redirect('/dashboard')
 }
 
 async function resolveSetupStoreOrganizationId(
@@ -359,20 +294,13 @@ export async function $setupStoreAction(
 
 	try {
 		await db.transaction(async (tx) => {
-			const [store] = await tx
-				.insert(stores)
-				.values({
-					organizationId,
-					name: input.name,
-					slug,
-					type: input.type,
-					ubigeoId: input.ubigeoId,
-					addressType: input.addressType,
-					address: input.address,
-					url: input.url,
-					createdBy: session.user.id,
-				})
-				.returning({ id: stores.id })
+			await createStoreForOrganization(
+				tx,
+				organizationId,
+				input,
+				slug,
+				session.user.id,
+			)
 
 			if (userState.setupStatus !== 'complete') {
 				await tx
@@ -388,19 +316,6 @@ export async function $setupStoreAction(
 					.set({ pendingOrganizationId: null })
 					.where(eq(users.id, session.user.id))
 			}
-
-			await createAuditLog({
-				organizationId,
-				userId: session.user.id,
-				action: AUDIT_LOG.STORE_CREATED,
-				entityType: 'store',
-				entityId: store.id,
-				newData: {
-					name: input.name,
-					type: input.type,
-					organizationId,
-				},
-			})
 		})
 	} catch {
 		return { error: 'Error al guardar la tienda. Inténtalo de nuevo.' }

@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/bun-sql'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 import { DATABASE_URL } from '@/lib/config'
 
 type DrizzleDb = ReturnType<typeof drizzle>
@@ -7,7 +8,8 @@ let _db: DrizzleDb | undefined
 
 function getDb(): DrizzleDb {
 	if (!_db) {
-		_db = drizzle(DATABASE_URL)
+		const client = postgres(DATABASE_URL)
+		_db = drizzle({ client })
 	}
 	return _db
 }
