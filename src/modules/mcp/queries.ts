@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, isNull, or, sql } from 'drizzle-orm'
+import { and, count, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import { db } from '@/database/database'
 import {
 	complaintDetails,
@@ -54,15 +54,28 @@ export interface McpComplaintsParams {
 	search?: string
 }
 
+// `allowedStoreIds`: undefined = todas las tiendas; lista = solo las asignadas
+function buildStoreAccessCondition(allowedStoreIds: string[] | undefined) {
+	if (allowedStoreIds === undefined) return null
+	if (allowedStoreIds.length === 0) return sql`false`
+	return inArray(complaints.storeId, allowedStoreIds)
+}
+
 export async function getComplaintsForMcp(
 	organizationId: string,
 	params: McpComplaintsParams,
+	allowedStoreIds?: string[],
 ): Promise<McpComplaintsResult> {
 	const page = Math.max(1, params.page ?? 1)
 	const pageSize = Math.min(50, Math.max(1, params.pageSize ?? 20))
 	const offset = (page - 1) * pageSize
 
 	const conditions = [eq(complaints.organizationId, organizationId)]
+
+	const storeAccessCondition = buildStoreAccessCondition(allowedStoreIds)
+	if (storeAccessCondition) {
+		conditions.push(storeAccessCondition as ReturnType<typeof eq>)
+	}
 
 	if (params.search?.trim()) {
 		const term = `%${params.search.trim()}%`
@@ -145,7 +158,9 @@ export async function getComplaintsForMcp(
 export async function getComplaintByTrackingCodeForMcp(
 	organizationId: string,
 	trackingCode: string,
+	allowedStoreIds?: string[],
 ): Promise<McpComplaintRow | null> {
+	const storeAccessCondition = buildStoreAccessCondition(allowedStoreIds)
 	const [row] = await db
 		.select({
 			id: complaints.id,
@@ -185,6 +200,7 @@ export async function getComplaintByTrackingCodeForMcp(
 			and(
 				eq(complaints.trackingCode, trackingCode),
 				eq(complaints.organizationId, organizationId),
+				...(storeAccessCondition ? [storeAccessCondition] : []),
 			),
 		)
 		.limit(1)
@@ -202,7 +218,12 @@ export interface McpStoreRow {
 
 export async function getStoresForMcp(
 	organizationId: string,
+	allowedStoreIds?: string[],
 ): Promise<McpStoreRow[]> {
+	if (allowedStoreIds !== undefined && allowedStoreIds.length === 0) {
+		return []
+	}
+
 	return db
 		.select({
 			id: stores.id,
@@ -216,6 +237,9 @@ export async function getStoresForMcp(
 			and(
 				eq(stores.organizationId, organizationId),
 				isNull(stores.deletedAt),
+				...(allowedStoreIds !== undefined
+					? [inArray(stores.id, allowedStoreIds)]
+					: []),
 			),
 		)
 		.orderBy(stores.name)
@@ -261,7 +285,9 @@ export interface McpOrganizationStats {
 
 export async function getOrganizationStatsForMcp(
 	organizationId: string,
+	allowedStoreIds?: string[],
 ): Promise<McpOrganizationStats> {
+	const storeAccessCondition = buildStoreAccessCondition(allowedStoreIds)
 	const [summary] = await db
 		.select({
 			total: count(),
@@ -275,7 +301,12 @@ export async function getOrganizationStatsForMcp(
 			)`,
 		})
 		.from(complaints)
-		.where(eq(complaints.organizationId, organizationId))
+		.where(
+			and(
+				eq(complaints.organizationId, organizationId),
+				...(storeAccessCondition ? [storeAccessCondition] : []),
+			),
+		)
 
 	return {
 		total: Number(summary?.total ?? 0),

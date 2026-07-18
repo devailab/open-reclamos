@@ -38,6 +38,7 @@ export interface ComplaintDetail {
 	lastName: string
 	personType: string
 	legalName: string | null
+	legalTaxId: string | null
 	documentType: string
 	documentNumber: string
 	isMinor: boolean
@@ -104,6 +105,7 @@ export async function getComplaintDetailById(
 			lastName: complaints.lastName,
 			personType: complaints.personType,
 			legalName: complaints.legalName,
+			legalTaxId: complaints.legalTaxId,
 			documentType: complaints.documentType,
 			documentNumber: complaints.documentNumber,
 			isMinor: complaints.isMinor,
@@ -193,9 +195,9 @@ export interface ComplaintAttachment {
 export async function getAttachmentByStorageKey(
 	storageKey: string,
 	organizationId: string,
-): Promise<{ id: string } | null> {
+): Promise<{ id: string; storeId: string } | null> {
 	const [attachment] = await db
-		.select({ id: complaintAttachments.id })
+		.select({ id: complaintAttachments.id, storeId: complaints.storeId })
 		.from(complaintAttachments)
 		.innerJoin(
 			complaints,

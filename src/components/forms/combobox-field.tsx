@@ -73,6 +73,7 @@ const ComboboxField: FC<ComboboxFieldProps> = ({
 			setError(validationError)
 			return validationError
 		},
+		clearError: () => setError(null),
 	}))
 
 	const handleSelect = (selectedValue: string) => {

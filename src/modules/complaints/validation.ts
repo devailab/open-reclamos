@@ -10,6 +10,12 @@ export const validateDocumentNumber = combine(required, (v) => {
 
 export const validateEmail = combine(required, email)
 
+export const validateRuc = combine(required, (v) => {
+	const s = String(v ?? '').trim()
+	if (!/^\d{11}$/.test(s)) return 'El RUC debe tener 11 dígitos'
+	return null
+})
+
 // Step 2 validators
 export const validateComplaintType = required
 

@@ -1,6 +1,7 @@
 import {
 	type FC,
 	type ReactNode,
+	useEffect,
 	useId,
 	useImperativeHandle,
 	useRef,
@@ -65,6 +66,7 @@ const NumberField: FC<NumberFieldProps> = ({
 			setError(validationError)
 			return validationError
 		},
+		clearError: () => setError(null),
 	}))
 
 	const parseNumber = (str: string): number | null => {
@@ -73,6 +75,20 @@ const NumberField: FC<NumberFieldProps> = ({
 		const parsed = allowDecimals ? parseFloat(str) : parseInt(str, 10)
 		return Number.isNaN(parsed) ? null : parsed
 	}
+
+	// Sincroniza la representación cuando el valor cambia desde fuera
+	// (reset del formulario, cambio de registro editado, etc.). No interrumpe
+	// estados transitorios mientras el usuario escribe (input enfocado).
+	// biome-ignore lint/correctness/useExhaustiveDependencies: solo debe reaccionar a cambios externos de `value`.
+	useEffect(() => {
+		if (inputRef.current === document.activeElement) return
+
+		const displayed = parseNumber(displayValue)
+		if ((value ?? null) !== displayed) {
+			setDisplayValue(value?.toString() ?? '')
+			setError(null)
+		}
+	}, [value])
 
 	const isValidInput = (input: string): boolean => {
 		if (input === '') return true

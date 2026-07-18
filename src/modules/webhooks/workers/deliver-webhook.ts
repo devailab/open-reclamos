@@ -1,12 +1,22 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
+import { NonRetriableError } from 'inngest'
 import { db } from '@/database/database'
 import { webhookDeliveries } from '@/database/schema'
 import { inngest } from '@/lib/inngest'
 import type { WebhookEventKey } from '@/lib/webhook-events'
 import { WEBHOOK_DELIVER_EVENT, type WebhookDispatchPayload } from '../dispatch'
 import { getActiveWebhooksByEventForOrganization } from '../queries'
+import { safeWebhookFetch, UnsafeWebhookUrlError } from '../ssrf'
 
 const DEFAULT_TIMEOUT_MS = 15000
+const MAX_RETRIES = 4
+
+// Códigos 4xx que sí ameritan reintento
+const RETRYABLE_CLIENT_STATUSES = new Set([408, 425, 429])
+
+function isRetryableStatus(status: number): boolean {
+	return status >= 500 || RETRYABLE_CLIENT_STATUSES.has(status)
+}
 
 async function sendWebhookRequest(
 	targetUrl: string,
@@ -17,7 +27,7 @@ async function sendWebhookRequest(
 	const timer = setTimeout(() => controller.abort(), timeoutMs)
 
 	try {
-		const response = await fetch(targetUrl, {
+		const response = await safeWebhookFetch(targetUrl, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload),
@@ -31,16 +41,14 @@ async function sendWebhookRequest(
 	}
 }
 
-async function deliverToEndpoint(
+async function createDeliveryRecord(
 	endpointId: string,
-	targetUrl: string,
-	timeoutMs: number | null,
 	requestBody: Record<string, unknown>,
 	organizationId: string,
 	eventKey: string,
 	entityType: string,
 	entityId: string,
-) {
+): Promise<string> {
 	const [delivery] = await db
 		.insert(webhookDeliveries)
 		.values({
@@ -54,7 +62,27 @@ async function deliverToEndpoint(
 		})
 		.returning({ id: webhookDeliveries.id })
 
+	return delivery.id
+}
+
+interface DeliveryAttemptParams {
+	deliveryId: string
+	targetUrl: string
+	timeoutMs: number | null
+	requestBody: Record<string, unknown>
+	attempt: number
+}
+
+async function attemptDelivery({
+	deliveryId,
+	targetUrl,
+	timeoutMs,
+	requestBody,
+	attempt,
+}: DeliveryAttemptParams) {
 	const now = new Date()
+	const attemptCount = attempt + 1
+	const hasRetriesLeft = attempt < MAX_RETRIES
 
 	try {
 		const result = await sendWebhookRequest(
@@ -63,20 +91,54 @@ async function deliverToEndpoint(
 			timeoutMs ?? DEFAULT_TIMEOUT_MS,
 		)
 
+		const willRetry = !result.ok && isRetryableStatus(result.status)
+
 		await db
 			.update(webhookDeliveries)
 			.set({
-				status: result.ok ? 'sent' : 'failed',
-				attemptCount: 1,
+				status: result.ok
+					? 'sent'
+					: willRetry && hasRetriesLeft
+						? 'pending'
+						: 'failed',
+				attemptCount,
 				responseStatus: result.status,
 				responseBody: result.body.slice(0, 4000),
 				sentAt: result.ok ? now : null,
+				nextAttemptAt: null,
 				updatedAt: now,
 			})
-			.where(eq(webhookDeliveries.id, delivery.id))
+			.where(eq(webhookDeliveries.id, deliveryId))
 
-		return { endpointId, ok: result.ok, status: result.status }
+		if (result.ok) {
+			return { ok: true, status: result.status }
+		}
+
+		if (willRetry) {
+			// Lanzar hace que Inngest reintente este step con backoff + jitter
+			throw new Error(
+				`El endpoint respondió ${result.status}; se reintentará la entrega.`,
+			)
+		}
+
+		// 4xx definitivo: no reintentar
+		return { ok: false, status: result.status }
 	} catch (error) {
+		if (error instanceof UnsafeWebhookUrlError) {
+			await db
+				.update(webhookDeliveries)
+				.set({
+					status: 'failed',
+					attemptCount,
+					errorMessage: error.message,
+					nextAttemptAt: null,
+					updatedAt: now,
+				})
+				.where(eq(webhookDeliveries.id, deliveryId))
+
+			throw new NonRetriableError(error.message)
+		}
+
 		const errorMessage =
 			error instanceof Error
 				? error.message
@@ -85,24 +147,25 @@ async function deliverToEndpoint(
 		await db
 			.update(webhookDeliveries)
 			.set({
-				status: 'failed',
-				attemptCount: 1,
+				status: hasRetriesLeft ? 'pending' : 'failed',
+				attemptCount: sql`greatest(${webhookDeliveries.attemptCount}, ${attemptCount})`,
 				errorMessage,
+				nextAttemptAt: null,
 				updatedAt: now,
 			})
-			.where(eq(webhookDeliveries.id, delivery.id))
+			.where(eq(webhookDeliveries.id, deliveryId))
 
-		return { endpointId, ok: false, errorMessage }
+		throw error
 	}
 }
 
 export const deliverWebhook = inngest.createFunction(
 	{
 		id: 'webhooks-deliver',
-		retries: 0,
+		retries: MAX_RETRIES,
 		triggers: [{ event: WEBHOOK_DELIVER_EVENT }],
 	},
-	async ({ event, step }) => {
+	async ({ event, step, attempt }) => {
 		const data = event.data as WebhookDispatchPayload
 
 		const endpoints = await step.run('load-active-endpoints', () =>
@@ -125,22 +188,43 @@ export const deliverWebhook = inngest.createFunction(
 			timestamp: new Date().toISOString(),
 		}
 
-		const results = await Promise.allSettled(
-			endpoints.map((endpoint) =>
-				step.run(`deliver-${endpoint.id}`, () =>
-					deliverToEndpoint(
+		// El registro de entrega se crea en un step memoizado: los reintentos
+		// de la función reutilizan la misma fila en lugar de crear duplicados.
+		const deliveryIds: Record<string, string> = {}
+		for (const endpoint of endpoints) {
+			deliveryIds[endpoint.id] = await step.run(
+				`create-delivery-${endpoint.id}`,
+				() =>
+					createDeliveryRecord(
 						endpoint.id,
-						endpoint.targetUrl,
-						endpoint.timeoutMs,
 						requestBody,
 						data.organizationId,
 						data.eventKey,
 						data.entityType,
 						data.entityId,
 					),
+			)
+		}
+
+		const results = await Promise.allSettled(
+			endpoints.map((endpoint) =>
+				step.run(`deliver-${endpoint.id}`, () =>
+					attemptDelivery({
+						deliveryId: deliveryIds[endpoint.id],
+						targetUrl: endpoint.targetUrl,
+						timeoutMs: endpoint.timeoutMs,
+						requestBody,
+						attempt,
+					}),
 				),
 			),
 		)
+
+		const failed = results.filter((r) => r.status === 'rejected')
+		if (failed.length > 0) {
+			// Propagar para que Inngest reintente los steps fallidos
+			throw failed[0].reason
+		}
 
 		const delivered = results.filter(
 			(r) => r.status === 'fulfilled' && r.value.ok,

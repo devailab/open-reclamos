@@ -16,7 +16,11 @@ import type { useForm } from '@/hooks/use-form'
 import { DOCUMENT_TYPE_OPTIONS } from '@/lib/constants'
 import { required } from '@/lib/validators'
 import { $searchUbigeosAction } from '@/modules/setup/actions'
-import { validateDocumentNumber, validateEmail } from '../validation'
+import {
+	validateDocumentNumber,
+	validateEmail,
+	validateRuc,
+} from '../validation'
 
 export interface CountryOption {
 	id: string
@@ -260,7 +264,7 @@ export const StepConsumer: FC<StepConsumerProps> = ({
 								{...register('documentNumber')}
 								label='RUC de la empresa *'
 								placeholder='20552103816'
-								validate={required}
+								validate={validateRuc}
 								disabled={disabled}
 							/>
 						</div>

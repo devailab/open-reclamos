@@ -203,11 +203,14 @@ export async function getStoreOptionsForOrganization(
 				? sql`false`
 				: eq(stores.organizationId, organizationId)
 
-	return db
-		.select({ id: stores.id, name: stores.name })
-		.from(stores)
-		.where(condition)
-		.orderBy(stores.name)
+	return (
+		db
+			.select({ id: stores.id, name: stores.name })
+			.from(stores)
+			// Las tiendas desactivadas no deben aparecer en opciones de uso activo
+			.where(and(condition, isNull(stores.deletedAt)))
+			.orderBy(stores.name)
+	)
 }
 
 export async function getComplaintsDashboardKpisForOrganization(

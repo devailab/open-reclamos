@@ -44,6 +44,7 @@ export function PermissionsPage({ initialState }: PermissionsPageProps) {
 		controller,
 		defineColumns,
 		search,
+		autoSearch,
 		page,
 		pageSize,
 		setPage,
@@ -67,6 +68,7 @@ export function PermissionsPage({ initialState }: PermissionsPageProps) {
 		},
 		filters,
 		setFilters,
+		hasInitialData: true,
 	})
 
 	useEffect(() => {
@@ -76,7 +78,7 @@ export function PermissionsPage({ initialState }: PermissionsPageProps) {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `search` cambia por diseño del hook.
 	useEffect(() => {
-		void search()
+		autoSearch()
 	}, [page, pageSize])
 
 	const hasActiveFilters = useMemo(() => {
@@ -110,7 +112,8 @@ export function PermissionsPage({ initialState }: PermissionsPageProps) {
 			setPage(1)
 			return
 		}
-		void search()
+		// Consultar con los filtros por defecto sin esperar el re-render
+		void search(DEFAULT_PERMISSIONS_TABLE_FILTERS)
 	}
 
 	const handleDelete = (permission: PermissionRow) => {

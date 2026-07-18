@@ -15,7 +15,7 @@ const AccountPage = async () => {
 
 	const [userRow] = await db
 		.select({
-			apiKey: users.apiKey,
+			apiKeyHash: users.apiKeyHash,
 			apiKeyCreatedAt: users.apiKeyCreatedAt,
 		})
 		.from(users)
@@ -46,7 +46,7 @@ const AccountPage = async () => {
 					</>
 				)}
 				<ApiKeySection
-					hasApiKey={!!userRow?.apiKey}
+					hasApiKey={!!userRow?.apiKeyHash}
 					apiKeyCreatedAt={userRow?.apiKeyCreatedAt ?? null}
 				/>
 			</div>

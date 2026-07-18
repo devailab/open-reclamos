@@ -3,6 +3,7 @@ import {
 	isWebhookEventKey,
 	type WebhookEventKey,
 } from '@/lib/webhook-events'
+import { validateWebhookUrlSyntax } from './url-validation'
 
 export const WEBHOOK_STATUS = ['active', 'inactive'] as const
 export type WebhookStatus = (typeof WEBHOOK_STATUS)[number]
@@ -91,14 +92,9 @@ export const validateWebhookMutationInput = (
 	if (input.targetUrl.length > MAX_URL_LENGTH)
 		return 'La URL de destino es demasiado larga.'
 
-	try {
-		const parsed = new URL(input.targetUrl)
-		if (!['http:', 'https:'].includes(parsed.protocol)) {
-			return 'La URL debe iniciar con http:// o https://.'
-		}
-	} catch {
-		return 'La URL de destino no es válida.'
-	}
+	// Rechaza protocolos no soportados, hosts internos e IPs privadas literales
+	const urlError = validateWebhookUrlSyntax(input.targetUrl)
+	if (urlError) return urlError
 
 	if (input.events.length === 0)
 		return 'Debes seleccionar al menos un evento.'

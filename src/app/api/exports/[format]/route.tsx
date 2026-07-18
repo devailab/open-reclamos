@@ -30,6 +30,15 @@ type ExportFormat = 'pdf' | 'csv' | 'xlsx'
 
 const VALID_FORMATS: ExportFormat[] = ['pdf', 'csv', 'xlsx']
 
+// Límites para evitar agotar memoria/tiempo de ejecución (M-03)
+const MAX_RANGE_DAYS = 366
+const MAX_ROWS_BY_FORMAT: Record<ExportFormat, number> = {
+	csv: 10000,
+	xlsx: 10000,
+	// El PDF renderiza el libro completo en memoria: límite más conservador
+	pdf: 1000,
+}
+
 function isValidFormat(value: string): value is ExportFormat {
 	return VALID_FORMATS.includes(value as ExportFormat)
 }
@@ -84,6 +93,7 @@ interface ExportRow {
 	Tienda: string
 	'Tipo de persona': string
 	'Nombre / Razón social': string
+	'RUC empresa': string
 	'Tipo de documento': string
 	'N° de documento': string
 	Email: string
@@ -117,6 +127,8 @@ function buildExportRows(
 		Tienda: row.storeName,
 		'Tipo de persona': getPersonTypeLabel(row.personType),
 		'Nombre / Razón social': formatConsumerName(row),
+		'RUC empresa':
+			row.personType === 'juridical' ? (row.legalTaxId ?? '') : '',
 		'Tipo de documento': row.documentType,
 		'N° de documento': row.documentNumber,
 		Email: row.email,
@@ -148,12 +160,21 @@ function buildExportRows(
 	}))
 }
 
+// Neutraliza inyección de fórmulas: valores que empiezan con =, +, -, @,
+// tabulador o retorno de carro se interpretan como fórmula en Excel/LibreOffice
+function sanitizeSpreadsheetValue(value: string): string {
+	if (/^[=+\-@\t\r]/.test(value)) {
+		return `'${value}`
+	}
+	return value
+}
+
 function buildCsv(rows: ExportRow[]): string {
 	const first = rows[0]
 	if (!first) return '﻿'
 	const headers = Object.keys(first)
 	const escapeCsv = (value: string) => {
-		const str = String(value)
+		const str = sanitizeSpreadsheetValue(String(value))
 		if (str.includes(';') || str.includes('"') || str.includes('\n')) {
 			return `"${str.replaceAll('"', '""')}"`
 		}
@@ -180,7 +201,9 @@ async function buildXlsx(rows: ExportRow[]): Promise<Buffer> {
 	const headers = rows[0] ? (Object.keys(rows[0]) as (keyof ExportRow)[]) : []
 	const data = [
 		headers,
-		...rows.map((row) => headers.map((h) => row[h] ?? '')),
+		...rows.map((row) =>
+			headers.map((h) => sanitizeSpreadsheetValue(row[h] ?? '')),
+		),
 	]
 	return writeXlsxFile(data, { sheet: 'Reclamos' }).toBuffer()
 }
@@ -254,6 +277,22 @@ export async function POST(
 		return new NextResponse('Fechas inválidas.', { status: 400 })
 	}
 
+	if (startDate.getTime() > endDate.getTime()) {
+		return new NextResponse(
+			'La fecha inicial no puede ser posterior a la final.',
+			{ status: 400 },
+		)
+	}
+
+	const rangeDays =
+		(endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
+	if (rangeDays > MAX_RANGE_DAYS) {
+		return new NextResponse(
+			`El rango máximo de exportación es de ${MAX_RANGE_DAYS} días.`,
+			{ status: 400 },
+		)
+	}
+
 	const allowedStoreIds =
 		membership.storeAccessMode === 'selected'
 			? membership.storeIds
@@ -263,13 +302,23 @@ export async function POST(
 		return new NextResponse('Sin acceso a esta tienda.', { status: 403 })
 	}
 
+	const maxRows = MAX_ROWS_BY_FORMAT[format]
 	const complaints = await getComplaintsForExport({
 		organizationId: membership.organizationId,
 		storeId,
 		startDate,
 		endDate,
 		allowedStoreIds,
+		// +1 para detectar cuando el rango excede el límite
+		limit: maxRows + 1,
 	})
+
+	if (complaints.length > maxRows) {
+		return new NextResponse(
+			`La exportación supera el límite de ${maxRows} registros. Reduce el rango de fechas.`,
+			{ status: 413 },
+		)
+	}
 
 	const storeSlug = complaints[0]?.storeSlug ?? storeId
 	const storeName = complaints[0]?.storeName ?? storeId
@@ -333,6 +382,7 @@ export async function POST(
 					firstName: complaint.firstName,
 					lastName: complaint.lastName,
 					legalName: complaint.legalName,
+					legalTaxId: complaint.legalTaxId,
 					guardianFirstName: complaint.guardianFirstName,
 					guardianLastName: complaint.guardianLastName,
 					guardianDocumentType: complaint.guardianDocumentType,

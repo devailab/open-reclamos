@@ -183,6 +183,7 @@ const AutocompleteField: FC<AutocompleteFieldProps> = ({
 			setError(validationError)
 			return validationError
 		},
+		clearError: () => setError(null),
 	}))
 
 	// Focus search input when dropdown opens and reset query

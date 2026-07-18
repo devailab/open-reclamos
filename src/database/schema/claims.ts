@@ -111,6 +111,8 @@ export const complaints = claimsSchema.table(
 		documentNumber: text('document_number').notNull(),
 		personType: text('person_type').notNull().default('natural'),
 		legalName: text('legal_name'),
+		// RUC de la empresa cuando el consumidor es persona jurídica
+		legalTaxId: text('legal_tax_id'),
 		isMinor: boolean('is_minor').notNull().default(false),
 		guardianFirstName: text('guardian_first_name'),
 		guardianLastName: text('guardian_last_name'),
@@ -292,12 +294,18 @@ export const complaintAttachments = claimsSchema.table(
 		id: uuid('id')
 			.primaryKey()
 			.$defaultFn(() => Bun.randomUUIDv7()),
-		complaintId: uuid('complaint_id').notNull(),
+		complaintId: uuid('complaint_id')
+			.notNull()
+			.references(() => complaints.id, { onDelete: 'cascade' }),
 		storageKey: text('storage_key').notNull(),
 		fileName: text('file_name').notNull(),
 		contentType: text('content_type'),
 		description: text('description'),
 	},
+	(table) => [
+		index('complaint_attachments_complaint_id_idx').on(table.complaintId),
+		index('complaint_attachments_storage_key_idx').on(table.storageKey),
+	],
 )
 
 export const complaintHistory = claimsSchema.table(

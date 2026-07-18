@@ -27,6 +27,7 @@ export interface ExportComplaintRow {
 	firstName: string
 	lastName: string
 	legalName: string | null
+	legalTaxId: string | null
 	documentType: string
 	documentNumber: string
 	isMinor: boolean
@@ -78,7 +79,10 @@ interface GetComplaintsForExportParams {
 	startDate: Date
 	endDate: Date
 	allowedStoreIds?: string[]
+	limit?: number
 }
+
+const DEFAULT_EXPORT_LIMIT = 10001
 
 export async function getComplaintsForExport({
 	organizationId,
@@ -86,6 +90,7 @@ export async function getComplaintsForExport({
 	startDate,
 	endDate,
 	allowedStoreIds,
+	limit = DEFAULT_EXPORT_LIMIT,
 }: GetComplaintsForExportParams): Promise<ExportComplaintRow[]> {
 	if (allowedStoreIds !== undefined && !allowedStoreIds.includes(storeId)) {
 		return []
@@ -109,6 +114,7 @@ export async function getComplaintsForExport({
 			firstName: complaints.firstName,
 			lastName: complaints.lastName,
 			legalName: complaints.legalName,
+			legalTaxId: complaints.legalTaxId,
 			documentType: complaints.documentType,
 			documentNumber: complaints.documentNumber,
 			isMinor: complaints.isMinor,
@@ -158,6 +164,7 @@ export async function getComplaintsForExport({
 			),
 		)
 		.orderBy(asc(complaints.createdAt))
+		.limit(limit)
 }
 
 export async function getOrganizationForExport(

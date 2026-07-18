@@ -232,7 +232,7 @@ export function OrganizationSettingsForm({
 	}
 
 	const handleCopyMcpUrl = () => {
-		const url = `${window.location.origin}/api/mcp/mcp?key=[aqui-tu-api-key]`
+		const url = `${window.location.origin}/api/mcp/mcp`
 		navigator.clipboard.writeText(url).then(() => {
 			setCopied(true)
 			setTimeout(() => setCopied(false), 2000)
@@ -579,8 +579,8 @@ function McpSettingsCard({
 
 	const mcpUrl =
 		typeof window !== 'undefined'
-			? `${window.location.origin}/api/mcp/mcp?key=[aqui-tu-api-key]`
-			: '/api/mcp/mcp?key=[aqui-tu-api-key]'
+			? `${window.location.origin}/api/mcp/mcp`
+			: '/api/mcp/mcp'
 
 	return (
 		<Card>
@@ -664,11 +664,11 @@ function McpSettingsCard({
 						</Button>
 					</div>
 					<p className='text-xs text-muted-foreground'>
-						Reemplaza{' '}
+						Configura tu cliente MCP con el header{' '}
 						<code className='rounded bg-muted px-1 py-0.5 font-mono text-xs'>
-							[aqui-tu-api-key]
-						</code>{' '}
-						con tu API key.{' '}
+							Authorization: Bearer &lt;tu-api-key&gt;
+						</code>
+						. Nunca incluyas la API key en la URL.{' '}
 						<a
 							href='/dashboard/account'
 							className='text-primary underline-offset-4 hover:underline'

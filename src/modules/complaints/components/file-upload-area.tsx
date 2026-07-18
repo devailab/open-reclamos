@@ -148,7 +148,17 @@ export const FileUploadArea: FC<FileUploadAreaProps> = ({
 	)
 
 	const handleRemove = (id: string) => {
+		const removed = files.find((f) => f.id === id)
 		onChange((prev) => prev.filter((f) => f.id !== id))
+
+		// Eliminar también el objeto temporal en el servidor (best-effort)
+		if (removed?.status === 'done' && removed.key) {
+			void fetch('/api/complaints/upload', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ key: removed.key }),
+			}).catch(() => {})
+		}
 	}
 
 	const triggerInput = () => {

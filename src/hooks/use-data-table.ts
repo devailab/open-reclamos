@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useDebounce } from './use-debounce'
 
 export interface DataTableStore {
@@ -57,6 +57,9 @@ export interface UseDataTableParams<T, F> {
 	isEnablePagination?: boolean
 	isEnableSorting?: boolean
 	isEnableRowSelection?: boolean
+	// true cuando la página hidrata filas iniciales desde el servidor:
+	// `autoSearch()` omite la primera ejecución para no duplicar la consulta
+	hasInitialData?: boolean
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: Is necessary to allow flexibility in filter types
@@ -72,6 +75,7 @@ export const useDataTable = <T, F = any>({
 	isEnablePagination = true,
 	isEnableSorting = false,
 	isEnableRowSelection = false,
+	hasInitialData = false,
 }: UseDataTableParams<T, F>) => {
 	const [page, setPage] = useState(1)
 	const [pageSize, setPageSize] = useState(10)
@@ -80,9 +84,16 @@ export const useDataTable = <T, F = any>({
 
 	const debouncedFilters = useDebounce(filters, 300)
 
-	const search = async () => {
+	// Identificador de la última solicitud: respuestas fuera de orden se descartan
+	const requestIdRef = useRef(0)
+	const initialAutoSearchPendingRef = useRef(hasInitialData)
+
+	// `overrideFilters` permite consultar con filtros recién asignados sin
+	// esperar a que React aplique el nuevo estado (ej. "Limpiar filtros").
+	const search = async (overrideFilters?: F) => {
 		if (!fetchData) return
 
+		const requestId = ++requestIdRef.current
 		setIsLoading(true)
 		try {
 			const {
@@ -92,16 +103,32 @@ export const useDataTable = <T, F = any>({
 			} = await fetchData({
 				page,
 				pageSize,
-				filters,
+				filters: overrideFilters ?? filters,
 			})
+
+			// Otra búsqueda más reciente ya está en curso o resuelta
+			if (requestId !== requestIdRef.current) return
+
 			setRows?.(rows)
 			setTotalItems(fetchedTotalItems)
 			if (currentPage) {
 				setPage(currentPage)
 			}
 		} finally {
-			setIsLoading(false)
+			if (requestId === requestIdRef.current) {
+				setIsLoading(false)
+			}
 		}
+	}
+
+	// Para efectos de sincronización con `page`/`pageSize`: omite la primera
+	// ejecución cuando la página ya tiene datos hidratados desde el servidor.
+	const autoSearch = () => {
+		if (initialAutoSearchPendingRef.current) {
+			initialAutoSearchPendingRef.current = false
+			return
+		}
+		void search()
 	}
 
 	const controller = useDataTableController<T>({
@@ -136,6 +163,7 @@ export const useDataTable = <T, F = any>({
 		isLoading,
 		setIsLoading,
 		search,
+		autoSearch,
 		filters,
 		setFilters,
 		debouncedFilters,

@@ -68,6 +68,7 @@ const TextField: FC<TextFieldProps> = ({
 			setError(validationError)
 			return validationError
 		},
+		clearError: () => setError(null),
 	}))
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

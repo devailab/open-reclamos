@@ -56,6 +56,7 @@ export function UsersPage({ initialState }: UsersPageProps) {
 		controller: userController,
 		defineColumns: defineUserColumns,
 		search: searchUsers,
+		autoSearch: autoSearchUsers,
 		page: userPage,
 		pageSize: userPageSize,
 		setPage: setUserPage,
@@ -80,12 +81,14 @@ export function UsersPage({ initialState }: UsersPageProps) {
 		filters: userFilters,
 		setFilters: setUserFilters,
 		onRowClick: (row) => setEditingUser(row),
+		hasInitialData: true,
 	})
 
 	const {
 		controller: invitationController,
 		defineColumns: defineInvitationColumns,
 		search: searchInvitations,
+		autoSearch: autoSearchInvitations,
 		page: invitationPage,
 		pageSize: invitationPageSize,
 		setPage: setInvitationPage,
@@ -109,6 +112,7 @@ export function UsersPage({ initialState }: UsersPageProps) {
 		},
 		filters: invitationFilters,
 		setFilters: setInvitationFilters,
+		hasInitialData: true,
 	})
 
 	useEffect(() => {
@@ -127,12 +131,12 @@ export function UsersPage({ initialState }: UsersPageProps) {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: Se refresca cuando cambia la paginacion.
 	useEffect(() => {
-		void searchUsers()
+		autoSearchUsers()
 	}, [userPage, userPageSize])
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: Se refresca cuando cambia la paginacion.
 	useEffect(() => {
-		void searchInvitations()
+		autoSearchInvitations()
 	}, [invitationPage, invitationPageSize])
 
 	const hasUserFilters = useMemo(() => {
@@ -358,7 +362,7 @@ export function UsersPage({ initialState }: UsersPageProps) {
 								setUserPage(1)
 								return
 							}
-							void searchUsers()
+							void searchUsers(DEFAULT_USERS_TABLE_FILTERS)
 						}}
 						hasActiveFilters={hasUserFilters}
 					/>
@@ -432,7 +436,7 @@ export function UsersPage({ initialState }: UsersPageProps) {
 								setInvitationPage(1)
 								return
 							}
-							void searchInvitations()
+							void searchInvitations(DEFAULT_USERS_TABLE_FILTERS)
 						}}
 						hasActiveFilters={hasInvitationFilters}
 					/>

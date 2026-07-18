@@ -58,6 +58,7 @@ export function WebhooksPage({
 		controller,
 		defineColumns,
 		search,
+		autoSearch,
 		page,
 		pageSize,
 		setPage,
@@ -80,6 +81,7 @@ export function WebhooksPage({
 		},
 		filters,
 		setFilters,
+		hasInitialData: true,
 	})
 
 	useEffect(() => {
@@ -89,7 +91,7 @@ export function WebhooksPage({
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `search` se recalcula en cada render por diseño del hook.
 	useEffect(() => {
-		void search()
+		autoSearch()
 	}, [page, pageSize])
 
 	const hasActiveFilters = useMemo(
@@ -117,7 +119,8 @@ export function WebhooksPage({
 			setPage(1)
 			return
 		}
-		void search()
+		// Consultar con los filtros por defecto sin esperar el re-render
+		void search(DEFAULT_WEBHOOKS_TABLE_FILTERS)
 	}
 
 	const handleCreated = () => {

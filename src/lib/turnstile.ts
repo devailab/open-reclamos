@@ -7,6 +7,8 @@ export async function verifyTurnstileToken(
 ): Promise<boolean> {
 	const secretKey = process.env.TURNSTILE_SECRET_KEY
 	if (!secretKey) {
+		// Turnstile es opcional (proyecto open source, cada despliegue decide
+		// si lo usa): sin key configurada, el formulario queda abierto.
 		console.warn('[turnstile] TURNSTILE_SECRET_KEY no está configurado')
 		return true
 	}

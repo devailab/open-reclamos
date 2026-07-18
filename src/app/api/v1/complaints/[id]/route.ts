@@ -1,17 +1,24 @@
 import type { NextRequest } from 'next/server'
-import { resolveApiKey, unauthorizedResponse } from '@/lib/api-auth'
+import {
+	forbiddenResponse,
+	getAllowedStoreIds,
+	resolveApiKey,
+	unauthorizedResponse,
+} from '@/lib/api-auth'
 import {
 	getComplaintAttachments,
 	getComplaintDetailById,
 	getComplaintHistory,
 } from '@/modules/complaints/detail-queries'
+import { hasPermission } from '@/modules/rbac/queries'
 
 /**
  * GET /api/v1/complaints/:id
  *
  * Devuelve el detalle completo de un reclamo junto con su historial y
- * archivos adjuntos. El reclamo debe pertenecer a la organización del
- * usuario autenticado con el API key.
+ * archivos adjuntos. Requiere el permiso `complaints.view`, el reclamo debe
+ * pertenecer a la organización del API key y a una tienda accesible por el
+ * miembro autenticado.
  */
 export async function GET(
 	request: NextRequest,
@@ -19,6 +26,12 @@ export async function GET(
 ) {
 	const auth = await resolveApiKey(request)
 	if (!auth) return unauthorizedResponse()
+
+	if (!hasPermission(auth.membership, 'complaints.view')) {
+		return forbiddenResponse(
+			'El API key no tiene permiso para ver reclamos.',
+		)
+	}
 
 	const { id } = await params
 
@@ -29,6 +42,17 @@ export async function GET(
 	])
 
 	if (!complaint) {
+		return Response.json(
+			{ error: 'Reclamo no encontrado.' },
+			{ status: 404 },
+		)
+	}
+
+	const allowedStoreIds = getAllowedStoreIds(auth.membership)
+	if (
+		allowedStoreIds !== undefined &&
+		!allowedStoreIds.includes(complaint.storeId)
+	) {
 		return Response.json(
 			{ error: 'Reclamo no encontrado.' },
 			{ status: 404 },
@@ -53,6 +77,7 @@ export async function GET(
 				firstName: complaint.firstName,
 				lastName: complaint.lastName,
 				legalName: complaint.legalName,
+				legalTaxId: complaint.legalTaxId,
 				documentType: complaint.documentType,
 				documentNumber: complaint.documentNumber,
 				isMinor: complaint.isMinor,

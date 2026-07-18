@@ -28,6 +28,13 @@ export const ComplaintConsumerCard: FC<ComplaintConsumerCardProps> = ({
 							value={complaint.legalName}
 						/>
 					)}
+				{complaint.personType === 'juridical' &&
+					complaint.legalTaxId && (
+						<InfoRow
+							label='RUC de la empresa'
+							value={complaint.legalTaxId}
+						/>
+					)}
 				<InfoRow
 					label='Documento'
 					value={`${DOCUMENT_TYPE_LABEL[complaint.documentType] ?? complaint.documentType} — ${complaint.documentNumber}`}

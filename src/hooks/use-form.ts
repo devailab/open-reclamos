@@ -11,6 +11,8 @@ export interface FormFieldProps<T> {
 export interface FormFieldRef {
 	focus: () => void
 	validate: () => string | null
+	// Limpia el estado de error visual interno del campo (usado por reset)
+	clearError?: () => void
 }
 
 export interface FormFieldError {
@@ -76,6 +78,12 @@ export const useForm = <T extends Record<string, any>>({
 	const reset = () => {
 		if (initialValues) {
 			setValues(() => ({ ...initialValues }))
+		}
+
+		// Limpiar errores visuales para que un diálogo reutilizado no
+		// conserve estados de validación anteriores
+		for (const [, fieldRef] of fieldRefs.current) {
+			fieldRef?.clearError?.()
 		}
 	}
 

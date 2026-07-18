@@ -47,6 +47,7 @@ export function RolesPage({ initialState }: RolesPageProps) {
 		controller,
 		defineColumns,
 		search,
+		autoSearch,
 		page,
 		pageSize,
 		setPage,
@@ -70,6 +71,7 @@ export function RolesPage({ initialState }: RolesPageProps) {
 		},
 		filters,
 		setFilters,
+		hasInitialData: true,
 	})
 
 	useEffect(() => {
@@ -79,7 +81,7 @@ export function RolesPage({ initialState }: RolesPageProps) {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `search` cambia por diseño del hook.
 	useEffect(() => {
-		void search()
+		autoSearch()
 	}, [page, pageSize])
 
 	const hasActiveFilters = useMemo(() => {
@@ -103,7 +105,8 @@ export function RolesPage({ initialState }: RolesPageProps) {
 			setPage(1)
 			return
 		}
-		void search()
+		// Consultar con los filtros por defecto sin esperar el re-render
+		void search(DEFAULT_ROLES_TABLE_FILTERS)
 	}
 
 	const handleEdit = (role: RoleRow) => {

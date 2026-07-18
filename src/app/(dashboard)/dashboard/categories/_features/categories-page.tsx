@@ -31,6 +31,7 @@ export const CategoriesPage: FC<CategoriesPageProps> = ({ initialState }) => {
 		controller,
 		defineColumns,
 		search,
+		autoSearch,
 		page,
 		pageSize,
 		setPage,
@@ -54,6 +55,7 @@ export const CategoriesPage: FC<CategoriesPageProps> = ({ initialState }) => {
 		},
 		filters,
 		setFilters,
+		hasInitialData: true,
 	})
 
 	useEffect(() => {
@@ -63,7 +65,7 @@ export const CategoriesPage: FC<CategoriesPageProps> = ({ initialState }) => {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `search` se recalcula en cada render por diseño del hook.
 	useEffect(() => {
-		void search()
+		autoSearch()
 	}, [page, pageSize])
 
 	const hasActiveFilters = useMemo(
@@ -94,7 +96,8 @@ export const CategoriesPage: FC<CategoriesPageProps> = ({ initialState }) => {
 			setPage(1)
 			return
 		}
-		void search()
+		// Consultar con los filtros por defecto sin esperar el re-render
+		void search(DEFAULT_CATEGORIES_TABLE_FILTERS)
 	}
 
 	const handleSaved = () => {

@@ -26,6 +26,7 @@ import {
 import { createComplaintHistoryEntry } from './history'
 import { generateTrackingCode } from './lib'
 import { getStoreForOrganization } from './queries'
+import { validateSubmitComplaintInput } from './server-validation'
 
 const TMP_PREFIX = 'tmp/'
 // Formato esperado: tmp/complaints/<storeId>/<filename>
@@ -94,6 +95,8 @@ export interface SubmitComplaintInput {
 	firstName: string
 	lastName: string
 	legalName: string | null
+	// RUC de la empresa (solo persona jurídica)
+	legalTaxId: string | null
 	isMinor: boolean
 	guardianFirstName: string | null
 	guardianLastName: string | null
@@ -153,18 +156,11 @@ export async function $submitComplaintAction(
 		}
 	}
 
-	// Basic server-side validation
-	if (!input.storeId || !input.organizationId) {
-		return { success: false, error: MESSAGES.complaints.invalidStoreData }
-	}
-	if (!input.email || !input.documentNumber) {
-		return {
-			success: false,
-			error: MESSAGES.complaints.incompleteClaimantData,
-		}
-	}
-	if (!input.type) {
-		return { success: false, error: MESSAGES.complaints.typeRequired }
+	// Validación integral del payload en servidor: el tipo TypeScript no
+	// protege una llamada HTTP directa al Server Action.
+	const validationError = validateSubmitComplaintInput(input)
+	if (validationError) {
+		return { success: false, error: validationError }
 	}
 
 	const organizationSettings =
@@ -258,6 +254,7 @@ export async function $submitComplaintAction(
 					documentType: input.documentType,
 					documentNumber: input.documentNumber,
 					legalName: input.legalName ?? null,
+					legalTaxId: input.legalTaxId ?? null,
 					isMinor: input.isMinor,
 					guardianFirstName: input.guardianFirstName ?? null,
 					guardianLastName: input.guardianLastName ?? null,

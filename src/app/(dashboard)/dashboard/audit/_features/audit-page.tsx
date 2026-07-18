@@ -42,6 +42,7 @@ export const AuditPage: FC<AuditPageProps> = ({ initialState }) => {
 		controller,
 		defineColumns,
 		search,
+		autoSearch,
 		page,
 		pageSize,
 		setPage,
@@ -72,6 +73,7 @@ export const AuditPage: FC<AuditPageProps> = ({ initialState }) => {
 		},
 		filters,
 		setFilters,
+		hasInitialData: true,
 	})
 
 	useEffect(() => {
@@ -81,7 +83,7 @@ export const AuditPage: FC<AuditPageProps> = ({ initialState }) => {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `search` se recalcula en cada render por diseño del hook.
 	useEffect(() => {
-		void search()
+		autoSearch()
 	}, [page, pageSize])
 
 	const hasActiveFilters = useMemo(() => {
@@ -117,14 +119,16 @@ export const AuditPage: FC<AuditPageProps> = ({ initialState }) => {
 
 	const handleClear = () => {
 		setSelectedUser(null)
-		setFilters(createDefaultAuditTableFilters())
+		const defaultFilters = createDefaultAuditTableFilters()
+		setFilters(defaultFilters)
 
 		if (page !== 1) {
 			setPage(1)
 			return
 		}
 
-		void search()
+		// Consultar con los filtros por defecto sin esperar el re-render
+		void search(defaultFilters)
 	}
 
 	const columns = defineColumns([

@@ -43,6 +43,7 @@ const OtpField = ({
 			setError(err)
 			return err
 		},
+		clearError: () => setError(null),
 	}))
 
 	const handleChange = (newValue: string) => {

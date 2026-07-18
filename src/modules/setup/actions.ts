@@ -8,6 +8,7 @@ import { db } from '@/database/database'
 import { organizations, users } from '@/database/schema'
 import { auth } from '@/lib/auth'
 import { DOCUMENT_LOOKUP_PROVIDER } from '@/lib/config'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { buildSlugBase, resolveUniqueSlug } from '@/lib/slug'
 import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
 import { getMembershipContext } from '@/modules/rbac/queries'
@@ -28,12 +29,39 @@ import {
 	createOrganizationWithAdmin,
 	createStoreForOrganization,
 } from './service'
+import {
+	validateSetupOrganizationPayload,
+	validateSetupStorePayload,
+} from './validation'
 
 export type LookupRucResult =
 	| { success: true; data: RucData; ubigeoId: string }
 	| { success: false; error: string }
 
 export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
+	// La consulta de RUC usa un proveedor externo pagado: requiere sesión
+	// y límite de frecuencia por usuario.
+	const session = await auth.api.getSession({ headers: await headers() })
+	if (!session) {
+		return { success: false, error: MESSAGES.common.notAuthenticated }
+	}
+
+	if (!checkRateLimit(`ruc-lookup:${session.user.id}`, 10, 60_000)) {
+		return {
+			success: false,
+			error: 'Demasiadas consultas de RUC. Intenta en un minuto.',
+		}
+	}
+
+	const normalizedRuc = ruc?.trim() ?? ''
+	if (!/^\d{11}$/.test(normalizedRuc)) {
+		return {
+			success: false,
+			error: 'El RUC debe tener 11 dígitos numéricos.',
+		}
+	}
+	ruc = normalizedRuc
+
 	const existing = await db
 		.select({ id: organizations.id })
 		.from(organizations)
@@ -84,20 +112,42 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 }
 
 export async function $getSlugSuggestionAction(name: string): Promise<string> {
-	return resolveUniqueSlug(buildSlugBase(name), checkSlugExists)
+	const session = await auth.api.getSession({ headers: await headers() })
+	if (!session) return ''
+
+	return resolveUniqueSlug(buildSlugBase(name.slice(0, 200)), checkSlugExists)
 }
 
 export async function $getStoreSlugSuggestionAction(
 	name: string,
 ): Promise<string> {
-	return resolveUniqueSlug(buildSlugBase(name), checkStoreSlugExists)
+	const session = await auth.api.getSession({ headers: await headers() })
+	if (!session) return ''
+
+	return resolveUniqueSlug(
+		buildSlugBase(name.slice(0, 200)),
+		checkStoreSlugExists,
+	)
 }
 
+// Usada también por el formulario público de reclamos: no exige sesión,
+// pero limita frecuencia por IP y tamaño de la consulta.
 export async function $searchUbigeosAction(
 	query: string,
 ): Promise<AutocompleteOption[]> {
-	if (!query.trim()) return []
-	const results = await searchUbigeos(query)
+	const trimmed = query?.trim().slice(0, 100) ?? ''
+	if (!trimmed) return []
+
+	const reqHeaders = await headers()
+	const ip =
+		reqHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+		reqHeaders.get('x-real-ip') ??
+		'unknown'
+	if (!checkRateLimit(`ubigeo-search:${ip}`, 60, 60_000)) {
+		return []
+	}
+
+	const results = await searchUbigeos(trimmed)
 	return results.map((u) => ({
 		value: u.id,
 		label: `${u.district}, ${u.province}, ${u.department}`,
@@ -150,6 +200,15 @@ export async function $completeSetupAction(
 	if (!session) {
 		redirect('/login')
 	}
+
+	// Validación integral del payload en servidor
+	const organizationError = validateSetupOrganizationPayload(
+		input.organization,
+	)
+	if (organizationError) return { error: organizationError }
+
+	const storeError = validateSetupStorePayload(input.store)
+	if (storeError) return { error: storeError }
 
 	if (await checkSlugExists(input.organization.slug)) {
 		return { error: MESSAGES.setup.slugTaken }
@@ -243,6 +302,9 @@ export async function $setupStoreAction(
 	if (!session) {
 		redirect('/login')
 	}
+
+	const storeError = validateSetupStorePayload(input)
+	if (storeError) return { error: storeError }
 
 	const userState = await getUserSetupStatus(session.user.id)
 	const organizationId = await resolveSetupStoreOrganizationId(

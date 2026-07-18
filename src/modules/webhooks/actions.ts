@@ -18,6 +18,7 @@ import {
 	type WebhookDeliveryRow,
 	type WebhookEndpointRow,
 } from './queries'
+import { assertPublicWebhookUrl, UnsafeWebhookUrlError } from './ssrf'
 import {
 	type DeliveriesTableFilters,
 	normalizeDeliveriesTableFilters,
@@ -97,6 +98,16 @@ export async function $createWebhookAction(
 	const validationError = validateWebhookMutationInput(normalized)
 	if (validationError) return { error: validationError }
 
+	// Verificación DNS anti-SSRF: el destino debe resolver a IPs públicas
+	try {
+		await assertPublicWebhookUrl(normalized.targetUrl)
+	} catch (error) {
+		if (error instanceof UnsafeWebhookUrlError) {
+			return { error: error.message }
+		}
+		return { error: MESSAGES.webhooks.createFailed }
+	}
+
 	const slug = await getUniqueWebhookSlug(
 		normalized.name,
 		access.membership.organizationId,
@@ -161,6 +172,16 @@ export async function $updateWebhookAction(
 	const normalized = normalizeWebhookMutationInput(input)
 	const validationError = validateWebhookMutationInput(normalized)
 	if (validationError) return { error: validationError }
+
+	// Verificación DNS anti-SSRF: el destino debe resolver a IPs públicas
+	try {
+		await assertPublicWebhookUrl(normalized.targetUrl)
+	} catch (error) {
+		if (error instanceof UnsafeWebhookUrlError) {
+			return { error: error.message }
+		}
+		return { error: MESSAGES.webhooks.updateFailed }
+	}
 
 	try {
 		await db.transaction(async (tx) => {

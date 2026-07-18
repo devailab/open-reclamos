@@ -17,8 +17,20 @@ import {
 export interface McpRequestContext {
 	userId: string
 	organizationId: string
+	permissionKeys: string[]
+	// undefined = acceso a todas las tiendas; lista = solo tiendas asignadas
+	allowedStoreIds: string[] | undefined
 	enabledTools: string[] | null
 	showSensitiveData: boolean
+}
+
+// Permiso RBAC requerido por herramienta
+const TOOL_REQUIRED_PERMISSION: Record<string, string> = {
+	[MCP_TOOLS.LIST_COMPLAINTS]: 'complaints.view',
+	[MCP_TOOLS.GET_COMPLAINT]: 'complaints.view',
+	[MCP_TOOLS.GET_ORGANIZATION_STATS]: 'complaints.view',
+	[MCP_TOOLS.LIST_STORES]: 'stores.view',
+	[MCP_TOOLS.LIST_COMPLAINT_REASONS]: 'reasons.view',
 }
 
 export const mcpStorage = new AsyncLocalStorage<McpRequestContext>()
@@ -142,6 +154,12 @@ function isToolEnabled(ctx: McpRequestContext, toolName: string): boolean {
 	return ctx.enabledTools.includes(toolName)
 }
 
+function hasToolPermission(ctx: McpRequestContext, toolName: string): boolean {
+	const requiredPermission = TOOL_REQUIRED_PERMISSION[toolName]
+	if (!requiredPermission) return false
+	return ctx.permissionKeys.includes(requiredPermission)
+}
+
 export function registerMcpTools(server: McpServer) {
 	const rawServer = server.server
 
@@ -171,6 +189,12 @@ export function registerMcpTools(server: McpServer) {
 		if (!isToolEnabled(ctx, toolName)) {
 			return toolError(
 				`La herramienta "${toolName}" no está habilitada para esta organización.`,
+			)
+		}
+
+		if (!hasToolPermission(ctx, toolName)) {
+			return toolError(
+				`No tienes permisos para usar la herramienta "${toolName}".`,
 			)
 		}
 
@@ -205,6 +229,7 @@ export function registerMcpTools(server: McpServer) {
 									? args.search
 									: undefined,
 						},
+						ctx.allowedStoreIds,
 					)
 					return toolResult({
 						...result,
@@ -223,6 +248,7 @@ export function registerMcpTools(server: McpServer) {
 					const complaint = await getComplaintByTrackingCodeForMcp(
 						ctx.organizationId,
 						args.trackingCode,
+						ctx.allowedStoreIds,
 					)
 					if (!complaint) {
 						return toolError(
@@ -235,7 +261,10 @@ export function registerMcpTools(server: McpServer) {
 				}
 
 				case MCP_TOOLS.LIST_STORES: {
-					const stores = await getStoresForMcp(ctx.organizationId)
+					const stores = await getStoresForMcp(
+						ctx.organizationId,
+						ctx.allowedStoreIds,
+					)
 					return toolResult(stores)
 				}
 
@@ -249,6 +278,7 @@ export function registerMcpTools(server: McpServer) {
 				case MCP_TOOLS.GET_ORGANIZATION_STATS: {
 					const stats = await getOrganizationStatsForMcp(
 						ctx.organizationId,
+						ctx.allowedStoreIds,
 					)
 					return toolResult(stats)
 				}

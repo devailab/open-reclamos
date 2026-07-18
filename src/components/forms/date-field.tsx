@@ -16,6 +16,7 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover'
 import type { FormFieldProps } from '@/hooks/use-form'
+import { formatDateLong } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 export interface DateFieldProps extends FormFieldProps<Date | null> {
@@ -54,6 +55,7 @@ const DateField: FC<DateFieldProps> = ({
 			setError(validationError)
 			return validationError
 		},
+		clearError: () => setError(null),
 	}))
 
 	const handleSelect = (date: Date | undefined) => {
@@ -69,11 +71,7 @@ const DateField: FC<DateFieldProps> = ({
 
 	const formatDate = (date: Date | null) => {
 		if (!date) return null
-		return new Intl.DateTimeFormat('es-MX', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-		}).format(date)
+		return formatDateLong(date)
 	}
 
 	const hasError = Boolean(error)

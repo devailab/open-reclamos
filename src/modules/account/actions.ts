@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { db } from '@/database/database'
 import { users } from '@/database/schema'
+import { hashApiKey } from '@/lib/api-auth'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { getSession } from '@/lib/auth-server'
@@ -81,12 +82,12 @@ export async function $generateApiKeyAction(): Promise<ApiKeyActionResult> {
 	if (!session) return { error: MESSAGES.common.notAuthenticated }
 
 	const [existing] = await db
-		.select({ apiKey: users.apiKey })
+		.select({ apiKeyHash: users.apiKeyHash })
 		.from(users)
 		.where(eq(users.id, session.user.id))
 		.limit(1)
 
-	if (existing?.apiKey) {
+	if (existing?.apiKeyHash) {
 		return {
 			error: MESSAGES.account.apiKeyAlreadyActive,
 		}
@@ -98,7 +99,10 @@ export async function $generateApiKeyAction(): Promise<ApiKeyActionResult> {
 		await db.transaction(async (tx) => {
 			await tx
 				.update(users)
-				.set({ apiKey, apiKeyCreatedAt: new Date() })
+				.set({
+					apiKeyHash: hashApiKey(apiKey),
+					apiKeyCreatedAt: new Date(),
+				})
 				.where(eq(users.id, session.user.id))
 
 			await createAuditLog({
@@ -127,7 +131,10 @@ export async function $regenerateApiKeyAction(): Promise<ApiKeyActionResult> {
 		await db.transaction(async (tx) => {
 			await tx
 				.update(users)
-				.set({ apiKey, apiKeyCreatedAt: new Date() })
+				.set({
+					apiKeyHash: hashApiKey(apiKey),
+					apiKeyCreatedAt: new Date(),
+				})
 				.where(eq(users.id, session.user.id))
 
 			await createAuditLog({

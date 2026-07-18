@@ -58,6 +58,7 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 		controller,
 		defineColumns,
 		search,
+		autoSearch,
 		page,
 		pageSize,
 		setPage,
@@ -82,6 +83,7 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 		},
 		filters,
 		setFilters,
+		hasInitialData: true,
 	})
 
 	useEffect(() => {
@@ -92,7 +94,7 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `search` se recalcula en cada render por diseño del hook.
 	useEffect(() => {
 		// Mantiene la tabla sincronizada cuando cambia la paginación.
-		void search()
+		autoSearch()
 	}, [page, pageSize])
 
 	const hasActiveFilters = useMemo(() => {
@@ -138,7 +140,8 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 			return
 		}
 
-		void search()
+		// Consultar con los filtros por defecto sin esperar el re-render
+		void search(DEFAULT_STORES_TABLE_FILTERS)
 	}
 
 	const handleCreated = () => {

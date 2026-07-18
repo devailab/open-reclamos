@@ -69,7 +69,6 @@ CREATE TABLE "claims"."complaint_details" (
 	"official_response" text,
 	"responded_at" timestamp with time zone,
 	"responded_by" uuid,
-	"ai_summary" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "complaint_details_complaint_id_unique" UNIQUE("complaint_id")
@@ -118,6 +117,7 @@ CREATE TABLE "claims"."complaints" (
 	"document_number" text NOT NULL,
 	"person_type" text DEFAULT 'natural' NOT NULL,
 	"legal_name" text,
+	"legal_tax_id" text,
 	"is_minor" boolean DEFAULT false NOT NULL,
 	"guardian_first_name" text,
 	"guardian_last_name" text,
@@ -174,7 +174,7 @@ CREATE TABLE "org"."organization_invitations" (
 	"accepted_at" timestamp with time zone,
 	"revoked_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"created_by" uuid NOT NULL,
+	"created_by" uuid,
 	"accepted_by" uuid,
 	"revoked_by" uuid,
 	CONSTRAINT "organization_invitations_token_hash_unique" UNIQUE("token_hash")
@@ -205,7 +205,7 @@ CREATE TABLE "org"."organization_members" (
 	"role_id" uuid NOT NULL,
 	"store_access_mode" text DEFAULT 'all' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"created_by" uuid NOT NULL,
+	"created_by" uuid,
 	"updated_at" timestamp with time zone,
 	"updated_by" uuid,
 	CONSTRAINT "organization_members_user_id_organization_id_pk" PRIMARY KEY("user_id","organization_id")
@@ -216,12 +216,10 @@ CREATE TABLE "org"."organization_settings" (
 	"organization_id" uuid NOT NULL,
 	"response_deadline_days" integer DEFAULT 15 NOT NULL,
 	"form_enabled" boolean DEFAULT true NOT NULL,
-	"ai_classification_enabled" boolean DEFAULT false NOT NULL,
-	"ai_organization_context" text,
 	"mcp_enabled_tools" text,
-	"mcp_show_sensitive_data" boolean DEFAULT true NOT NULL,
+	"mcp_show_sensitive_data" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"created_by" uuid NOT NULL,
+	"created_by" uuid,
 	"updated_at" timestamp with time zone,
 	"updated_by" uuid,
 	CONSTRAINT "organization_settings_organization_id_unique" UNIQUE("organization_id")
@@ -242,7 +240,7 @@ CREATE TABLE "org"."organizations" (
 	"primary_color" text,
 	"logo_key" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"created_by" uuid NOT NULL,
+	"created_by" uuid,
 	"updated_at" timestamp with time zone,
 	"updated_by" uuid,
 	CONSTRAINT "organizations_slug_unique" UNIQUE("slug"),
@@ -325,7 +323,7 @@ CREATE TABLE "org"."stores" (
 	"deleted_at" timestamp with time zone,
 	"deleted_by" uuid,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"created_by" uuid NOT NULL,
+	"created_by" uuid,
 	"updated_at" timestamp with time zone,
 	"updated_by" uuid,
 	CONSTRAINT "stores_slug_unique" UNIQUE("slug")
@@ -352,12 +350,12 @@ CREATE TABLE "auth"."users" (
 	"setup_status" text DEFAULT 'complete' NOT NULL,
 	"is_super_admin" boolean DEFAULT false NOT NULL,
 	"pending_organization_id" uuid,
-	"api_key" text,
+	"api_key_hash" text,
 	"api_key_created_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email"),
-	CONSTRAINT "users_api_key_unique" UNIQUE("api_key")
+	CONSTRAINT "users_api_key_hash_unique" UNIQUE("api_key_hash")
 );
 --> statement-breakpoint
 CREATE TABLE "auth"."verifications" (
@@ -408,6 +406,7 @@ CREATE TABLE "integrations"."webhook_endpoints" (
 );
 --> statement-breakpoint
 ALTER TABLE "auth"."accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "claims"."complaint_attachments" ADD CONSTRAINT "complaint_attachments_complaint_id_complaints_id_fk" FOREIGN KEY ("complaint_id") REFERENCES "claims"."complaints"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "claims"."complaint_categories" ADD CONSTRAINT "complaint_categories_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "org"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "claims"."complaint_categories" ADD CONSTRAINT "complaint_categories_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "auth"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "claims"."complaint_categories" ADD CONSTRAINT "complaint_categories_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "auth"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
@@ -450,7 +449,7 @@ ALTER TABLE "org"."organization_members" ADD CONSTRAINT "organization_members_up
 ALTER TABLE "org"."organization_settings" ADD CONSTRAINT "organization_settings_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "org"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "org"."organization_settings" ADD CONSTRAINT "organization_settings_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "auth"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "org"."organization_settings" ADD CONSTRAINT "organization_settings_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "auth"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "org"."organizations" ADD CONSTRAINT "organizations_ubigeo_id_ubigeos_id_fk" FOREIGN KEY ("ubigeo_id") REFERENCES "core"."ubigeos"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "org"."organizations" ADD CONSTRAINT "organizations_ubigeo_id_ubigeos_id_fk" FOREIGN KEY ("ubigeo_id") REFERENCES "core"."ubigeos"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "org"."organizations" ADD CONSTRAINT "organizations_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "auth"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "org"."organizations" ADD CONSTRAINT "organizations_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "auth"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "org"."permissions" ADD CONSTRAINT "permissions_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "org"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -478,6 +477,8 @@ ALTER TABLE "integrations"."webhook_endpoints" ADD CONSTRAINT "webhook_endpoints
 ALTER TABLE "integrations"."webhook_endpoints" ADD CONSTRAINT "webhook_endpoints_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "auth"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "integrations"."webhook_endpoints" ADD CONSTRAINT "webhook_endpoints_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "auth"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "accounts_userId_idx" ON "auth"."accounts" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "complaint_attachments_complaint_id_idx" ON "claims"."complaint_attachments" USING btree ("complaint_id");--> statement-breakpoint
+CREATE INDEX "complaint_attachments_storage_key_idx" ON "claims"."complaint_attachments" USING btree ("storage_key");--> statement-breakpoint
 CREATE INDEX "complaint_categories_organization_id_idx" ON "claims"."complaint_categories" USING btree ("organization_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "complaint_categories_organization_id_name_uidx" ON "claims"."complaint_categories" USING btree ("organization_id","name");--> statement-breakpoint
 CREATE INDEX "complaint_deliveries_organization_id_idx" ON "claims"."complaint_deliveries" USING btree ("organization_id");--> statement-breakpoint

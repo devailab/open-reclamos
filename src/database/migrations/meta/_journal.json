@@ -1,20 +1,13 @@
 {
-    "version": "7",
-    "dialect": "postgresql",
-    "entries": [
-        {
-            "idx": 0,
-            "version": "7",
-            "when": 1780199777148,
-            "tag": "0000_amusing_puppet_master",
-            "breakpoints": true
-        },
-        {
-            "idx": 1,
-            "version": "7",
-            "when": 1784085886614,
-            "tag": "0001_outgoing_major_mapleleaf",
-            "breakpoints": true
-        }
-    ]
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1784382262137,
+      "tag": "0000_polite_pride",
+      "breakpoints": true
+    }
+  ]
 }

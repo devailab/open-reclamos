@@ -22,7 +22,7 @@ export const organizations = orgSchema.table('organizations', {
 		.$defaultFn(() => Bun.randomUUIDv7()),
 	ubigeoId: uuid('ubigeo_id')
 		.notNull()
-		.references(() => ubigeos.id, { onDelete: 'set null' }),
+		.references(() => ubigeos.id, { onDelete: 'restrict' }),
 	slug: text('slug').notNull().unique(),
 	name: text('name').notNull(),
 	legalName: text('legal_name').notNull(),
@@ -37,9 +37,10 @@ export const organizations = orgSchema.table('organizations', {
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),
-	createdBy: uuid('created_by')
-		.notNull()
-		.references(() => users.id, { onDelete: 'set null' }),
+	// Nullable: al eliminar el usuario creador se preserva la organización (ON DELETE SET NULL)
+	createdBy: uuid('created_by').references(() => users.id, {
+		onDelete: 'set null',
+	}),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }),
 	updatedBy: uuid('updated_by').references(() => users.id, {
 		onDelete: 'set null',
@@ -178,9 +179,9 @@ export const organizationMembers = orgSchema.table(
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 			.defaultNow()
 			.notNull(),
-		createdBy: uuid('created_by')
-			.notNull()
-			.references(() => users.id, { onDelete: 'set null' }),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
 		updatedAt: timestamp('updated_at', {
 			withTimezone: true,
 			mode: 'date',
@@ -252,9 +253,9 @@ export const stores = orgSchema.table('stores', {
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),
-	createdBy: uuid('created_by')
-		.notNull()
-		.references(() => users.id, { onDelete: 'set null' }),
+	createdBy: uuid('created_by').references(() => users.id, {
+		onDelete: 'set null',
+	}),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }),
 	updatedBy: uuid('updated_by').references(() => users.id, {
 		onDelete: 'set null',
@@ -322,9 +323,9 @@ export const organizationInvitations = orgSchema.table(
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 			.defaultNow()
 			.notNull(),
-		createdBy: uuid('created_by')
-			.notNull()
-			.references(() => users.id, { onDelete: 'set null' }),
+		createdBy: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null',
+		}),
 		acceptedBy: uuid('accepted_by').references(() => users.id, {
 			onDelete: 'set null',
 		}),
@@ -381,9 +382,9 @@ export const organizationSettings = orgSchema.table('organization_settings', {
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),
-	createdBy: uuid('created_by')
-		.notNull()
-		.references(() => users.id, { onDelete: 'set null' }),
+	createdBy: uuid('created_by').references(() => users.id, {
+		onDelete: 'set null',
+	}),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }),
 	updatedBy: uuid('updated_by').references(() => users.id, {
 		onDelete: 'set null',

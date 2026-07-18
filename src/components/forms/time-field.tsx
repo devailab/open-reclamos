@@ -136,6 +136,7 @@ const TimeField: FC<TimeFieldProps> = ({
 			setError(validationError)
 			return validationError
 		},
+		clearError: () => setError(null),
 	}))
 
 	const handleTimeChange = (

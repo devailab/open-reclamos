@@ -43,6 +43,7 @@ interface Person {
 const DataTable = <T,>({ controller, columns, rows }: DataTableProps<T>) => {
 	const {
 		store,
+		getRowId,
 		handleRowClick,
 		totalPages,
 		hasNextPage,
@@ -115,7 +116,7 @@ const DataTable = <T,>({ controller, columns, rows }: DataTableProps<T>) => {
 						)}
 						{rows.map((row, index) => (
 							<TableRow
-								key={index}
+								key={getRowId ? getRowId(row) : index}
 								className={cn(
 									'text-foreground border-border/50',
 									isEnableRowSelection

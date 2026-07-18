@@ -21,7 +21,8 @@ export const users = authSchema.table('users', {
 	setupStatus: text('setup_status').notNull().default('complete'),
 	isSuperAdmin: boolean('is_super_admin').notNull().default(false),
 	pendingOrganizationId: uuid('pending_organization_id'),
-	apiKey: text('api_key').unique(),
+	// Solo se almacena el hash SHA-256 de la API key; el valor completo se muestra una única vez
+	apiKeyHash: text('api_key_hash').unique(),
 	apiKeyCreatedAt: timestamp('api_key_created_at', {
 		withTimezone: true,
 		mode: 'date',

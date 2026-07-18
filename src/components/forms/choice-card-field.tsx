@@ -49,6 +49,7 @@ function ChoiceCardField<
 			setError(validationError)
 			return validationError
 		},
+		clearError: () => setError(null),
 	}))
 
 	const gridClass = {

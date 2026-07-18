@@ -121,6 +121,9 @@ export function useComplaintForm({
 			const dialCode = dialCodeRaw.match(/^\+(\d+)/)?.[0] ?? null
 
 			const isJuridical = step1Values.personType === 'juridical'
+			// Solo aplica a persona natural: evita enviar datos de tutor
+			// residuales si el usuario cambió de tipo de persona
+			const isMinor = !isJuridical && step1Values.isMinor
 
 			const result = await $submitComplaintAction({
 				organizationId,
@@ -144,17 +147,21 @@ export function useComplaintForm({
 					? (step1Values.contactLastName ?? '')
 					: (step1Values.lastName ?? ''),
 				legalName: isJuridical ? (step1Values.legalName ?? null) : null,
-				isMinor: !isJuridical && step1Values.isMinor,
-				guardianFirstName: step1Values.isMinor
+				// RUC de la empresa: el campo documentNumber del paso 1 en modo jurídico
+				legalTaxId: isJuridical
+					? (step1Values.documentNumber ?? null)
+					: null,
+				isMinor,
+				guardianFirstName: isMinor
 					? (step1Values.guardianFirstName ?? null)
 					: null,
-				guardianLastName: step1Values.isMinor
+				guardianLastName: isMinor
 					? (step1Values.guardianLastName ?? null)
 					: null,
-				guardianDocumentType: step1Values.isMinor
+				guardianDocumentType: isMinor
 					? (step1Values.guardianDocumentType?.value ?? null)
 					: null,
-				guardianDocumentNumber: step1Values.isMinor
+				guardianDocumentNumber: isMinor
 					? (step1Values.guardianDocumentNumber ?? null)
 					: null,
 				email: step1Values.email ?? '',

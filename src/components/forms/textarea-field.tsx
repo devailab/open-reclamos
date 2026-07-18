@@ -54,6 +54,7 @@ const TextAreaField: FC<TextAreaFieldProps> = ({
 			setError(validationError)
 			return validationError
 		},
+		clearError: () => setError(null),
 	}))
 
 	const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

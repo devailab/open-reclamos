@@ -59,6 +59,7 @@ const SelectField: FC<SelectFieldProps> = ({
 			setError(validationError)
 			return validationError
 		},
+		clearError: () => setError(null),
 	}))
 
 	const handleValueChange = (selectedValue: string | null) => {

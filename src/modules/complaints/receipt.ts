@@ -31,6 +31,7 @@ interface ComplaintReceiptPayload {
 		firstName: string
 		lastName: string
 		legalName: string | null
+		legalTaxId: string | null
 		guardianFirstName: string | null
 		guardianLastName: string | null
 		guardianDocumentType: string | null
@@ -147,9 +148,15 @@ function formatConsumerRepresentative(
 			.filter(Boolean)
 			.join(' ')
 			.trim()
+		const contactDocument = [params.documentType, params.documentNumber]
+			.filter(Boolean)
+			.join(' ')
+			.trim()
 
 		return contactName
-			? `Contacto registrado: ${contactName}`
+			? `Contacto registrado: ${contactName}${
+					contactDocument ? ` (${contactDocument})` : ''
+				}`
 			: 'Contacto no consignado'
 	}
 
@@ -267,9 +274,15 @@ function buildComplaintPdfBaseData(params: ComplaintReceiptPayload) {
 		consumer: {
 			heading: formatConsumerHeading(params.complaint) || 'No consignado',
 			identity:
-				[params.complaint.documentType, params.complaint.documentNumber]
-					.filter(Boolean)
-					.join(' ') || 'Documento no consignado',
+				params.complaint.personType === 'juridical' &&
+				params.complaint.legalTaxId
+					? `RUC ${params.complaint.legalTaxId}`
+					: [
+							params.complaint.documentType,
+							params.complaint.documentNumber,
+						]
+							.filter(Boolean)
+							.join(' ') || 'Documento no consignado',
 			representative: formatConsumerRepresentative(params.complaint),
 			contact: formatConsumerContact(params.complaint) || 'No consignado',
 			address: formatConsumerAddress(params.complaint, params.context),

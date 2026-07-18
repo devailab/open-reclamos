@@ -2,7 +2,48 @@ import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth-server'
 import { s3 } from '@/lib/s3'
 import { getAttachmentByStorageKey } from '@/modules/complaints/detail-queries'
-import { getMembershipContext } from '@/modules/rbac/queries'
+import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+
+interface ParsedRange {
+	start: number
+	end: number
+}
+
+/**
+ * Parsing estricto de un único rango `bytes=`. Retorna:
+ * - null: header ausente o con formato/múltiples rangos → responder 200 completo
+ * - 'unsatisfiable': rango fuera de los límites → responder 416
+ */
+function parseRangeHeader(
+	rangeHeader: string | null,
+	size: number,
+): ParsedRange | null | 'unsatisfiable' {
+	if (!rangeHeader) return null
+
+	const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim())
+	if (!match) return null
+
+	const [, startRaw, endRaw] = match
+
+	// "bytes=-" no es un rango válido
+	if (startRaw === '' && endRaw === '') return null
+
+	// Rango sufijo: bytes=-N (últimos N bytes)
+	if (startRaw === '') {
+		const suffixLength = parseInt(endRaw, 10)
+		if (suffixLength === 0) return 'unsatisfiable'
+		const start = Math.max(0, size - suffixLength)
+		return { start, end: size - 1 }
+	}
+
+	const start = parseInt(startRaw, 10)
+	if (start >= size) return 'unsatisfiable'
+
+	const end = endRaw === '' ? size - 1 : parseInt(endRaw, 10)
+	if (start > end) return 'unsatisfiable'
+
+	return { start, end: Math.min(end, size - 1) }
+}
 
 export async function GET(
 	request: Request,
@@ -18,6 +59,10 @@ export async function GET(
 		return new NextResponse('Forbidden', { status: 403 })
 	}
 
+	if (!hasPermission(membership, 'complaints.view')) {
+		return new NextResponse('Forbidden', { status: 403 })
+	}
+
 	const { key: segments } = await params
 	const key = segments.join('/')
 
@@ -26,6 +71,14 @@ export async function GET(
 		membership.organizationId,
 	)
 	if (!attachment) {
+		return new NextResponse('Forbidden', { status: 403 })
+	}
+
+	// Respetar la restricción de tiendas del miembro
+	if (
+		membership.storeAccessMode === 'selected' &&
+		!membership.storeIds.includes(attachment.storeId)
+	) {
 		return new NextResponse('Forbidden', { status: 403 })
 	}
 
@@ -48,20 +101,23 @@ export async function GET(
 	headers.set('Accept-Ranges', 'bytes')
 	headers.set('Cache-Control', 'private, max-age=3600, immutable')
 
-	const rangeHeader = request.headers.get('range')
+	const range = parseRangeHeader(request.headers.get('range'), stat.size)
 
-	if (rangeHeader) {
-		const match = /bytes=(\d+)-(\d*)/.exec(rangeHeader)
-		if (match) {
-			const start = parseInt(match[1], 10)
-			const end = match[2] ? parseInt(match[2], 10) : stat.size - 1
-			headers.set('Content-Range', `bytes ${start}-${end}/${stat.size}`)
-			headers.set('Content-Length', String(end - start + 1))
-			return new NextResponse(file.slice(start, end + 1).stream(), {
-				status: 206,
-				headers,
-			})
-		}
+	if (range === 'unsatisfiable') {
+		headers.set('Content-Range', `bytes */${stat.size}`)
+		return new NextResponse(null, { status: 416, headers })
+	}
+
+	if (range) {
+		headers.set(
+			'Content-Range',
+			`bytes ${range.start}-${range.end}/${stat.size}`,
+		)
+		headers.set('Content-Length', String(range.end - range.start + 1))
+		return new NextResponse(
+			file.slice(range.start, range.end + 1).stream(),
+			{ status: 206, headers },
+		)
 	}
 
 	headers.set('Content-Length', String(stat.size))

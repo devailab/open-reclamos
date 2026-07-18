@@ -43,6 +43,7 @@ const BooleanField: FC<BooleanFieldProps> = ({
 			}
 		},
 		validate: () => null,
+		clearError: () => {},
 	}))
 
 	const handleChange = (checked: boolean) => {

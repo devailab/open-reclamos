@@ -127,6 +127,7 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 		controller,
 		defineColumns,
 		search,
+		autoSearch,
 		page,
 		pageSize,
 		setPage,
@@ -149,6 +150,7 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 		},
 		filters,
 		setFilters,
+		hasInitialData: true,
 	})
 
 	useEffect(() => {
@@ -158,7 +160,7 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `search` se recalcula en cada render por diseño del hook.
 	useEffect(() => {
-		void search()
+		autoSearch()
 	}, [page, pageSize])
 
 	const hasActiveFilters = useMemo(() => {
@@ -204,7 +206,8 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 			setPage(1)
 			return
 		}
-		void search()
+		// Consultar con los filtros por defecto sin esperar el re-render
+		void search(DEFAULT_COMPLAINTS_TABLE_FILTERS)
 	}
 
 	const columns = defineColumns([

@@ -112,6 +112,7 @@ export function DeliveriesPage({
 		controller,
 		defineColumns,
 		search,
+		autoSearch,
 		page,
 		pageSize,
 		setPage,
@@ -134,6 +135,7 @@ export function DeliveriesPage({
 		},
 		filters,
 		setFilters,
+		hasInitialData: true,
 	})
 
 	useEffect(() => {
@@ -143,7 +145,7 @@ export function DeliveriesPage({
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `search` se recalcula en cada render por diseño del hook.
 	useEffect(() => {
-		void search()
+		autoSearch()
 	}, [page, pageSize])
 
 	const hasActiveFilters = useMemo(
@@ -176,7 +178,8 @@ export function DeliveriesPage({
 			setPage(1)
 			return
 		}
-		void search()
+		// Consultar con los filtros por defecto sin esperar el re-render
+		void search(DEFAULT_DELIVERIES_TABLE_FILTERS)
 	}
 
 	const columns = defineColumns([

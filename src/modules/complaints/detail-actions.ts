@@ -673,6 +673,14 @@ export async function $getAttachmentDownloadUrlAction(
 		return { error: MESSAGES.complaints.attachmentNotFound }
 	}
 
+	// Respetar la restricción de tiendas del miembro
+	if (
+		access.membership.storeAccessMode === 'selected' &&
+		!access.membership.storeIds.includes(attachment.storeId)
+	) {
+		return { error: MESSAGES.complaints.attachmentNotFound }
+	}
+
 	const url = await getPresignedDownloadUrl(storageKey)
 	return { url }
 }
