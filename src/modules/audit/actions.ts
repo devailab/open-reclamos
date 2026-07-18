@@ -1,8 +1,6 @@
 'use server'
 
-import { redirect } from 'next/navigation'
-import { getSession } from '@/lib/auth-server'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { requireAccess } from '@/modules/shared/access'
 import {
 	type AuditLogTableRow,
 	type AuditUserAutocompleteOption,
@@ -36,22 +34,6 @@ export interface GetAuditLogsTableActionResult {
 export interface SearchAuditUsersActionResult {
 	options: AuditUserAutocompleteOption[]
 	error?: string
-}
-
-async function requireAccess(permissionKey: string) {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, permissionKey)) {
-		return {
-			error: 'No tienes permisos para realizar esta acción.',
-		} as const
-	}
-
-	return { session, membership } as const
 }
 
 export async function $getAuditLogsTableAction(

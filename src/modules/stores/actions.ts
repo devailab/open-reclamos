@@ -2,12 +2,13 @@
 
 import { and, eq, isNull } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { stores } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
-import { getSession } from '@/lib/auth-server'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { buildSlugBase, resolveUniqueSlug } from '@/lib/slug'
+import { requireAccess } from '@/modules/shared/access'
+import { MESSAGES } from '@/modules/shared/messages'
+import type { ActionResult } from '@/modules/shared/types'
 import {
 	checkStoreSlugExists,
 	getOrganizationFormEnabledForOrganization,
@@ -25,8 +26,6 @@ import {
 	validateStoreMutationInput,
 } from './validation'
 
-export type StoreActionResult = { error: string } | { success: true }
-
 export interface GetStoresTableActionInput {
 	page: number
 	pageSize: number
@@ -40,22 +39,6 @@ export interface GetStoresTableActionResult {
 	pageSize: number
 	filters: StoresTableFilters
 	organizationFormEnabled: boolean
-}
-
-async function requireAccess(permissionKey: string) {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, permissionKey)) {
-		return {
-			error: 'No tienes permisos para realizar esta acción.',
-		} as const
-	}
-
-	return { session, membership } as const
 }
 
 export async function $getStoresTableAction(
@@ -100,32 +83,8 @@ export async function $getStoresTableAction(
 	}
 }
 
-const buildStoreSlugBase = (name: string): string => {
-	const base = name
-		.toLowerCase()
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.replace(/[^a-z0-9\s]/g, '')
-		.trim()
-		.replace(/\s+/g, '-')
-		.replace(/-+/g, '-')
-		.slice(0, 50)
-
-	return base || 'tienda'
-}
-
-const getUniqueStoreSlug = async (name: string): Promise<string> => {
-	const base = buildStoreSlugBase(name)
-	let slug = base
-	let counter = 2
-
-	while (await checkStoreSlugExists(slug)) {
-		slug = `${base}-${counter}`
-		counter++
-	}
-
-	return slug
-}
+const getUniqueStoreSlug = (name: string): Promise<string> =>
+	resolveUniqueSlug(buildSlugBase(name, 'tienda'), checkStoreSlugExists)
 
 const buildStorePersistenceInput = (
 	input: ReturnType<typeof normalizeStoreMutationInput>,
@@ -144,13 +103,9 @@ const buildStorePersistenceInput = (
 
 export async function $createStoreAction(
 	input: StoreMutationInput,
-): Promise<StoreActionResult> {
+): Promise<ActionResult> {
 	const access = await requireAccess('stores.manage')
-	if ('error' in access)
-		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
-		}
+	if ('error' in access) return { error: access.error }
 
 	const normalizedInput = normalizeStoreMutationInput(input)
 	const validationError = validateStoreMutationInput(normalizedInput)
@@ -181,7 +136,7 @@ export async function $createStoreAction(
 			})
 		})
 	} catch {
-		return { error: 'No se pudo crear la tienda. Inténtalo nuevamente.' }
+		return { error: MESSAGES.stores.createFailed }
 	}
 
 	revalidatePath('/dashboard/stores')
@@ -196,10 +151,9 @@ export type UpdateStoreActionInput = StoreMutationInput & {
 
 export async function $updateStoreAction(
 	input: UpdateStoreActionInput,
-): Promise<StoreActionResult> {
+): Promise<ActionResult> {
 	const access = await requireAccess('stores.manage')
-	if ('error' in access)
-		return { error: 'No tienes permisos para realizar esta acción.' }
+	if ('error' in access) return { error: access.error }
 
 	const idError = validateStoreId(input.id)
 	if (idError) return { error: idError }
@@ -208,9 +162,9 @@ export async function $updateStoreAction(
 		input.id,
 		access.membership.organizationId,
 	)
-	if (!currentStore) return { error: 'La tienda no fue encontrada.' }
+	if (!currentStore) return { error: MESSAGES.stores.notFound }
 	if (currentStore.deletedAt) {
-		return { error: 'La tienda está inactiva y no se puede editar.' }
+		return { error: MESSAGES.stores.inactiveNotEditable }
 	}
 
 	const normalizedInput = normalizeStoreMutationInput(input)
@@ -257,7 +211,7 @@ export async function $updateStoreAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo actualizar la tienda. Inténtalo nuevamente.',
+			error: MESSAGES.stores.updateFailed,
 		}
 	}
 
@@ -269,10 +223,9 @@ export async function $updateStoreAction(
 
 export async function $deactivateStoreAction(
 	id: string,
-): Promise<StoreActionResult> {
+): Promise<ActionResult> {
 	const access = await requireAccess('stores.manage')
-	if ('error' in access)
-		return { error: 'No tienes permisos para realizar esta acción.' }
+	if ('error' in access) return { error: access.error }
 
 	const idError = validateStoreId(id)
 	if (idError) return { error: idError }
@@ -281,9 +234,9 @@ export async function $deactivateStoreAction(
 		id,
 		access.membership.organizationId,
 	)
-	if (!currentStore) return { error: 'La tienda no fue encontrada.' }
+	if (!currentStore) return { error: MESSAGES.stores.notFound }
 	if (currentStore.deletedAt) {
-		return { error: 'La tienda ya está inactiva.' }
+		return { error: MESSAGES.stores.alreadyInactive }
 	}
 
 	class AlreadyInactiveError extends Error {}
@@ -327,10 +280,10 @@ export async function $deactivateStoreAction(
 		})
 	} catch (e) {
 		if (e instanceof AlreadyInactiveError) {
-			return { error: 'La tienda ya está inactiva.' }
+			return { error: MESSAGES.stores.alreadyInactive }
 		}
 		return {
-			error: 'No se pudo desactivar la tienda. Inténtalo nuevamente.',
+			error: MESSAGES.stores.deactivateFailed,
 		}
 	}
 
@@ -343,10 +296,9 @@ export async function $deactivateStoreAction(
 export async function $setStoreFormEnabledAction(
 	id: string,
 	formEnabled: boolean,
-): Promise<StoreActionResult> {
+): Promise<ActionResult> {
 	const access = await requireAccess('stores.manage')
-	if ('error' in access)
-		return { error: 'No tienes permisos para realizar esta acción.' }
+	if ('error' in access) return { error: access.error }
 
 	const idError = validateStoreId(id)
 	if (idError) return { error: idError }
@@ -355,9 +307,9 @@ export async function $setStoreFormEnabledAction(
 		id,
 		access.membership.organizationId,
 	)
-	if (!currentStore) return { error: 'La tienda no fue encontrada.' }
+	if (!currentStore) return { error: MESSAGES.stores.notFound }
 	if (currentStore.deletedAt) {
-		return { error: 'La tienda está inactiva y no se puede editar.' }
+		return { error: MESSAGES.stores.inactiveNotEditable }
 	}
 	if (currentStore.formEnabled === formEnabled) {
 		return { success: true }
@@ -404,7 +356,7 @@ export async function $setStoreFormEnabledAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo actualizar el formulario de la tienda. Inténtalo nuevamente.',
+			error: MESSAGES.stores.formUpdateFailed,
 		}
 	}
 

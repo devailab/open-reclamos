@@ -27,6 +27,7 @@ import {
 	complaints,
 	stores,
 } from '@/database/schema'
+import { countRows } from '@/modules/shared/queries'
 import type {
 	ComplaintsTableFilters,
 	DashboardTrendDays,
@@ -179,17 +180,12 @@ export async function getComplaintsTableForOrganization({
 		.limit(pageSize)
 		.offset(offset)
 
-	const [total] = await db
-		.select({ total: count() })
-		.from(complaints)
-		.where(whereClause)
-
 	return {
 		rows: rows.map((row) => ({
 			...row,
 			category: row.category?.id ? row.category : null,
 		})),
-		totalItems: total?.total ?? 0,
+		totalItems: await countRows(complaints, whereClause),
 	}
 }
 

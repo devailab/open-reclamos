@@ -1,8 +1,6 @@
 'use server'
 
-import { redirect } from 'next/navigation'
-import { getSession } from '@/lib/auth-server'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { requireAccess } from '@/modules/shared/access'
 import {
 	type ComplaintsDashboardKpis,
 	type ComplaintTableRow,
@@ -45,26 +43,6 @@ export interface GetComplaintsDashboardMetricsActionResult {
 	trend: DashboardTrendPoint[]
 }
 
-async function requireAccess(permissionKey: string) {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, permissionKey)) {
-		return {
-			error: 'No tienes permisos para realizar esta acción.',
-		} as const
-	}
-
-	return { session, membership } as const
-}
-
-/**
- * Devuelve los IDs de tiendas permitidas para el usuario.
- * undefined = acceso a todas las tiendas; string[] = solo esas tiendas.
- */
 function resolveAllowedStoreIds(
 	storeAccessMode: 'all' | 'selected',
 	storeIds: string[],
@@ -108,21 +86,15 @@ export async function $getComplaintsDashboardMetricsAction(
 ): Promise<GetComplaintsDashboardMetricsActionResult> {
 	const days = normalizeDashboardTrendDays(input.days)
 
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	// El dashboard principal es accesible a todos, pero solo muestra métricas
-	// si el usuario tiene complaints.view. Si no, devuelve ceros.
-	if (!hasPermission(membership, 'complaints.view')) {
+	const access = await requireAccess('complaints.view')
+	if ('error' in access) {
 		return {
 			days,
 			kpis: { total: 0, open: 0, inReview: 0, resolved: 0, overdue: 0 },
 			trend: [],
 		}
 	}
+	const { membership } = access
 
 	const allowedStoreIds = resolveAllowedStoreIds(
 		membership.storeAccessMode,
@@ -147,15 +119,11 @@ export async function $getComplaintsDashboardMetricsAction(
 export async function $getFeaturedComplaintsAction(): Promise<
 	FeaturedComplaint[]
 > {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, 'complaints.view')) {
+	const access = await requireAccess('complaints.view')
+	if ('error' in access) {
 		return []
 	}
+	const { membership } = access
 
 	const allowedStoreIds = resolveAllowedStoreIds(
 		membership.storeAccessMode,

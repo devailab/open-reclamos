@@ -2,16 +2,12 @@
 
 import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { rolePermissions, roles } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
-import { getSession } from '@/lib/auth-server'
-import {
-	getMembershipContext,
-	hasPermission,
-	syncRolePermissions,
-} from '@/modules/rbac/queries'
+import { syncRolePermissions } from '@/modules/rbac/queries'
+import { requireAccess } from '@/modules/shared/access'
+import { MESSAGES } from '@/modules/shared/messages'
 import {
 	checkRoleKeyExists,
 	getAvailablePermissionIdsForOrganization,
@@ -52,28 +48,10 @@ export interface GetRoleActionResult {
 	role: RoleDetailRow | null
 }
 
-async function requireRolesAccess(
-	permissionKey: 'roles.view' | 'roles.manage',
-) {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, permissionKey)) {
-		return {
-			error: 'No tienes permisos para realizar esta acción.',
-		} as const
-	}
-
-	return { session, membership } as const
-}
-
 export async function $getRolesTableAction(
 	input: GetRolesTableActionInput,
 ): Promise<GetRolesTableActionResult> {
-	const access = await requireRolesAccess('roles.view')
+	const access = await requireAccess('roles.view')
 	if ('error' in access) {
 		return {
 			rows: [],
@@ -102,11 +80,10 @@ export async function $getRolesTableAction(
 export async function $getRoleAction(
 	roleId: string,
 ): Promise<GetRoleActionResult | { error: string }> {
-	const access = await requireRolesAccess('roles.view')
+	const access = await requireAccess('roles.view')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -117,7 +94,7 @@ export async function $getRoleAction(
 		roleId,
 		access.membership.organizationId,
 	)
-	if (!role) return { error: 'El rol no fue encontrado.' }
+	if (!role) return { error: MESSAGES.roles.notFound }
 
 	return { role }
 }
@@ -125,11 +102,10 @@ export async function $getRoleAction(
 export async function $createRoleAction(
 	input: RoleMutationInput,
 ): Promise<RoleActionResult> {
-	const access = await requireRolesAccess('roles.manage')
+	const access = await requireAccess('roles.manage')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -145,7 +121,7 @@ export async function $createRoleAction(
 		(permissionId) => !availablePermissionIds.has(permissionId),
 	)
 	if (invalidPermissionId) {
-		return { error: 'Uno de los permisos seleccionados no es válido.' }
+		return { error: MESSAGES.permissions.invalidSelection }
 	}
 
 	const key = buildCustomRoleKey(
@@ -153,7 +129,7 @@ export async function $createRoleAction(
 		normalizedInput,
 	)
 	if (await checkRoleKeyExists(key)) {
-		return { error: 'Ya existe un rol con ese nombre.' }
+		return { error: MESSAGES.roles.duplicateName }
 	}
 
 	try {
@@ -196,7 +172,7 @@ export async function $createRoleAction(
 			})
 		})
 	} catch {
-		return { error: 'No se pudo crear el rol. Inténtalo nuevamente.' }
+		return { error: MESSAGES.roles.createFailed }
 	}
 
 	revalidatePath('/dashboard/roles')
@@ -207,11 +183,10 @@ export async function $updateRoleAction(
 	id: string,
 	input: RoleMutationInput,
 ): Promise<RoleActionResult> {
-	const access = await requireRolesAccess('roles.manage')
+	const access = await requireAccess('roles.manage')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -222,9 +197,9 @@ export async function $updateRoleAction(
 		id,
 		access.membership.organizationId,
 	)
-	if (!role) return { error: 'El rol no fue encontrado.' }
+	if (!role) return { error: MESSAGES.roles.notFound }
 	if (role.isSystem) {
-		return { error: 'Los roles base no se pueden editar.' }
+		return { error: MESSAGES.roles.systemNotEditable }
 	}
 
 	const normalizedInput = normalizeRoleMutationInput(input)
@@ -239,7 +214,7 @@ export async function $updateRoleAction(
 		(permissionId) => !availablePermissionIds.has(permissionId),
 	)
 	if (invalidPermissionId) {
-		return { error: 'Uno de los permisos seleccionados no es válido.' }
+		return { error: MESSAGES.permissions.invalidSelection }
 	}
 
 	const nextKey = buildCustomRoleKey(
@@ -247,7 +222,7 @@ export async function $updateRoleAction(
 		normalizedInput,
 	)
 	if (await checkRoleKeyExists(nextKey, role.id)) {
-		return { error: 'Ya existe un rol con ese nombre.' }
+		return { error: MESSAGES.roles.duplicateName }
 	}
 
 	try {
@@ -304,7 +279,7 @@ export async function $updateRoleAction(
 			})
 		})
 	} catch {
-		return { error: 'No se pudo actualizar el rol. Inténtalo nuevamente.' }
+		return { error: MESSAGES.roles.updateFailed }
 	}
 
 	revalidatePath('/dashboard/roles')
@@ -312,11 +287,10 @@ export async function $updateRoleAction(
 }
 
 export async function $deleteRoleAction(id: string): Promise<RoleActionResult> {
-	const access = await requireRolesAccess('roles.manage')
+	const access = await requireAccess('roles.manage')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -327,15 +301,15 @@ export async function $deleteRoleAction(id: string): Promise<RoleActionResult> {
 		id,
 		access.membership.organizationId,
 	)
-	if (!role) return { error: 'El rol no fue encontrado.' }
+	if (!role) return { error: MESSAGES.roles.notFound }
 	if (role.isSystem) {
-		return { error: 'Los roles base no se pueden eliminar.' }
+		return { error: MESSAGES.roles.systemNotDeletable }
 	}
 
 	const usageCount = await getRoleUsageCount(role.id)
 	if (usageCount > 0) {
 		return {
-			error: 'No puedes eliminar un rol que ya está asignado a usuarios.',
+			error: MESSAGES.roles.assignedNotDeletable,
 		}
 	}
 
@@ -376,7 +350,7 @@ export async function $deleteRoleAction(id: string): Promise<RoleActionResult> {
 			})
 		})
 	} catch {
-		return { error: 'No se pudo eliminar el rol. Inténtalo nuevamente.' }
+		return { error: MESSAGES.roles.deleteFailed }
 	}
 
 	revalidatePath('/dashboard/roles')

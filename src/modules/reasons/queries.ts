@@ -1,6 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '@/database/database'
-import { complaintReasons, organizationMembers } from '@/database/schema'
+import { complaintReasons } from '@/database/schema'
 
 export async function getReasonsForOrg(organizationId: string) {
 	return db
@@ -19,13 +19,4 @@ export async function getReasonsForOrg(organizationId: string) {
 				isNull(complaintReasons.deletedAt),
 			),
 		)
-}
-
-export async function getOrganizationForUser(userId: string) {
-	const [membership] = await db
-		.select({ organizationId: organizationMembers.organizationId })
-		.from(organizationMembers)
-		.where(eq(organizationMembers.userId, userId))
-		.limit(1)
-	return membership?.organizationId ?? null
 }

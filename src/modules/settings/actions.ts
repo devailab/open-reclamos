@@ -15,6 +15,7 @@ import {
 } from '@/lib/email'
 import { deleteS3Object } from '@/lib/s3'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { MESSAGES } from '@/modules/shared/messages'
 import { renderTestEmailPdfBuffer } from './components/test-email-pdf'
 import { getOrganizationSettingsForOrganization } from './queries'
 import {
@@ -121,14 +122,14 @@ function getEmailTestErrorMessage(error: unknown) {
 async function getOrganizationSettingsAccess(sessionUserId: string) {
 	const membership = await getMembershipContext(sessionUserId)
 	if (!membership) {
-		return { error: 'No se encontró una membresía válida.' as const }
+		return { error: MESSAGES.settings.membershipNotFound }
 	}
 
 	const organization = await getOrganizationSettingsForOrganization(
 		membership.organizationId,
 	)
 	if (!organization) {
-		return { error: 'No se encontró una organización asociada.' as const }
+		return { error: MESSAGES.settings.organizationNotFound }
 	}
 
 	return { membership, organization }
@@ -145,7 +146,7 @@ export async function $updateOrganizationSettingsAction(
 	const { membership, organization: org } = access
 
 	if (!hasPermission(membership, 'settings.manage')) {
-		return { error: 'No tienes permisos para editar la organización.' }
+		return { error: MESSAGES.settings.organizationEditDenied }
 	}
 
 	const normalizedInput = normalizeUpdateOrganizationInput(input)
@@ -153,7 +154,7 @@ export async function $updateOrganizationSettingsAction(
 	if (validationError) return { error: validationError }
 	if (!hasRequiredOrganizationFields(normalizedInput)) {
 		return {
-			error: 'No se pudo actualizar la organización. Inténtalo nuevamente.',
+			error: MESSAGES.settings.organizationUpdateFailed,
 		}
 	}
 
@@ -248,7 +249,7 @@ export async function $updateOrganizationSettingsAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo actualizar la organización. Inténtalo nuevamente.',
+			error: MESSAGES.settings.organizationUpdateFailed,
 		}
 	}
 
@@ -271,7 +272,7 @@ export async function $sendOrganizationTestEmailAction(
 
 	if (!hasPermission(membership, 'settings.manage')) {
 		return {
-			error: 'No tienes permisos para ejecutar esta prueba.',
+			error: MESSAGES.settings.smtpTestDenied,
 		}
 	}
 
@@ -281,7 +282,7 @@ export async function $sendOrganizationTestEmailAction(
 
 	const recipientEmail = normalizedInput.recipientEmail
 	if (!recipientEmail) {
-		return { error: 'Debes indicar un correo de destino.' }
+		return { error: MESSAGES.settings.testEmailRequired }
 	}
 
 	try {
@@ -361,7 +362,7 @@ export async function $removeOrganizationLogoAction(): Promise<SettingsActionRes
 	const { membership, organization } = access
 
 	if (!hasPermission(membership, 'settings.manage')) {
-		return { error: 'No tienes permisos para editar la organización.' }
+		return { error: MESSAGES.settings.organizationEditDenied }
 	}
 
 	try {
@@ -385,7 +386,7 @@ export async function $removeOrganizationLogoAction(): Promise<SettingsActionRes
 	} catch (error) {
 		console.error('[settings] Error al quitar logo:', error)
 		return {
-			error: 'No se pudo quitar el logo. Inténtalo nuevamente.',
+			error: MESSAGES.settings.logoRemoveFailed,
 		}
 	}
 

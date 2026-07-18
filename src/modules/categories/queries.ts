@@ -1,6 +1,7 @@
-import { and, asc, count, desc, eq, ilike, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, type SQL } from 'drizzle-orm'
 import { db } from '@/database/database'
 import { complaintCategories } from '@/database/schema'
+import { countRows } from '@/modules/shared/queries'
 import type { CategoriesTableFilters } from './validation'
 
 export interface ComplaintCategoryRow {
@@ -80,13 +81,8 @@ export async function getCategoriesTableForOrganization({
 		.limit(pageSize)
 		.offset(offset)
 
-	const [total] = await db
-		.select({ total: count() })
-		.from(complaintCategories)
-		.where(whereClause)
-
 	return {
 		rows,
-		totalItems: total?.total ?? 0,
+		totalItems: await countRows(complaintCategories, whereClause),
 	}
 }

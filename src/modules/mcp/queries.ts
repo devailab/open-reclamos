@@ -6,6 +6,7 @@ import {
 	complaints,
 	stores,
 } from '@/database/schema'
+import { countRows } from '@/modules/shared/queries'
 
 export interface McpComplaintRow {
 	id: string
@@ -89,7 +90,7 @@ export async function getComplaintsForMcp(
 
 	const where = and(...conditions)
 
-	const [rows, [total]] = await Promise.all([
+	const [rows, total] = await Promise.all([
 		db
 			.select({
 				id: complaints.id,
@@ -129,15 +130,15 @@ export async function getComplaintsForMcp(
 			.orderBy(sql`${complaints.createdAt} desc`)
 			.limit(pageSize)
 			.offset(offset),
-		db.select({ total: count() }).from(complaints).where(where),
+		countRows(complaints, where),
 	])
 
 	return {
 		rows,
-		total: Number(total?.total ?? 0),
+		total,
 		page,
 		pageSize,
-		totalPages: Math.ceil(Number(total?.total ?? 0) / pageSize),
+		totalPages: Math.ceil(total / pageSize),
 	}
 }
 

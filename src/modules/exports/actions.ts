@@ -1,24 +1,18 @@
 'use server'
 
-import { redirect } from 'next/navigation'
-import { getSession } from '@/lib/auth-server'
 import { getStoreOptionsForOrganization } from '@/modules/complaints/dashboard-queries'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { requireAccess } from '@/modules/shared/access'
+import { MESSAGES } from '@/modules/shared/messages'
 import { getOrganizationForExport } from './queries'
 
 export async function $getExportPageDataAction() {
-	const session = await getSession()
-	if (!session) redirect('/login')
+	const access = await requireAccess(
+		'exports.view',
+		MESSAGES.exports.accessDenied,
+	)
+	if ('error' in access) return { error: access.error } as const
 
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, 'exports.view')) {
-		return {
-			error: 'No tienes permisos para acceder a las exportaciones.',
-		} as const
-	}
-
+	const { membership } = access
 	const allowedStoreIds =
 		membership.storeAccessMode === 'selected'
 			? membership.storeIds

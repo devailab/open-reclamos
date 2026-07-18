@@ -22,10 +22,10 @@ import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
 import {
 	assignDefaultMemberPermissionsForRole,
 	getAvailablePermissionIdsForOrganization,
-	getMembershipContext,
-	hasPermission,
 } from '@/modules/rbac/queries'
 import { getRoleByIdForOrganization } from '@/modules/roles/queries'
+import { requireAccess } from '@/modules/shared/access'
+import { MESSAGES } from '@/modules/shared/messages'
 import { createInvitationToken, hashInvitationToken } from './lib'
 import {
 	getExistingUserByEmail,
@@ -95,22 +95,6 @@ export interface UserAccessActionResult {
 	storeIds: string[]
 }
 
-async function requireUsersAccess(permissionKey: string) {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, permissionKey)) {
-		return {
-			error: 'No tienes permisos para realizar esta acción.',
-		} as const
-	}
-
-	return { session, membership } as const
-}
-
 async function validateRoleAndStores(
 	organizationId: string,
 	roleId: string,
@@ -118,7 +102,7 @@ async function validateRoleAndStores(
 	storeIds: string[],
 ) {
 	const role = await getRoleByIdForOrganization(roleId, organizationId)
-	if (!role) return { error: 'El rol seleccionado no es válido.' } as const
+	if (!role) return { error: MESSAGES.users.invalidRole } as const
 
 	const validStoreIds =
 		storeAccessMode === 'selected'
@@ -130,7 +114,7 @@ async function validateRoleAndStores(
 		validStoreIds.length !== storeIds.length
 	) {
 		return {
-			error: 'Una o más tiendas seleccionadas no son válidas.',
+			error: MESSAGES.users.invalidStores,
 		} as const
 	}
 
@@ -140,7 +124,7 @@ async function validateRoleAndStores(
 export async function $getUsersTableAction(
 	input: GetUsersTableActionInput,
 ): Promise<GetUsersTableActionResult> {
-	const access = await requireUsersAccess('users.view')
+	const access = await requireAccess('users.view')
 	if ('error' in access) {
 		return {
 			rows: [],
@@ -169,7 +153,7 @@ export async function $getUsersTableAction(
 export async function $getInvitationsTableAction(
 	input: GetUsersTableActionInput,
 ): Promise<GetInvitationsTableActionResult> {
-	const access = await requireUsersAccess('users.view')
+	const access = await requireAccess('users.view')
 	if ('error' in access) {
 		return {
 			rows: [],
@@ -198,11 +182,10 @@ export async function $getInvitationsTableAction(
 export async function $createUserInvitationAction(
 	input: UserInvitationInput,
 ): Promise<CreateInvitationActionResult> {
-	const access = await requireUsersAccess('users.invite')
+	const access = await requireAccess('users.invite')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -215,7 +198,7 @@ export async function $createUserInvitationAction(
 		access.membership.organizationId,
 	)
 	if (existingMembership) {
-		return { error: 'Ese correo ya pertenece a esta organización.' }
+		return { error: MESSAGES.users.emailAlreadyMember }
 	}
 
 	// Con SSO la cuenta vive en el IdP: un usuario existente puede aceptar
@@ -224,7 +207,7 @@ export async function $createUserInvitationAction(
 		const existingUser = await getExistingUserByEmail(normalizedInput.email)
 		if (existingUser) {
 			return {
-				error: 'Ese correo ya tiene una cuenta registrada. Por ahora solo se admiten usuarios nuevos por invitación.',
+				error: MESSAGES.users.emailHasAccountInviteOnly,
 			}
 		}
 	}
@@ -237,7 +220,7 @@ export async function $createUserInvitationAction(
 	)
 	if ('error' in roleAndStores) {
 		return {
-			error: roleAndStores.error ?? 'El rol seleccionado no es válido.',
+			error: roleAndStores.error ?? MESSAGES.users.invalidRole,
 		}
 	}
 
@@ -309,7 +292,7 @@ export async function $createUserInvitationAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo crear la invitación. Inténtalo nuevamente.',
+			error: MESSAGES.users.invitationCreateFailed,
 		}
 	}
 
@@ -324,11 +307,10 @@ export async function $createUserInvitationAction(
 export async function $getUserAccessAction(
 	userId: string,
 ): Promise<UserAccessActionResult | { error: string }> {
-	const access = await requireUsersAccess('users.view')
+	const access = await requireAccess('users.view')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -336,7 +318,7 @@ export async function $getUserAccessAction(
 		userId,
 		access.membership.organizationId,
 	)
-	if (!member) return { error: 'El usuario no fue encontrado.' }
+	if (!member) return { error: MESSAGES.users.notFound }
 
 	return {
 		userId: member.userId,
@@ -351,11 +333,10 @@ export async function $getUserAccessAction(
 export async function $updateUserAccessAction(
 	input: UpdateUserAccessInput,
 ): Promise<UserActionResult> {
-	const access = await requireUsersAccess('users.manage')
+	const access = await requireAccess('users.manage')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -365,7 +346,7 @@ export async function $updateUserAccessAction(
 
 	if (normalizedInput.userId === access.session.user.id) {
 		return {
-			error: 'No puedes editar tu propio acceso desde este módulo.',
+			error: MESSAGES.users.cannotEditOwnAccess,
 		}
 	}
 
@@ -373,7 +354,7 @@ export async function $updateUserAccessAction(
 		normalizedInput.userId,
 		access.membership.organizationId,
 	)
-	if (!member) return { error: 'El usuario no fue encontrado.' }
+	if (!member) return { error: MESSAGES.users.notFound }
 
 	const roleAndStores = await validateRoleAndStores(
 		access.membership.organizationId,
@@ -383,7 +364,7 @@ export async function $updateUserAccessAction(
 	)
 	if ('error' in roleAndStores) {
 		return {
-			error: roleAndStores.error ?? 'El rol seleccionado no es válido.',
+			error: roleAndStores.error ?? MESSAGES.users.invalidRole,
 		}
 	}
 
@@ -395,7 +376,7 @@ export async function $updateUserAccessAction(
 		(permissionId) => !availablePermissionIds.has(permissionId),
 	)
 	if (invalidPermissionId) {
-		return { error: 'Uno de los permisos seleccionados no es válido.' }
+		return { error: MESSAGES.permissions.invalidSelection }
 	}
 
 	try {
@@ -475,7 +456,7 @@ export async function $updateUserAccessAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo actualizar el acceso del usuario.',
+			error: MESSAGES.users.accessUpdateFailed,
 		}
 	}
 
@@ -496,11 +477,10 @@ export async function $updateMemberAccessAction(
 export async function $revokeInvitationAction(
 	invitationId: string,
 ): Promise<UserActionResult> {
-	const access = await requireUsersAccess('users.revoke')
+	const access = await requireAccess('users.revoke')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -508,9 +488,9 @@ export async function $revokeInvitationAction(
 		invitationId,
 		access.membership.organizationId,
 	)
-	if (!invitation) return { error: 'La invitación no fue encontrada.' }
+	if (!invitation) return { error: MESSAGES.users.invitationNotFound }
 	if (invitation.acceptedAt || invitation.revokedAt) {
-		return { error: 'La invitación ya no está activa.' }
+		return { error: MESSAGES.users.invitationNotActive }
 	}
 
 	try {
@@ -544,7 +524,7 @@ export async function $revokeInvitationAction(
 			})
 		})
 	} catch {
-		return { error: 'No se pudo revocar la invitación.' }
+		return { error: MESSAGES.users.invitationRevokeFailed }
 	}
 
 	revalidatePath('/dashboard/users')
@@ -554,23 +534,22 @@ export async function $revokeInvitationAction(
 export async function $removeUserFromOrganizationAction(
 	userId: string,
 ): Promise<UserActionResult> {
-	const access = await requireUsersAccess('users.revoke')
+	const access = await requireAccess('users.revoke')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
 	if (userId === access.session.user.id) {
-		return { error: 'No puedes retirarte a ti mismo de la organización.' }
+		return { error: MESSAGES.users.cannotRemoveSelf }
 	}
 
 	const member = await getUserByIdForOrganization(
 		userId,
 		access.membership.organizationId,
 	)
-	if (!member) return { error: 'El usuario no fue encontrado.' }
+	if (!member) return { error: MESSAGES.users.notFound }
 
 	try {
 		await db.transaction(async (tx) => {
@@ -626,7 +605,7 @@ export async function $removeUserFromOrganizationAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo retirar al usuario de la organización.',
+			error: MESSAGES.users.memberRemoveFailed,
 		}
 	}
 
@@ -639,7 +618,7 @@ export async function $acceptInvitationAction(
 ): Promise<UserActionResult> {
 	if (SSO_ENABLED) {
 		return {
-			error: 'La creación de cuentas con contraseña está deshabilitada.',
+			error: MESSAGES.users.passwordSignupDisabled,
 		}
 	}
 
@@ -651,18 +630,18 @@ export async function $acceptInvitationAction(
 	if (validationError) return { error: validationError }
 
 	const invitation = await getOpenInvitationByToken(normalizedInput.token)
-	if (!invitation) return { error: 'La invitación no fue encontrada.' }
+	if (!invitation) return { error: MESSAGES.users.invitationNotFound }
 	if (invitation.acceptedAt || invitation.revokedAt) {
-		return { error: 'La invitación ya no está disponible.' }
+		return { error: MESSAGES.users.invitationUnavailable }
 	}
 	if (invitation.expiresAt < new Date()) {
-		return { error: 'La invitación ha expirado.' }
+		return { error: MESSAGES.users.invitationExpired }
 	}
 
 	const existingUser = await getExistingUserByEmail(invitation.email)
 	if (existingUser) {
 		return {
-			error: 'Ese correo ya tiene una cuenta registrada. Solicita una nueva invitación con otro correo.',
+			error: MESSAGES.users.emailHasAccountNewInvitation,
 		}
 	}
 
@@ -678,7 +657,7 @@ export async function $acceptInvitationAction(
 		})
 
 		if (!authResult?.user?.id) {
-			return { error: 'No se pudo completar el registro.' }
+			return { error: MESSAGES.users.registrationFailed }
 		}
 
 		const userId = authResult.user.id
@@ -781,7 +760,7 @@ export async function $acceptInvitationAction(
 		}
 
 		return {
-			error: 'No se pudo completar el registro. Inténtalo nuevamente.',
+			error: MESSAGES.users.registrationFailedRetry,
 		}
 	}
 
@@ -793,18 +772,18 @@ export async function $acceptInvitationAction(
 export async function $acceptSsoInvitationAction(
 	token: string,
 ): Promise<UserActionResult> {
-	if (!SSO_ENABLED) return { error: 'El acceso SSO no está habilitado.' }
+	if (!SSO_ENABLED) return { error: MESSAGES.users.ssoDisabled }
 
 	const session = await getSession()
 	if (!session) redirect('/login')
 
 	const invitation = await getOpenInvitationByToken(token.trim())
-	if (!invitation) return { error: 'La invitación no fue encontrada.' }
+	if (!invitation) return { error: MESSAGES.users.invitationNotFound }
 	if (invitation.acceptedAt || invitation.revokedAt) {
-		return { error: 'La invitación ya no está disponible.' }
+		return { error: MESSAGES.users.invitationUnavailable }
 	}
 	if (invitation.expiresAt < new Date()) {
-		return { error: 'La invitación ha expirado.' }
+		return { error: MESSAGES.users.invitationExpired }
 	}
 	if (session.user.email.toLowerCase() !== invitation.email.toLowerCase()) {
 		return {
@@ -817,7 +796,7 @@ export async function $acceptSsoInvitationAction(
 		invitation.organizationId,
 	)
 	if (existingMembership) {
-		return { error: 'Ya perteneces a esta organización.' }
+		return { error: MESSAGES.users.alreadyMember }
 	}
 
 	const invitationStores =
@@ -886,7 +865,7 @@ export async function $acceptSsoInvitationAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo aceptar la invitación. Inténtalo nuevamente.',
+			error: MESSAGES.users.invitationAcceptFailed,
 		}
 	}
 
@@ -931,16 +910,15 @@ export interface SendInvitationEmailInput {
 export async function $sendInvitationEmailAction(
 	input: SendInvitationEmailInput,
 ): Promise<UserActionResult> {
-	const access = await requireUsersAccess('users.invite')
+	const access = await requireAccess('users.invite')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
 	if (!input.email?.trim() || !input.inviteUrl?.trim()) {
-		return { error: 'Datos de invitación inválidos.' }
+		return { error: MESSAGES.users.invalidInvitationData }
 	}
 
 	const [org] = await db
@@ -979,7 +957,7 @@ export async function $sendInvitationEmailAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo enviar el correo. Verifica la configuración de email.',
+			error: MESSAGES.users.emailSendFailed,
 		}
 	}
 

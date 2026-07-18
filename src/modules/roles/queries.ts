@@ -17,6 +17,7 @@ import {
 	roles,
 } from '@/database/schema'
 import { isRoleAssignableSystemPermissionKey } from '@/modules/rbac/lib'
+import { countRows } from '@/modules/shared/queries'
 import type { RolesTableFilters } from './validation'
 
 export interface RoleTableRow {
@@ -173,11 +174,6 @@ export async function getRolesTableForOrganization({
 		.limit(pageSize)
 		.offset(offset)
 
-	const [total] = await db
-		.select({ total: count() })
-		.from(roles)
-		.where(whereClause)
-
 	const roleIds = rows.map((row) => row.id)
 	const permissionCounts = roleIds.length
 		? await db
@@ -214,7 +210,7 @@ export async function getRolesTableForOrganization({
 			permissionsCount: permissionCountByRoleId.get(row.id) ?? 0,
 			membersCount: memberCountByRoleId.get(row.id) ?? 0,
 		})),
-		totalItems: total?.total ?? 0,
+		totalItems: await countRows(roles, whereClause),
 	}
 }
 
@@ -228,12 +224,10 @@ export async function checkRoleKeyExists(key: string, excludeRoleId?: string) {
 }
 
 export async function getRoleUsageCount(roleId: string) {
-	const [result] = await db
-		.select({ total: count() })
-		.from(organizationMembers)
-		.where(eq(organizationMembers.roleId, roleId))
-
-	return result?.total ?? 0
+	return countRows(
+		organizationMembers,
+		eq(organizationMembers.roleId, roleId),
+	)
 }
 
 export async function getRolePermissionIds(roleId: string) {

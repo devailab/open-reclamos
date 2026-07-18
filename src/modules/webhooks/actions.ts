@@ -2,12 +2,13 @@
 
 import { and, eq, isNull } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { webhookEndpoints } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
-import { getSession } from '@/lib/auth-server'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { buildSlugBase, resolveUniqueSlug } from '@/lib/slug'
+import { requireAccess } from '@/modules/shared/access'
+import { MESSAGES } from '@/modules/shared/messages'
+import type { ActionResult } from '@/modules/shared/types'
 import {
 	checkWebhookSlugExists,
 	getDeliveriesTableForOrganization,
@@ -29,8 +30,6 @@ import {
 	type WebhooksTableFilters,
 } from './validation'
 
-export type WebhookActionResult = { error: string } | { success: true }
-
 export interface GetWebhooksTableActionResult {
 	rows: WebhookEndpointRow[]
 	totalItems: number
@@ -48,58 +47,13 @@ export interface GetDeliveriesTableActionResult {
 	endpointOptions: { id: string; name: string }[]
 }
 
-async function requireAccess(permissionKey: string): Promise<
-	| { error: string; session?: never; membership?: never }
-	| {
-			error?: never
-			session: NonNullable<Awaited<ReturnType<typeof getSession>>>
-			membership: NonNullable<
-				Awaited<ReturnType<typeof getMembershipContext>>
-			>
-	  }
-> {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, permissionKey)) {
-		return { error: 'No tienes permisos para realizar esta acción.' }
-	}
-
-	return { session, membership }
-}
-
-const buildWebhookSlugBase = (name: string): string => {
-	const base = name
-		.toLowerCase()
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.replace(/[^a-z0-9\s]/g, '')
-		.trim()
-		.replace(/\s+/g, '-')
-		.replace(/-+/g, '-')
-		.slice(0, 50)
-
-	return base || 'webhook'
-}
-
-const getUniqueWebhookSlug = async (
+const getUniqueWebhookSlug = (
 	name: string,
 	organizationId: string,
-): Promise<string> => {
-	const base = buildWebhookSlugBase(name)
-	let slug = base
-	let counter = 2
-
-	while (await checkWebhookSlugExists(slug, organizationId)) {
-		slug = `${base}-${counter}`
-		counter++
-	}
-
-	return slug
-}
+): Promise<string> =>
+	resolveUniqueSlug(buildSlugBase(name, 'webhook'), (slug) =>
+		checkWebhookSlugExists(slug, organizationId),
+	)
 
 export async function $getWebhooksTableAction(input: {
 	page: number
@@ -135,13 +89,9 @@ export async function $getWebhooksTableAction(input: {
 
 export async function $createWebhookAction(
 	input: WebhookMutationInput,
-): Promise<WebhookActionResult> {
+): Promise<ActionResult> {
 	const access = await requireAccess('webhooks.manage')
-	if ('error' in access)
-		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
-		}
+	if ('error' in access) return { error: access.error }
 
 	const normalized = normalizeWebhookMutationInput(input)
 	const validationError = validateWebhookMutationInput(normalized)
@@ -182,7 +132,7 @@ export async function $createWebhookAction(
 			})
 		})
 	} catch {
-		return { error: 'No se pudo crear el webhook. Inténtalo nuevamente.' }
+		return { error: MESSAGES.webhooks.createFailed }
 	}
 
 	revalidatePath('/dashboard/webhooks')
@@ -193,13 +143,9 @@ export type UpdateWebhookActionInput = WebhookMutationInput & { id: string }
 
 export async function $updateWebhookAction(
 	input: UpdateWebhookActionInput,
-): Promise<WebhookActionResult> {
+): Promise<ActionResult> {
 	const access = await requireAccess('webhooks.manage')
-	if ('error' in access)
-		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
-		}
+	if ('error' in access) return { error: access.error }
 
 	const idError = validateWebhookId(input.id)
 	if (idError) return { error: idError }
@@ -208,9 +154,9 @@ export async function $updateWebhookAction(
 		input.id,
 		access.membership.organizationId,
 	)
-	if (!current) return { error: 'El webhook no fue encontrado.' }
+	if (!current) return { error: MESSAGES.webhooks.notFound }
 	if (current.deletedAt)
-		return { error: 'El webhook está eliminado y no se puede editar.' }
+		return { error: MESSAGES.webhooks.deletedNotEditable }
 
 	const normalized = normalizeWebhookMutationInput(input)
 	const validationError = validateWebhookMutationInput(normalized)
@@ -260,7 +206,7 @@ export async function $updateWebhookAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo actualizar el webhook. Inténtalo nuevamente.',
+			error: MESSAGES.webhooks.updateFailed,
 		}
 	}
 
@@ -268,15 +214,9 @@ export async function $updateWebhookAction(
 	return { success: true }
 }
 
-export async function $deleteWebhookAction(
-	id: string,
-): Promise<WebhookActionResult> {
+export async function $deleteWebhookAction(id: string): Promise<ActionResult> {
 	const access = await requireAccess('webhooks.manage')
-	if ('error' in access)
-		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
-		}
+	if ('error' in access) return { error: access.error }
 
 	const idError = validateWebhookId(id)
 	if (idError) return { error: idError }
@@ -285,8 +225,8 @@ export async function $deleteWebhookAction(
 		id,
 		access.membership.organizationId,
 	)
-	if (!current) return { error: 'El webhook no fue encontrado.' }
-	if (current.deletedAt) return { error: 'El webhook ya está eliminado.' }
+	if (!current) return { error: MESSAGES.webhooks.notFound }
+	if (current.deletedAt) return { error: MESSAGES.webhooks.alreadyDeleted }
 
 	class AlreadyDeletedError extends Error {}
 
@@ -327,9 +267,9 @@ export async function $deleteWebhookAction(
 		})
 	} catch (e) {
 		if (e instanceof AlreadyDeletedError)
-			return { error: 'El webhook ya está eliminado.' }
+			return { error: MESSAGES.webhooks.alreadyDeleted }
 		return {
-			error: 'No se pudo eliminar el webhook. Inténtalo nuevamente.',
+			error: MESSAGES.webhooks.deleteFailed,
 		}
 	}
 

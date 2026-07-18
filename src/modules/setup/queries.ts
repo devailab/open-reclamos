@@ -43,15 +43,6 @@ export async function checkSlugExists(slug: string): Promise<boolean> {
 	return result.length > 0
 }
 
-export async function checkStoreSlugExists(slug: string): Promise<boolean> {
-	const result = await db
-		.select({ id: stores.id })
-		.from(stores)
-		.where(eq(stores.slug, slug))
-		.limit(1)
-	return result.length > 0
-}
-
 export async function searchUbigeos(query: string) {
 	return db
 		.select({

@@ -10,10 +10,10 @@ import {
 	complaints,
 } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
-import { getSession } from '@/lib/auth-server'
 import { getPresignedDownloadUrl } from '@/lib/s3'
 import { WEBHOOK_EVENT } from '@/lib/webhook-events'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { requireAccess } from '@/modules/shared/access'
+import { MESSAGES } from '@/modules/shared/messages'
 import { dispatchWebhookEvent } from '@/modules/webhooks/dispatch'
 import type { ChangeableStatus } from './dashboard-validation'
 import {
@@ -37,22 +37,6 @@ export interface GetComplaintDetailResult {
 	complaint: ComplaintDetail
 	auditHistory: ComplaintAuditEntry[]
 	history: ComplaintHistoryEntry[]
-}
-
-async function requireAccess(permissionKey: string) {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, permissionKey)) {
-		return {
-			error: 'No tienes permisos para realizar esta acción.',
-		} as const
-	}
-
-	return { session, membership } as const
 }
 
 /**
@@ -159,8 +143,7 @@ export async function $saveDraftResponseAction(
 	if ('error' in access) {
 		return {
 			success: false,
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -168,7 +151,8 @@ export async function $saveDraftResponseAction(
 		id,
 		access.membership.organizationId,
 	)
-	if (!existing) return { success: false, error: 'Reclamo no encontrado.' }
+	if (!existing)
+		return { success: false, error: MESSAGES.complaints.notFound }
 
 	if (
 		!canAccessStore(
@@ -177,13 +161,13 @@ export async function $saveDraftResponseAction(
 			access.membership.storeIds,
 		)
 	) {
-		return { success: false, error: 'No tienes acceso a este reclamo.' }
+		return { success: false, error: MESSAGES.complaints.noAccess }
 	}
 
 	if (existing.officialResponse) {
 		return {
 			success: false,
-			error: 'El reclamo ya tiene respuesta oficial.',
+			error: MESSAGES.complaints.alreadyHasResponse,
 		}
 	}
 
@@ -218,15 +202,14 @@ export async function $updateComplaintClassificationAction(
 	if ('error' in access) {
 		return {
 			success: false,
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
 	if (!isComplaintPriority(input.priority)) {
 		return {
 			success: false,
-			error: 'La prioridad seleccionada no es válida.',
+			error: MESSAGES.complaints.invalidPriority,
 		}
 	}
 
@@ -235,7 +218,7 @@ export async function $updateComplaintClassificationAction(
 		access.membership.organizationId,
 	)
 	if (!existing) {
-		return { success: false, error: 'Reclamo no encontrado.' }
+		return { success: false, error: MESSAGES.complaints.notFound }
 	}
 
 	if (
@@ -245,7 +228,7 @@ export async function $updateComplaintClassificationAction(
 			access.membership.storeIds,
 		)
 	) {
-		return { success: false, error: 'No tienes acceso a este reclamo.' }
+		return { success: false, error: MESSAGES.complaints.noAccess }
 	}
 
 	const category = await getComplaintCategoryForOrganization({
@@ -255,7 +238,7 @@ export async function $updateComplaintClassificationAction(
 	if (input.categoryId && !category) {
 		return {
 			success: false,
-			error: 'La categoría seleccionada no es válida.',
+			error: MESSAGES.complaints.invalidCategory,
 		}
 	}
 
@@ -309,7 +292,7 @@ export async function $updateComplaintClassificationAction(
 		)
 		return {
 			success: false,
-			error: 'No se pudieron guardar la prioridad y la categoría.',
+			error: MESSAGES.complaints.priorityCategorySaveFailed,
 		}
 	}
 }
@@ -334,20 +317,19 @@ export async function $respondToComplaintAction(
 	if ('error' in access) {
 		return {
 			success: false,
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
 	const response = input.response?.trim()
 	if (!response) {
-		return { success: false, error: 'La respuesta no puede estar vacía' }
+		return { success: false, error: MESSAGES.complaints.responseEmpty }
 	}
 
 	if (!isComplaintPriority(input.priority)) {
 		return {
 			success: false,
-			error: 'La prioridad seleccionada no es válida.',
+			error: MESSAGES.complaints.invalidPriority,
 		}
 	}
 
@@ -356,7 +338,7 @@ export async function $respondToComplaintAction(
 		access.membership.organizationId,
 	)
 	if (!existing) {
-		return { success: false, error: 'Reclamo no encontrado' }
+		return { success: false, error: MESSAGES.complaints.notFoundShort }
 	}
 
 	// Verificar acceso a la tienda del reclamo
@@ -367,13 +349,13 @@ export async function $respondToComplaintAction(
 			access.membership.storeIds,
 		)
 	) {
-		return { success: false, error: 'No tienes acceso a este reclamo.' }
+		return { success: false, error: MESSAGES.complaints.noAccess }
 	}
 
 	if (existing.officialResponse) {
 		return {
 			success: false,
-			error: 'Este reclamo ya tiene una respuesta registrada',
+			error: MESSAGES.complaints.alreadyHasResponseRegistered,
 		}
 	}
 
@@ -390,7 +372,7 @@ export async function $respondToComplaintAction(
 	if (input.categoryId && !category) {
 		return {
 			success: false,
-			error: 'La categoría seleccionada no es válida.',
+			error: MESSAGES.complaints.invalidCategory,
 		}
 	}
 
@@ -491,7 +473,7 @@ export async function $respondToComplaintAction(
 		console.error('[complaints] Error al responder reclamo:', error)
 		return {
 			success: false,
-			error: 'Error al guardar la respuesta. Intenta de nuevo.',
+			error: MESSAGES.complaints.responseSaveFailed,
 		}
 	}
 
@@ -570,8 +552,7 @@ export async function $changeComplaintStatusAction(
 	if ('error' in access) {
 		return {
 			success: false,
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -579,7 +560,8 @@ export async function $changeComplaintStatusAction(
 		input.id,
 		access.membership.organizationId,
 	)
-	if (!existing) return { success: false, error: 'Reclamo no encontrado.' }
+	if (!existing)
+		return { success: false, error: MESSAGES.complaints.notFound }
 
 	if (
 		!canAccessStore(
@@ -588,15 +570,15 @@ export async function $changeComplaintStatusAction(
 			access.membership.storeIds,
 		)
 	) {
-		return { success: false, error: 'No tienes acceso a este reclamo.' }
+		return { success: false, error: MESSAGES.complaints.noAccess }
 	}
 
 	if (existing.status === 'resolved') {
-		return { success: false, error: 'El reclamo ya fue resuelto.' }
+		return { success: false, error: MESSAGES.complaints.alreadyResolved }
 	}
 
 	if (existing.status === input.status) {
-		return { success: false, error: 'El reclamo ya tiene ese estado.' }
+		return { success: false, error: MESSAGES.complaints.sameStatus }
 	}
 
 	const now = new Date()
@@ -652,7 +634,7 @@ export async function $changeComplaintStatusAction(
 	} catch {
 		return {
 			success: false,
-			error: 'Error al cambiar el estado. Intenta de nuevo.',
+			error: MESSAGES.complaints.statusChangeFailed,
 		}
 	}
 
@@ -680,8 +662,7 @@ export async function $getAttachmentDownloadUrlAction(
 	const access = await requireAccess('complaints.view')
 	if ('error' in access)
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 
 	const attachment = await getAttachmentByStorageKey(
@@ -689,7 +670,7 @@ export async function $getAttachmentDownloadUrlAction(
 		access.membership.organizationId,
 	)
 	if (!attachment) {
-		return { error: 'Archivo no encontrado o sin acceso.' }
+		return { error: MESSAGES.complaints.attachmentNotFound }
 	}
 
 	const url = await getPresignedDownloadUrl(storageKey)

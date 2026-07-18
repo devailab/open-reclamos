@@ -1,17 +1,8 @@
-import {
-	and,
-	count,
-	desc,
-	eq,
-	ilike,
-	isNotNull,
-	isNull,
-	or,
-	sql,
-} from 'drizzle-orm'
+import { and, desc, eq, ilike, isNotNull, isNull, or, sql } from 'drizzle-orm'
 import { db } from '@/database/database'
 import { webhookDeliveries, webhookEndpoints } from '@/database/schema'
 import type { WebhookEventKey } from '@/lib/webhook-events'
+import { countRows } from '@/modules/shared/queries'
 import type { DeliveriesTableFilters, WebhooksTableFilters } from './validation'
 
 export interface WebhookEndpointRow {
@@ -69,7 +60,7 @@ export async function getWebhooksTableForOrganization({
 	const where = and(...conditions)
 	const offset = (page - 1) * pageSize
 
-	const [rows, [{ total }]] = await Promise.all([
+	const [rows, totalItems] = await Promise.all([
 		db
 			.select({
 				id: webhookEndpoints.id,
@@ -87,7 +78,7 @@ export async function getWebhooksTableForOrganization({
 			.orderBy(desc(webhookEndpoints.createdAt))
 			.limit(pageSize)
 			.offset(offset),
-		db.select({ total: count() }).from(webhookEndpoints).where(where),
+		countRows(webhookEndpoints, where),
 	])
 
 	return {
@@ -95,7 +86,7 @@ export async function getWebhooksTableForOrganization({
 			...r,
 			events: (r.events ?? []) as WebhookEventKey[],
 		})),
-		totalItems: Number(total),
+		totalItems,
 	}
 }
 
@@ -182,7 +173,7 @@ export async function getDeliveriesTableForOrganization({
 	const where = and(...conditions)
 	const offset = (page - 1) * pageSize
 
-	const [rows, [{ total }]] = await Promise.all([
+	const [rows, totalItems] = await Promise.all([
 		db
 			.select({
 				id: webhookDeliveries.id,
@@ -207,7 +198,7 @@ export async function getDeliveriesTableForOrganization({
 			.orderBy(desc(webhookDeliveries.createdAt))
 			.limit(pageSize)
 			.offset(offset),
-		db.select({ total: count() }).from(webhookDeliveries).where(where),
+		countRows(webhookDeliveries, where),
 	])
 
 	return {
@@ -216,7 +207,7 @@ export async function getDeliveriesTableForOrganization({
 			endpointId: r.endpointId ?? null,
 			entityId: r.entityId ?? null,
 		})),
-		totalItems: Number(total),
+		totalItems,
 	}
 }
 

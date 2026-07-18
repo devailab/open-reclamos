@@ -2,12 +2,11 @@
 
 import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { permissions, rolePermissions } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
-import { getSession } from '@/lib/auth-server'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { requireAccess } from '@/modules/shared/access'
+import { MESSAGES } from '@/modules/shared/messages'
 import {
 	checkPermissionKeyExists,
 	getPermissionByIdForOrganization,
@@ -42,26 +41,10 @@ export interface GetPermissionsTableActionResult {
 	filters: PermissionsTableFilters
 }
 
-async function requirePermissionsAccess(permissionKey: string) {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, permissionKey)) {
-		return {
-			error: 'No tienes permisos para realizar esta acción.',
-		} as const
-	}
-
-	return { session, membership } as const
-}
-
 export async function $getPermissionsTableAction(
 	input: GetPermissionsTableActionInput,
 ): Promise<GetPermissionsTableActionResult> {
-	const access = await requirePermissionsAccess('permissions.view')
+	const access = await requireAccess('permissions.view')
 	if ('error' in access) {
 		return {
 			rows: [],
@@ -90,11 +73,10 @@ export async function $getPermissionsTableAction(
 export async function $createPermissionAction(
 	input: PermissionMutationInput,
 ): Promise<PermissionActionResult> {
-	const access = await requirePermissionsAccess('permissions.manage')
+	const access = await requireAccess('permissions.manage')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -107,7 +89,7 @@ export async function $createPermissionAction(
 		normalizedInput,
 	)
 	if (await checkPermissionKeyExists(key)) {
-		return { error: 'Ya existe un permiso personalizado con ese nombre.' }
+		return { error: MESSAGES.permissions.duplicateName }
 	}
 
 	try {
@@ -142,7 +124,7 @@ export async function $createPermissionAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo crear el permiso. Inténtalo nuevamente.',
+			error: MESSAGES.permissions.createFailed,
 		}
 	}
 
@@ -155,11 +137,10 @@ export async function $updatePermissionAction(
 	id: string,
 	input: PermissionMutationInput,
 ): Promise<PermissionActionResult> {
-	const access = await requirePermissionsAccess('permissions.manage')
+	const access = await requireAccess('permissions.manage')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -170,9 +151,9 @@ export async function $updatePermissionAction(
 		id,
 		access.membership.organizationId,
 	)
-	if (!permission) return { error: 'El permiso no fue encontrado.' }
+	if (!permission) return { error: MESSAGES.permissions.notFound }
 	if (permission.isSystem) {
-		return { error: 'Los permisos base no se pueden editar.' }
+		return { error: MESSAGES.permissions.systemNotEditable }
 	}
 
 	const normalizedInput = normalizePermissionMutationInput(input)
@@ -184,7 +165,7 @@ export async function $updatePermissionAction(
 		normalizedInput,
 	)
 	if (await checkPermissionKeyExists(nextKey, permission.id)) {
-		return { error: 'Ya existe un permiso personalizado con ese nombre.' }
+		return { error: MESSAGES.permissions.duplicateName }
 	}
 
 	try {
@@ -233,7 +214,7 @@ export async function $updatePermissionAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo actualizar el permiso. Inténtalo nuevamente.',
+			error: MESSAGES.permissions.updateFailed,
 		}
 	}
 
@@ -245,11 +226,10 @@ export async function $updatePermissionAction(
 export async function $deletePermissionAction(
 	id: string,
 ): Promise<PermissionActionResult> {
-	const access = await requirePermissionsAccess('permissions.manage')
+	const access = await requireAccess('permissions.manage')
 	if ('error' in access) {
 		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
+			error: access.error,
 		}
 	}
 
@@ -260,9 +240,9 @@ export async function $deletePermissionAction(
 		id,
 		access.membership.organizationId,
 	)
-	if (!permission) return { error: 'El permiso no fue encontrado.' }
+	if (!permission) return { error: MESSAGES.permissions.notFound }
 	if (permission.isSystem) {
-		return { error: 'Los permisos base no se pueden eliminar.' }
+		return { error: MESSAGES.permissions.systemNotDeletable }
 	}
 
 	const usageCount = await getPermissionUsageCount(permission.id)
@@ -306,7 +286,7 @@ export async function $deletePermissionAction(
 		})
 	} catch {
 		return {
-			error: 'No se pudo eliminar el permiso. Inténtalo nuevamente.',
+			error: MESSAGES.permissions.deleteFailed,
 		}
 	}
 

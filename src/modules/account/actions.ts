@@ -10,6 +10,7 @@ import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { auth } from '@/lib/auth'
 import { getSession } from '@/lib/auth-server'
 import { SSO_ENABLED } from '@/lib/config'
+import { MESSAGES } from '@/modules/shared/messages'
 
 const SSO_MANAGED_ACCOUNT_ERROR =
 	'Tu cuenta se administra desde el proveedor de identidad de tu organización.'
@@ -30,10 +31,10 @@ export async function $updateProfileAction(input: {
 	if (SSO_ENABLED) return { error: SSO_MANAGED_ACCOUNT_ERROR }
 
 	const session = await getSession()
-	if (!session) return { error: 'No estás autenticado' }
+	if (!session) return { error: MESSAGES.common.notAuthenticated }
 
 	const name = input.name?.trim()
-	if (!name) return { error: 'El nombre es requerido' }
+	if (!name) return { error: MESSAGES.account.nameRequired }
 
 	try {
 		await auth.api.updateUser({
@@ -43,7 +44,7 @@ export async function $updateProfileAction(input: {
 		revalidatePath('/dashboard/account')
 		return { success: true }
 	} catch {
-		return { error: 'No se pudo actualizar el perfil. Intenta de nuevo.' }
+		return { error: MESSAGES.account.profileUpdateFailed }
 	}
 }
 
@@ -54,10 +55,10 @@ export async function $changePasswordAction(input: {
 	if (SSO_ENABLED) return { error: SSO_MANAGED_ACCOUNT_ERROR }
 
 	const session = await getSession()
-	if (!session) return { error: 'No estás autenticado' }
+	if (!session) return { error: MESSAGES.common.notAuthenticated }
 
 	if (!input.currentPassword || !input.newPassword) {
-		return { error: 'Todos los campos son requeridos' }
+		return { error: MESSAGES.account.allFieldsRequired }
 	}
 
 	try {
@@ -71,13 +72,13 @@ export async function $changePasswordAction(input: {
 		})
 		return { success: true }
 	} catch {
-		return { error: 'Contraseña actual incorrecta. Intenta de nuevo.' }
+		return { error: MESSAGES.account.wrongCurrentPassword }
 	}
 }
 
 export async function $generateApiKeyAction(): Promise<ApiKeyActionResult> {
 	const session = await getSession()
-	if (!session) return { error: 'No estás autenticado' }
+	if (!session) return { error: MESSAGES.common.notAuthenticated }
 
 	const [existing] = await db
 		.select({ apiKey: users.apiKey })
@@ -87,7 +88,7 @@ export async function $generateApiKeyAction(): Promise<ApiKeyActionResult> {
 
 	if (existing?.apiKey) {
 		return {
-			error: 'Ya tienes una API key activa. Usa regenerar para crear una nueva.',
+			error: MESSAGES.account.apiKeyAlreadyActive,
 		}
 	}
 
@@ -109,7 +110,7 @@ export async function $generateApiKeyAction(): Promise<ApiKeyActionResult> {
 			})
 		})
 	} catch {
-		return { error: 'No se pudo generar la API key. Intenta de nuevo.' }
+		return { error: MESSAGES.account.apiKeyCreateFailed }
 	}
 
 	revalidatePath('/dashboard/account')
@@ -118,7 +119,7 @@ export async function $generateApiKeyAction(): Promise<ApiKeyActionResult> {
 
 export async function $regenerateApiKeyAction(): Promise<ApiKeyActionResult> {
 	const session = await getSession()
-	if (!session) return { error: 'No estás autenticado' }
+	if (!session) return { error: MESSAGES.common.notAuthenticated }
 
 	const apiKey = generateApiKeyValue()
 
@@ -138,7 +139,7 @@ export async function $regenerateApiKeyAction(): Promise<ApiKeyActionResult> {
 			})
 		})
 	} catch {
-		return { error: 'No se pudo regenerar la API key. Intenta de nuevo.' }
+		return { error: MESSAGES.account.apiKeyRegenerateFailed }
 	}
 
 	revalidatePath('/dashboard/account')

@@ -39,16 +39,6 @@ function toNullableFilter(value: string): string | null {
 	return value.trim() === '' ? null : value.trim()
 }
 
-export async function getOrganizationForUser(userId: string) {
-	const [membership] = await db
-		.select({ organizationId: organizationMembers.organizationId })
-		.from(organizationMembers)
-		.where(eq(organizationMembers.userId, userId))
-		.limit(1)
-
-	return membership?.organizationId ?? null
-}
-
 export async function getAuditLogsTableForOrganization({
 	organizationId,
 	page,

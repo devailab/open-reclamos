@@ -11,6 +11,7 @@ import {
 } from 'drizzle-orm'
 import { db } from '@/database/database'
 import { permissions, rolePermissions } from '@/database/schema'
+import { countRows } from '@/modules/shared/queries'
 import type { PermissionsTableFilters } from './validation'
 
 export interface PermissionTableRow {
@@ -155,11 +156,6 @@ export async function getPermissionsTableForOrganization({
 		.limit(pageSize)
 		.offset(offset)
 
-	const [total] = await db
-		.select({ total: count() })
-		.from(permissions)
-		.where(whereClause)
-
 	const permissionIds = permissionRows.map((row) => row.id)
 	const assignedRoleCounts = permissionIds.length
 		? await db
@@ -181,7 +177,7 @@ export async function getPermissionsTableForOrganization({
 			...row,
 			assignedRolesCount: countsByPermissionId.get(row.id) ?? 0,
 		})),
-		totalItems: total?.total ?? 0,
+		totalItems: await countRows(permissions, whereClause),
 	}
 }
 
@@ -198,10 +194,8 @@ export async function checkPermissionKeyExists(
 }
 
 export async function getPermissionUsageCount(permissionId: string) {
-	const [result] = await db
-		.select({ total: count() })
-		.from(rolePermissions)
-		.where(eq(rolePermissions.permissionId, permissionId))
-
-	return result?.total ?? 0
+	return countRows(
+		rolePermissions,
+		eq(rolePermissions.permissionId, permissionId),
+	)
 }

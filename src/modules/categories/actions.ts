@@ -2,11 +2,11 @@
 
 import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { db } from '@/database/database'
 import { complaintCategories } from '@/database/schema'
-import { getSession } from '@/lib/auth-server'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { requireAccess } from '@/modules/shared/access'
+import { MESSAGES } from '@/modules/shared/messages'
+import type { ActionResult } from '@/modules/shared/types'
 import {
 	type ComplaintCategoryRow,
 	getCategoriesTableForOrganization,
@@ -20,8 +20,6 @@ import {
 	validateCategoryMutationInput,
 } from './validation'
 
-export type ActionResult = { error: string } | { success: true }
-
 export interface GetCategoriesTableActionInput {
 	page: number
 	pageSize: number
@@ -34,22 +32,6 @@ export interface GetCategoriesTableActionResult {
 	page: number
 	pageSize: number
 	filters: CategoriesTableFilters
-}
-
-async function requireAccess(permissionKey: string) {
-	const session = await getSession()
-	if (!session) redirect('/login')
-
-	const membership = await getMembershipContext(session.user.id)
-	if (!membership) redirect('/setup')
-
-	if (!hasPermission(membership, permissionKey)) {
-		return {
-			error: 'No tienes permisos para realizar esta acción.',
-		} as const
-	}
-
-	return { session, membership } as const
 }
 
 export async function $getCategoriesTableAction(
@@ -80,12 +62,7 @@ export async function $createCategoryAction(
 	input: CategoryMutationInput,
 ): Promise<ActionResult> {
 	const access = await requireAccess('categories.manage')
-	if ('error' in access) {
-		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
-		}
-	}
+	if ('error' in access) return { error: access.error }
 
 	const normalizedInput = normalizeCategoryMutationInput(input)
 	const validationError = validateCategoryMutationInput(normalizedInput)
@@ -105,7 +82,7 @@ export async function $createCategoryAction(
 		)
 		.limit(1)
 	if (duplicate) {
-		return { error: 'Ya existe una categoría con ese nombre.' }
+		return { error: MESSAGES.categories.duplicateName }
 	}
 
 	await db.insert(complaintCategories).values({
@@ -125,12 +102,7 @@ export async function $updateCategoryAction(input: {
 	description: string | null
 }): Promise<ActionResult> {
 	const access = await requireAccess('categories.manage')
-	if ('error' in access) {
-		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
-		}
-	}
+	if ('error' in access) return { error: access.error }
 
 	const normalizedInput = normalizeCategoryMutationInput(input)
 	const validationError = validateCategoryMutationInput(normalizedInput)
@@ -149,7 +121,7 @@ export async function $updateCategoryAction(input: {
 			),
 		)
 		.limit(1)
-	if (!existing) return { error: 'La categoría no fue encontrada.' }
+	if (!existing) return { error: MESSAGES.categories.notFound }
 
 	const [duplicate] = await db
 		.select({ id: complaintCategories.id })
@@ -165,7 +137,7 @@ export async function $updateCategoryAction(input: {
 		)
 		.limit(1)
 	if (duplicate && duplicate.id !== input.id) {
-		return { error: 'Ya existe una categoría con ese nombre.' }
+		return { error: MESSAGES.categories.duplicateName }
 	}
 
 	await db
@@ -192,12 +164,7 @@ export async function $updateCategoryAction(input: {
 
 export async function $deleteCategoryAction(id: string): Promise<ActionResult> {
 	const access = await requireAccess('categories.manage')
-	if ('error' in access) {
-		return {
-			error:
-				access.error ?? 'No tienes permisos para realizar esta acción.',
-		}
-	}
+	if ('error' in access) return { error: access.error }
 
 	const [existing] = await db
 		.select({ id: complaintCategories.id })
@@ -212,7 +179,7 @@ export async function $deleteCategoryAction(id: string): Promise<ActionResult> {
 			),
 		)
 		.limit(1)
-	if (!existing) return { error: 'La categoría no fue encontrada.' }
+	if (!existing) return { error: MESSAGES.categories.notFound }
 
 	await db
 		.delete(complaintCategories)

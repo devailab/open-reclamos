@@ -15,6 +15,7 @@ import { moveS3Object } from '@/lib/s3'
 import { verifyTurnstileToken } from '@/lib/turnstile'
 import { WEBHOOK_EVENT } from '@/lib/webhook-events'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
+import { MESSAGES } from '@/modules/shared/messages'
 import { dispatchWebhookEvent } from '../webhooks/dispatch'
 import { enqueueComplaintAdminNotification } from './admin-notifications'
 import {
@@ -148,19 +149,22 @@ export async function $submitComplaintAction(
 	if (!isTurnstileValid) {
 		return {
 			success: false,
-			error: 'Verificación de seguridad fallida. Recarga la página e intenta nuevamente.',
+			error: MESSAGES.complaints.captchaFailed,
 		}
 	}
 
 	// Basic server-side validation
 	if (!input.storeId || !input.organizationId) {
-		return { success: false, error: 'Datos de tienda inválidos.' }
+		return { success: false, error: MESSAGES.complaints.invalidStoreData }
 	}
 	if (!input.email || !input.documentNumber) {
-		return { success: false, error: 'Datos del reclamante incompletos.' }
+		return {
+			success: false,
+			error: MESSAGES.complaints.incompleteClaimantData,
+		}
 	}
 	if (!input.type) {
-		return { success: false, error: 'Tipo de reclamo requerido.' }
+		return { success: false, error: MESSAGES.complaints.typeRequired }
 	}
 
 	const organizationSettings =
@@ -171,7 +175,7 @@ export async function $submitComplaintAction(
 	if (!organizationSettings.formEnabled) {
 		return {
 			success: false,
-			error: 'El formulario de reclamos no está disponible actualmente.',
+			error: MESSAGES.complaints.formUnavailable,
 		}
 	}
 
@@ -181,7 +185,7 @@ export async function $submitComplaintAction(
 		input.organizationId,
 	)
 	if (!store) {
-		return { success: false, error: 'Datos de tienda inválidos.' }
+		return { success: false, error: MESSAGES.complaints.invalidStoreData }
 	}
 
 	// Verificar que el motivo pertenece a la organización y no está eliminado
@@ -198,7 +202,7 @@ export async function $submitComplaintAction(
 			)
 			.limit(1)
 		if (!reason) {
-			return { success: false, error: 'Motivo de reclamo no válido.' }
+			return { success: false, error: MESSAGES.complaints.invalidReason }
 		}
 	}
 

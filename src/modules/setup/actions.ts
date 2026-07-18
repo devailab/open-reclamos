@@ -8,8 +8,11 @@ import { db } from '@/database/database'
 import { organizations, users } from '@/database/schema'
 import { auth } from '@/lib/auth'
 import { DOCUMENT_LOOKUP_PROVIDER } from '@/lib/config'
+import { buildSlugBase, resolveUniqueSlug } from '@/lib/slug'
 import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
 import { getMembershipContext } from '@/modules/rbac/queries'
+import { MESSAGES } from '@/modules/shared/messages'
+import { checkStoreSlugExists } from '@/modules/stores/queries'
 import {
 	getDocumentLookupProvider,
 	type RucData,
@@ -17,7 +20,6 @@ import {
 } from './document-lookup'
 import {
 	checkSlugExists,
-	checkStoreSlugExists,
 	getUbigeoByCode,
 	getUserOrganization,
 	searchUbigeos,
@@ -41,7 +43,7 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 	if (existing.length > 0) {
 		return {
 			success: false,
-			error: 'Este RUC ya está registrado en la plataforma',
+			error: MESSAGES.setup.rucAlreadyRegisteredShort,
 		}
 	}
 
@@ -60,12 +62,12 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 		data = await provider.lookupRuc(ruc)
 	} catch (e) {
 		if (e instanceof RucNotFoundError) {
-			return { success: false, error: 'RUC no encontrado en SUNAT' }
+			return { success: false, error: MESSAGES.setup.rucNotFound }
 		}
 		console.error('Error fetching RUC data:', e)
 		return {
 			success: false,
-			error: 'Error de conexión al consultar el RUC. Inténtalo de nuevo.',
+			error: MESSAGES.setup.rucLookupFailed,
 		}
 	}
 
@@ -74,7 +76,7 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 	if (!ubigeo) {
 		return {
 			success: false,
-			error: 'No se pudo verificar la ubicación del RUC. Contacta a soporte.',
+			error: MESSAGES.setup.rucLocationUnverified,
 		}
 	}
 
@@ -82,49 +84,13 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 }
 
 export async function $getSlugSuggestionAction(name: string): Promise<string> {
-	const base = name
-		.toLowerCase()
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.replace(/[^a-z0-9\s]/g, '')
-		.trim()
-		.replace(/\s+/g, '-')
-		.replace(/-+/g, '-')
-		.slice(0, 50)
-
-	let slug = base
-	let counter = 2
-
-	while (await checkSlugExists(slug)) {
-		slug = `${base}-${counter}`
-		counter++
-	}
-
-	return slug
+	return resolveUniqueSlug(buildSlugBase(name), checkSlugExists)
 }
 
 export async function $getStoreSlugSuggestionAction(
 	name: string,
 ): Promise<string> {
-	const base = name
-		.toLowerCase()
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.replace(/[^a-z0-9\s]/g, '')
-		.trim()
-		.replace(/\s+/g, '-')
-		.replace(/-+/g, '-')
-		.slice(0, 50)
-
-	let slug = base
-	let counter = 2
-
-	while (await checkStoreSlugExists(slug)) {
-		slug = `${base}-${counter}`
-		counter++
-	}
-
-	return slug
+	return resolveUniqueSlug(buildSlugBase(name), checkStoreSlugExists)
 }
 
 export async function $searchUbigeosAction(
@@ -186,7 +152,7 @@ export async function $completeSetupAction(
 	}
 
 	if (await checkSlugExists(input.organization.slug)) {
-		return { error: 'Este identificador ya está en uso. Elige otro.' }
+		return { error: MESSAGES.setup.slugTaken }
 	}
 
 	const [existingRuc] = await db
@@ -195,7 +161,7 @@ export async function $completeSetupAction(
 		.where(eq(organizations.taxId, input.organization.ruc))
 		.limit(1)
 	if (existingRuc) {
-		return { error: 'Este RUC ya está registrado en la plataforma.' }
+		return { error: MESSAGES.setup.rucAlreadyRegistered }
 	}
 
 	const storeSlug = await $getStoreSlugSuggestionAction(input.store.name)
@@ -226,13 +192,13 @@ export async function $completeSetupAction(
 		})
 	} catch {
 		return {
-			error: 'Error al guardar la organización. Inténtalo de nuevo.',
+			error: MESSAGES.setup.organizationSaveFailed,
 		}
 	}
 
 	if (!organizationId) {
 		return {
-			error: 'Error al guardar la organización. Inténtalo de nuevo.',
+			error: MESSAGES.setup.organizationSaveFailed,
 		}
 	}
 
@@ -286,7 +252,7 @@ export async function $setupStoreAction(
 	)
 	if (!organizationId) {
 		return {
-			error: 'No se encontró la organización pendiente. Vuelve a crearla para continuar.',
+			error: MESSAGES.setup.pendingOrganizationNotFound,
 		}
 	}
 
@@ -318,7 +284,7 @@ export async function $setupStoreAction(
 			}
 		})
 	} catch {
-		return { error: 'Error al guardar la tienda. Inténtalo de nuevo.' }
+		return { error: MESSAGES.setup.storeSaveFailed }
 	}
 
 	await setActiveOrganizationCookie(organizationId)

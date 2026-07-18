@@ -6,6 +6,7 @@ import {
 	getPublicComplaintHistory,
 	type PublicHistoryEntry,
 } from '@/modules/complaints/queries'
+import { MESSAGES } from '@/modules/shared/messages'
 
 export type TrackingResult = NonNullable<
 	Awaited<ReturnType<typeof getComplaintByTrackingCode>>
@@ -24,7 +25,10 @@ export async function lookupComplaintByTrackingCodeAction(
 	const clean = trackingCode.trim().toUpperCase()
 
 	if (!clean) {
-		return { success: false, error: 'Ingresa tu código de seguimiento' }
+		return {
+			success: false,
+			error: MESSAGES.complaints.trackingCodeRequired,
+		}
 	}
 
 	const complaint = await getComplaintByTrackingCode(clean, organizationId)
@@ -32,7 +36,7 @@ export async function lookupComplaintByTrackingCodeAction(
 	if (!complaint) {
 		return {
 			success: false,
-			error: 'No encontramos ningún reclamo con ese código. Verifica que esté escrito correctamente.',
+			error: MESSAGES.complaints.trackingNotFound,
 		}
 	}
 

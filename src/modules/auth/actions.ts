@@ -18,6 +18,7 @@ import {
 } from '@/modules/rbac/cookies'
 import { selectActiveOrganizationId } from '@/modules/rbac/organization-selection'
 import { getUserOrganizationOptions } from '@/modules/rbac/queries'
+import { MESSAGES } from '@/modules/shared/messages'
 
 export type AuthActionResult = {
 	error: string | null
@@ -93,7 +94,7 @@ export async function $loginAction(
 ): Promise<AuthActionResult> {
 	if (SSO_ENABLED) {
 		return {
-			error: 'El acceso con correo y contraseña está deshabilitado.',
+			error: MESSAGES.auth.passwordLoginDisabled,
 		}
 	}
 
@@ -197,13 +198,13 @@ export async function $registerAction(
 ): Promise<AuthActionResult> {
 	if (SSO_ENABLED) {
 		return {
-			error: 'El registro local está deshabilitado. Usa el acceso SSO.',
+			error: MESSAGES.auth.localRegistrationDisabled,
 		}
 	}
 
 	const anyUser = await hasAnyUser()
 	if (!ALLOW_PUBLIC_REGISTRATION && anyUser) {
-		return { error: 'El registro de nuevas cuentas no está disponible.' }
+		return { error: MESSAGES.auth.registrationDisabled }
 	}
 
 	const isFirstUser = !anyUser
@@ -224,7 +225,7 @@ export async function $registerAction(
 	}
 
 	if (!result || result.user === null) {
-		return { error: 'No se pudo crear la cuenta. Intenta con otro email.' }
+		return { error: MESSAGES.auth.accountCreateFailed }
 	}
 
 	await db
@@ -259,13 +260,13 @@ export async function $sendRegistrationVerificationAction(
 ): Promise<AuthActionResult> {
 	if (SSO_ENABLED) {
 		return {
-			error: 'El registro local está deshabilitado. Usa el acceso SSO.',
+			error: MESSAGES.auth.localRegistrationDisabled,
 		}
 	}
 
 	const anyUser = await hasAnyUser()
 	if (!ALLOW_PUBLIC_REGISTRATION && anyUser) {
-		return { error: 'El registro de nuevas cuentas no está disponible.' }
+		return { error: MESSAGES.auth.registrationDisabled }
 	}
 
 	const normalizedEmail = email.trim().toLowerCase()
@@ -279,7 +280,7 @@ export async function $sendRegistrationVerificationAction(
 
 	if (existingUser?.emailVerified) {
 		return {
-			error: 'Ya existe una cuenta verificada con este correo. Inicia sesión.',
+			error: MESSAGES.auth.emailAlreadyRegistered,
 		}
 	}
 
@@ -335,7 +336,7 @@ export async function $verifyAndRegisterAction(
 ): Promise<AuthActionResult> {
 	if (SSO_ENABLED) {
 		return {
-			error: 'El registro local está deshabilitado. Usa el acceso SSO.',
+			error: MESSAGES.auth.localRegistrationDisabled,
 		}
 	}
 
@@ -353,7 +354,7 @@ export async function $verifyAndRegisterAction(
 
 		if (!verifyingUser?.isSuperAdmin) {
 			return {
-				error: 'El registro de nuevas cuentas no está disponible.',
+				error: MESSAGES.auth.registrationDisabled,
 			}
 		}
 	}
@@ -368,7 +369,7 @@ export async function $verifyAndRegisterAction(
 
 	if (!existingUser) {
 		return {
-			error: 'No se encontró la cuenta. Inicia el registro nuevamente.',
+			error: MESSAGES.auth.accountNotFoundRestart,
 		}
 	}
 

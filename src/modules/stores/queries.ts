@@ -1,19 +1,7 @@
-import {
-	and,
-	count,
-	desc,
-	eq,
-	ilike,
-	isNotNull,
-	isNull,
-	type SQL,
-} from 'drizzle-orm'
+import { and, desc, eq, ilike, isNotNull, isNull, type SQL } from 'drizzle-orm'
 import { db } from '@/database/database'
-import {
-	organizationMembers,
-	organizationSettings,
-	stores,
-} from '@/database/schema'
+import { organizationSettings, stores } from '@/database/schema'
+import { countRows } from '@/modules/shared/queries'
 import type { StoresTableFilters } from './validation'
 
 export interface StoreTableRow {
@@ -63,16 +51,6 @@ const buildStoresTableConditions = (
 	}
 
 	return conditions
-}
-
-export async function getOrganizationForUser(userId: string) {
-	const [membership] = await db
-		.select({ organizationId: organizationMembers.organizationId })
-		.from(organizationMembers)
-		.where(eq(organizationMembers.userId, userId))
-		.limit(1)
-
-	return membership?.organizationId ?? null
 }
 
 export async function checkStoreSlugExists(slug: string): Promise<boolean> {
@@ -154,14 +132,9 @@ export async function getStoresTableForOrganization({
 		.limit(pageSize)
 		.offset(offset)
 
-	const [total] = await db
-		.select({ total: count() })
-		.from(stores)
-		.where(whereClause)
-
 	return {
 		rows,
-		totalItems: total?.total ?? 0,
+		totalItems: await countRows(stores, whereClause),
 	}
 }
 
