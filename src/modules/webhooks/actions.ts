@@ -18,6 +18,7 @@ import {
 	type WebhookDeliveryRow,
 	type WebhookEndpointRow,
 } from './queries'
+import { encryptWebhookSecret } from './secret'
 import { assertPublicWebhookUrl, UnsafeWebhookUrlError } from './ssrf'
 import {
 	type DeliveriesTableFilters,
@@ -27,6 +28,7 @@ import {
 	normalizeWebhooksTableFilters,
 	validateWebhookId,
 	validateWebhookMutationInput,
+	validateWebhookSecret,
 	type WebhookMutationInput,
 	type WebhooksTableFilters,
 } from './validation'
@@ -98,6 +100,9 @@ export async function $createWebhookAction(
 	const validationError = validateWebhookMutationInput(normalized)
 	if (validationError) return { error: validationError }
 
+	const secretError = validateWebhookSecret(normalized.secret)
+	if (secretError) return { error: secretError }
+
 	// Verificación DNS anti-SSRF: el destino debe resolver a IPs públicas
 	try {
 		await assertPublicWebhookUrl(normalized.targetUrl)
@@ -114,6 +119,8 @@ export async function $createWebhookAction(
 	)
 
 	try {
+		const secretEncrypted = encryptWebhookSecret(normalized.secret)
+
 		await db.transaction(async (tx) => {
 			const [endpoint] = await tx
 				.insert(webhookEndpoints)
@@ -124,6 +131,7 @@ export async function $createWebhookAction(
 					targetUrl: normalized.targetUrl,
 					events: normalized.events,
 					status: normalized.status,
+					secretEncrypted,
 					createdBy: access.session.user.id,
 				})
 				.returning({ id: webhookEndpoints.id })
@@ -173,6 +181,13 @@ export async function $updateWebhookAction(
 	const validationError = validateWebhookMutationInput(normalized)
 	if (validationError) return { error: validationError }
 
+	// Secreto vacío = conservar el actual; con valor, se rota por el nuevo
+	const rotatesSecret = normalized.secret.length > 0
+	if (rotatesSecret) {
+		const secretError = validateWebhookSecret(normalized.secret)
+		if (secretError) return { error: secretError }
+	}
+
 	// Verificación DNS anti-SSRF: el destino debe resolver a IPs públicas
 	try {
 		await assertPublicWebhookUrl(normalized.targetUrl)
@@ -192,6 +207,11 @@ export async function $updateWebhookAction(
 					targetUrl: normalized.targetUrl,
 					events: normalized.events,
 					status: normalized.status,
+					...(rotatesSecret && {
+						secretEncrypted: encryptWebhookSecret(
+							normalized.secret,
+						),
+					}),
 					updatedAt: new Date(),
 					updatedBy: access.session.user.id,
 				})
@@ -224,6 +244,16 @@ export async function $updateWebhookAction(
 					status: normalized.status,
 				},
 			})
+
+			if (rotatesSecret) {
+				await createAuditLog({
+					organizationId: access.membership.organizationId,
+					userId: access.session.user.id,
+					action: AUDIT_LOG.WEBHOOK_SECRET_REGENERATED,
+					entityType: 'webhook',
+					entityId: input.id,
+				})
+			}
 		})
 	} catch {
 		return {

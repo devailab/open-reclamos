@@ -1,5 +1,6 @@
 'use client'
 
+import { TriangleAlert } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
@@ -52,23 +53,28 @@ export function WebhookFormDialog({
 	)
 	const [isPending, startTransition] = useTransition()
 
-	// Sincronizar cuando cambia el webhook a editar
+	// Sincronizar al abrir o cambiar el webhook a editar; el secreto nunca se
+	// precarga: en edición, vacío significa conservar el actual
 	useEffect(() => {
+		if (!open) return
 		if (webhook) {
 			setValues({
 				name: webhook.name,
 				targetUrl: webhook.targetUrl,
 				events: [...webhook.events],
 				status: webhook.status,
+				secret: '',
 			})
 		} else {
 			setValues(INITIAL_WEBHOOK_FORM_VALUES)
 		}
-	}, [webhook])
+	}, [open, webhook])
 
 	const selectedStatus =
 		STATUS_OPTIONS.find((o) => o.value === values.status) ??
 		STATUS_OPTIONS[0]
+
+	const isRotatingSecret = isEditing && values.secret.trim().length > 0
 
 	const toggleEvent = (eventKey: string) => {
 		setValues((prev) => ({
@@ -94,6 +100,14 @@ export function WebhookFormDialog({
 					description: result.error,
 				})
 				return
+			}
+
+			if (isRotatingSecret) {
+				sileo.warning({
+					title: 'Secreto actualizado',
+					description:
+						'El secreto anterior dejó de ser válido. Actualiza la configuración en el receptor.',
+				})
 			}
 
 			sileo.success({
@@ -137,6 +151,37 @@ export function WebhookFormDialog({
 						}
 						disabled={isPending}
 					/>
+
+					<div className='space-y-1.5'>
+						<TextField
+							label='Secreto'
+							type='password'
+							placeholder={
+								isEditing
+									? '••••••••••••••••'
+									: 'Mínimo 16 caracteres'
+							}
+							value={values.secret}
+							onValueChange={(v) =>
+								setValues((p) => ({ ...p, secret: v ?? '' }))
+							}
+							disabled={isPending}
+						/>
+						{isRotatingSecret ? (
+							<p className='flex items-center gap-1.5 text-xs text-amber-600'>
+								<TriangleAlert className='size-3.5 shrink-0' />
+								Al guardar, el secreto anterior dejará de ser
+								válido y el receptor deberá actualizar su
+								configuración.
+							</p>
+						) : (
+							<p className='text-xs text-muted-foreground'>
+								{isEditing
+									? 'Déjalo en blanco para mantener el secreto actual.'
+									: 'Se usará para firmar cada envío con HMAC-SHA256. Configura el mismo valor en tu receptor.'}
+							</p>
+						)}
+					</div>
 
 					<SelectField
 						label='Estado'

@@ -16,6 +16,7 @@ export interface WebhookFormValues {
 	targetUrl: string
 	events: string[]
 	status: string
+	secret: string
 }
 
 export const INITIAL_WEBHOOK_FORM_VALUES: WebhookFormValues = {
@@ -23,4 +24,5 @@ export const INITIAL_WEBHOOK_FORM_VALUES: WebhookFormValues = {
 	targetUrl: '',
 	events: [],
 	status: 'active',
+	secret: '',
 }

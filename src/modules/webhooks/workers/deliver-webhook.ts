@@ -6,6 +6,8 @@ import { inngest } from '@/lib/inngest'
 import type { WebhookEventKey } from '@/lib/webhook-events'
 import { WEBHOOK_DELIVER_EVENT, type WebhookDispatchPayload } from '../dispatch'
 import { getActiveWebhooksByEventForOrganization } from '../queries'
+import { decryptWebhookSecret } from '../secret'
+import { buildSignatureHeader, signWebhookPayload } from '../signature'
 import { safeWebhookFetch, UnsafeWebhookUrlError } from '../ssrf'
 
 const DEFAULT_TIMEOUT_MS = 15000
@@ -18,9 +20,29 @@ function isRetryableStatus(status: number): boolean {
 	return status >= 500 || RETRYABLE_CLIENT_STATUSES.has(status)
 }
 
+class MissingWebhookSecretError extends Error {}
+
+function buildSignedHeaders(
+	deliveryId: string,
+	secretEncrypted: string,
+	rawBody: string,
+): Record<string, string> {
+	const timestamp = Math.floor(Date.now() / 1000)
+	const secret = decryptWebhookSecret(secretEncrypted)
+	const signature = signWebhookPayload(secret, timestamp, rawBody)
+
+	return {
+		'Content-Type': 'application/json',
+		'X-Webhook-Timestamp': String(timestamp),
+		'X-Webhook-Signature': buildSignatureHeader(signature),
+		'X-Webhook-Id': deliveryId,
+	}
+}
+
 async function sendWebhookRequest(
 	targetUrl: string,
-	payload: Record<string, unknown>,
+	headers: Record<string, string>,
+	rawBody: string,
 	timeoutMs: number,
 ): Promise<{ ok: boolean; status: number; body: string }> {
 	const controller = new AbortController()
@@ -29,8 +51,8 @@ async function sendWebhookRequest(
 	try {
 		const response = await safeWebhookFetch(targetUrl, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(payload),
+			headers,
+			body: rawBody,
 			signal: controller.signal,
 		})
 
@@ -70,6 +92,7 @@ interface DeliveryAttemptParams {
 	targetUrl: string
 	timeoutMs: number | null
 	requestBody: Record<string, unknown>
+	secretEncrypted: string | null
 	attempt: number
 }
 
@@ -78,6 +101,7 @@ async function attemptDelivery({
 	targetUrl,
 	timeoutMs,
 	requestBody,
+	secretEncrypted,
 	attempt,
 }: DeliveryAttemptParams) {
 	const now = new Date()
@@ -85,9 +109,20 @@ async function attemptDelivery({
 	const hasRetriesLeft = attempt < MAX_RETRIES
 
 	try {
+		if (!secretEncrypted) {
+			throw new MissingWebhookSecretError(
+				'El endpoint no tiene un secreto de firma configurado.',
+			)
+		}
+
+		// El body se serializa una única vez: la misma cadena se firma y se envía
+		const rawBody = JSON.stringify(requestBody)
+		const headers = buildSignedHeaders(deliveryId, secretEncrypted, rawBody)
+
 		const result = await sendWebhookRequest(
 			targetUrl,
-			requestBody,
+			headers,
+			rawBody,
 			timeoutMs ?? DEFAULT_TIMEOUT_MS,
 		)
 
@@ -124,7 +159,10 @@ async function attemptDelivery({
 		// 4xx definitivo: no reintentar
 		return { ok: false, status: result.status }
 	} catch (error) {
-		if (error instanceof UnsafeWebhookUrlError) {
+		if (
+			error instanceof UnsafeWebhookUrlError ||
+			error instanceof MissingWebhookSecretError
+		) {
 			await db
 				.update(webhookDeliveries)
 				.set({
@@ -214,6 +252,7 @@ export const deliverWebhook = inngest.createFunction(
 						targetUrl: endpoint.targetUrl,
 						timeoutMs: endpoint.timeoutMs,
 						requestBody,
+						secretEncrypted: endpoint.secretEncrypted,
 						attempt,
 					}),
 				),

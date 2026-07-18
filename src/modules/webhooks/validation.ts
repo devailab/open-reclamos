@@ -16,12 +16,15 @@ const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const MAX_NAME_LENGTH = 120
 const MAX_URL_LENGTH = 2048
+const MIN_SECRET_LENGTH = 16
+const MAX_SECRET_LENGTH = 256
 
 export interface WebhookMutationInput {
 	name: string
 	targetUrl: string
 	events: string[]
 	status: string
+	secret: string
 }
 
 export interface NormalizedWebhookMutationInput {
@@ -29,6 +32,7 @@ export interface NormalizedWebhookMutationInput {
 	targetUrl: string
 	events: WebhookEventKey[]
 	status: WebhookStatus
+	secret: string
 }
 
 export interface WebhooksTableFilters {
@@ -76,7 +80,17 @@ export const normalizeWebhookMutationInput = (
 		targetUrl: input.targetUrl.trim(),
 		events,
 		status: isWebhookStatus(input.status) ? input.status : 'active',
+		secret: typeof input.secret === 'string' ? input.secret.trim() : '',
 	}
+}
+
+export const validateWebhookSecret = (secret: string): string | null => {
+	if (!secret) return 'El secreto de firma es requerido.'
+	if (secret.length < MIN_SECRET_LENGTH)
+		return `El secreto debe tener al menos ${MIN_SECRET_LENGTH} caracteres.`
+	if (secret.length > MAX_SECRET_LENGTH)
+		return `El secreto no puede superar los ${MAX_SECRET_LENGTH} caracteres.`
+	return null
 }
 
 export const validateWebhookMutationInput = (
