@@ -377,7 +377,7 @@ export const organizationSettings = orgSchema.table('organization_settings', {
 	mcpEnabledTools: text('mcp_enabled_tools'),
 	mcpShowSensitiveData: boolean('mcp_show_sensitive_data')
 		.notNull()
-		.default(true),
+		.default(false),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),

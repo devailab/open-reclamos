@@ -80,7 +80,7 @@ export async function getOrganizationSettingsForOrganization(
 		responseDeadlineDays:
 			result.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
 		mcpEnabledTools: result.mcpEnabledTools ?? null,
-		mcpShowSensitiveData: result.mcpShowSensitiveData ?? true,
+		mcpShowSensitiveData: result.mcpShowSensitiveData ?? false,
 	}
 }
 
@@ -122,7 +122,7 @@ export async function getOrganizationMcpSettings(
 
 	return {
 		mcpEnabledTools: result?.mcpEnabledTools ?? null,
-		mcpShowSensitiveData: result?.mcpShowSensitiveData ?? true,
+		mcpShowSensitiveData: result?.mcpShowSensitiveData ?? false,
 	}
 }
 
