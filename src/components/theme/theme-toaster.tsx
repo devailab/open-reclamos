@@ -1,6 +1,6 @@
 'use client'
 
-import { useTheme } from 'next-themes'
+import { useTheme } from '@wrksz/themes/client'
 import { Toaster } from 'sileo'
 
 type ToasterTheme = 'light' | 'dark' | 'system'
@@ -12,8 +12,10 @@ function isToasterTheme(value: string | undefined): value is ToasterTheme {
 }
 
 export function ThemeToaster() {
-	const { theme } = useTheme()
-	const toasterTheme = isToasterTheme(theme) ? theme : 'system'
+	const { resolvedTheme } = useTheme()
+	const toasterTheme = isToasterTheme(resolvedTheme)
+		? resolvedTheme
+		: 'system'
 
 	return <Toaster position='top-center' theme={toasterTheme} />
 }

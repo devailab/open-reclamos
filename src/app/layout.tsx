@@ -1,9 +1,9 @@
+import { ThemeProvider } from '@wrksz/themes/next'
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import './globals.css'
 import type { FC, PropsWithChildren } from 'react'
 import FeedbackDialog from '@/components/feedback-dialog'
-import { ThemeProvider } from '@/components/theme/theme-provider'
 import { ThemeToaster } from '@/components/theme/theme-toaster'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
