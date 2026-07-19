@@ -252,6 +252,22 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 				/>
 			</div>
 
+			<div className='flex justify-end'>
+				<Button
+					variant='outline'
+					onClick={handleSaveClassification}
+					disabled={isSubmitting || isSavingClassification}
+					className='gap-2'
+				>
+					<Save className='size-4' />
+					{isSavingClassification
+						? 'Guardando...'
+						: 'Guardar clasificación'}
+				</Button>
+			</div>
+
+			<hr />
+
 			<TextAreaField
 				{...register('response')}
 				label='Respuesta al consumidor'
@@ -263,27 +279,14 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 
 			<div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
 				<DraftIndicator status={draftStatus} />
-				<div className='flex flex-col gap-2 sm:flex-row'>
-					<Button
-						variant='outline'
-						onClick={handleSaveClassification}
-						disabled={isSubmitting || isSavingClassification}
-						className='gap-2'
-					>
-						<Save className='size-4' />
-						{isSavingClassification
-							? 'Guardando...'
-							: 'Guardar clasificación'}
-					</Button>
-					<Button
-						onClick={handleSubmit}
-						disabled={isSubmitting}
-						className='gap-2 shrink-0 bg-green-600 text-white hover:bg-green-700'
-					>
-						<Send className='size-4' />
-						{isSubmitting ? 'Enviando...' : 'Registrar respuesta'}
-					</Button>
-				</div>
+				<Button
+					onClick={handleSubmit}
+					disabled={isSubmitting}
+					className='gap-2 shrink-0 bg-green-600 text-white hover:bg-green-700'
+				>
+					<Send className='size-4' />
+					{isSubmitting ? 'Enviando...' : 'Registrar respuesta'}
+				</Button>
 			</div>
 
 			<p className='text-xs text-muted-foreground'>
