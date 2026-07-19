@@ -1,24 +1,16 @@
 'use client'
 
-import { ArrowLeft, Eye } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { type FC, useState, useTransition } from 'react'
-import { sileo } from 'sileo'
-import { Button } from '@/components/ui/button'
-import type { ChangeableStatus } from '@/modules/complaints/dashboard-validation'
-import { $changeComplaintStatusAction } from '@/modules/complaints/detail-actions'
+import { type FC, useState } from 'react'
 import type { ComplaintCategorySummary } from '@/modules/complaints/detail-queries'
 import { ComplaintAuditCard } from './complaint-audit-card'
 import { ComplaintConsumerCard } from './complaint-consumer-card'
 import { ComplaintDetailsCard } from './complaint-details-card'
 import { ComplaintHeader } from './complaint-header'
 import { ComplaintSolutionCard } from './complaint-solution-card'
-import { COMPLAINT_STATUS_LABEL, getDeadlineStatus } from './shared'
+import { getDeadlineStatus } from './shared'
 import type { ComplaintDetailPageProps } from './types'
-
-const STATUS_CHANGE_OPTIONS: { value: ChangeableStatus; label: string }[] = [
-	{ value: 'in_review', label: COMPLAINT_STATUS_LABEL.in_review },
-]
 
 export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 	complaint,
@@ -40,7 +32,6 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 	const [currentPriority, setCurrentPriority] = useState(complaint.priority)
 	const [currentCategory, setCurrentCategory] = useState(complaint.category)
 	const [historyEntries, setHistoryEntries] = useState(history)
-	const [isPending, startTransition] = useTransition()
 
 	const isRespondable =
 		!resolvedResponse &&
@@ -91,43 +82,6 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 		setCurrentCategory(result.category)
 	}
 
-	const handleStatusChange = (status: ChangeableStatus) => {
-		startTransition(async () => {
-			const result = await $changeComplaintStatusAction({
-				id: complaint.id,
-				status,
-			})
-			if (!result.success) {
-				sileo.error({
-					title: 'Error al cambiar estado',
-					description: result.error ?? 'Intenta de nuevo.',
-				})
-				return
-			}
-			setCurrentStatus(status)
-			setHistoryEntries((prev) => [
-				...prev,
-				{
-					id: crypto.randomUUID(),
-					eventType: 'status_changed',
-					fromStatus: currentStatus,
-					toStatus: status,
-					publicNote: null,
-					internalNote: null,
-					performedByName: null,
-					performedByRole: 'operator',
-					createdAt: new Date(),
-				},
-			])
-			sileo.success({ title: 'Estado actualizado correctamente' })
-		})
-	}
-
-	const canChangeStatus = currentStatus !== 'resolved'
-	const nextStatusOption = STATUS_CHANGE_OPTIONS.find(
-		(option) => option.value !== currentStatus,
-	)
-
 	return (
 		<div className='space-y-4 pb-10'>
 			<div className='flex items-center justify-between gap-3'>
@@ -166,18 +120,6 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 				</div>
 
 				<div className='space-y-4 lg:sticky lg:top-4'>
-					{canChangeStatus && nextStatusOption && (
-						<Button
-							disabled={isPending}
-							className='w-full'
-							onClick={() =>
-								handleStatusChange(nextStatusOption.value)
-							}
-						>
-							<Eye />
-							Marcar como {nextStatusOption.label.toLowerCase()}
-						</Button>
-					)}
 					<ComplaintSolutionCard
 						complaint={{
 							...complaint,
