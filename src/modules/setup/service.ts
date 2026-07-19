@@ -30,6 +30,7 @@ export type OrganizationSetupData = {
 export type StoreSetupData = {
 	name: string
 	type: string
+	color: string
 	ubigeoId: string | null
 	addressType: string | null
 	address: string | null
@@ -126,6 +127,7 @@ export async function createStoreForOrganization(
 			name: input.name,
 			slug,
 			type: input.type,
+			color: input.color.trim().toUpperCase(),
 			ubigeoId: input.ubigeoId,
 			addressType: input.addressType,
 			address: input.address,
@@ -143,6 +145,7 @@ export async function createStoreForOrganization(
 		newData: {
 			name: input.name,
 			type: input.type,
+			color: input.color.trim().toUpperCase(),
 			organizationId,
 		},
 	})

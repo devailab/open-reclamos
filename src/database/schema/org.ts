@@ -242,6 +242,7 @@ export const stores = orgSchema.table('stores', {
 	slug: text('slug').notNull().unique(),
 	name: text('name').notNull(),
 	type: text('type').notNull(),
+	color: text('color').notNull().default('#4F46E5'),
 	addressType: text('address_type'),
 	address: text('address'),
 	url: text('url'),

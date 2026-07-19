@@ -22,6 +22,8 @@ import {
 	$updateStoreAction,
 	type UpdateStoreActionInput,
 } from '@/modules/stores/actions'
+import { StoreColorField } from '@/modules/stores/components/store-color-field'
+import { DEFAULT_STORE_COLOR } from '@/modules/stores/constants'
 import {
 	normalizeStoreMutationInput,
 	validateStoreMutationInput,
@@ -37,6 +39,7 @@ interface EditStoreDialogProps {
 interface StoreFormValues {
 	name: string | null
 	type: SelectOption | null
+	color: string
 	ubigeoOption: AutocompleteOption | null
 	addressType: SelectOption | null
 	address: string | null
@@ -46,6 +49,7 @@ interface StoreFormValues {
 const EMPTY_VALUES: StoreFormValues = {
 	name: null,
 	type: null,
+	color: DEFAULT_STORE_COLOR,
 	ubigeoOption: null,
 	addressType: null,
 	address: null,
@@ -85,6 +89,7 @@ export function EditStoreDialog({
 		setValues({
 			name: store.name,
 			type: getStoreTypeOption(store.type),
+			color: store.color,
 			ubigeoOption: store.ubigeoId
 				? {
 						value: store.ubigeoId,
@@ -109,6 +114,7 @@ export function EditStoreDialog({
 			id: store.id,
 			name: values.name ?? store.name,
 			type: selectedType,
+			color: values.color ?? store.color,
 			ubigeoId: isPhysicalType
 				? (values.ubigeoOption?.value ?? store.ubigeoId ?? null)
 				: null,
@@ -192,6 +198,14 @@ export function EditStoreDialog({
 							disabled={isPending}
 						/>
 					</div>
+
+					<StoreColorField
+						value={values.color}
+						onValueChange={(color) =>
+							setValues((previous) => ({ ...previous, color }))
+						}
+						disabled={isPending}
+					/>
 
 					{values.type && (
 						<>

@@ -30,10 +30,14 @@ import {
 	validateStoreType,
 	validateStoreUbigeo,
 } from '@/modules/setup/validation'
+import { StoreColorField } from '@/modules/stores/components/store-color-field'
+import { DEFAULT_STORE_COLOR } from '@/modules/stores/constants'
+import { validateStoreColor } from '@/modules/stores/validation'
 
 type StoreFormValues = {
 	name: string | null
 	type: SelectOption | null
+	color: string
 	ubigeoOption: AutocompleteOption | null
 	addressType: SelectOption | null
 	address: string | null
@@ -43,6 +47,7 @@ type StoreFormValues = {
 const INITIAL_VALUES: StoreFormValues = {
 	name: null,
 	type: null,
+	color: DEFAULT_STORE_COLOR,
 	ubigeoOption: null,
 	addressType: null,
 	address: null,
@@ -80,6 +85,7 @@ export function SetupStepStore({
 		onSubmit({
 			name: values.name ?? '',
 			type: values.type?.value ?? '',
+			color: values.color,
 			ubigeoId: isPhysical ? (values.ubigeoOption?.value ?? null) : null,
 			addressType: isPhysical
 				? (values.addressType?.value ?? null)
@@ -128,6 +134,12 @@ export function SetupStepStore({
 							disabled={isPending}
 						/>
 					</div>
+
+					<StoreColorField
+						{...register('color')}
+						validate={validateStoreColor}
+						disabled={isPending}
+					/>
 
 					{values.type && (
 						<>

@@ -9,6 +9,7 @@ export interface StoreTableRow {
 	name: string
 	slug: string
 	type: string
+	color: string
 	ubigeoId: string | null
 	addressType: string | null
 	address: string | null
@@ -73,6 +74,7 @@ export async function getStoreByIdForOrganization(
 			slug: stores.slug,
 			name: stores.name,
 			type: stores.type,
+			color: stores.color,
 			ubigeoId: stores.ubigeoId,
 			addressType: stores.addressType,
 			address: stores.address,
@@ -117,6 +119,7 @@ export async function getStoresTableForOrganization({
 			name: stores.name,
 			slug: stores.slug,
 			type: stores.type,
+			color: stores.color,
 			ubigeoId: stores.ubigeoId,
 			addressType: stores.addressType,
 			address: stores.address,

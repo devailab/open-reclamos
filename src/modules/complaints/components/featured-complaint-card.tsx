@@ -7,11 +7,12 @@ import {
 	StoreIcon,
 } from 'lucide-react'
 import Link from 'next/link'
-import type { FC } from 'react'
+import type { CSSProperties, FC } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatDateDisplay } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import { DEFAULT_STORE_COLOR } from '@/modules/stores/constants'
 import type { ComplaintCategorySummary } from '../dashboard-queries'
 
 const TYPE_LABEL: Record<string, string> = {
@@ -122,6 +123,20 @@ const PROGRESS_COLOR: Record<DeadlineLevel, string> = {
 	safe: 'bg-emerald-500',
 }
 
+const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/i
+
+function getStoreBadgeStyle(color: string): CSSProperties {
+	const storeColor = HEX_COLOR_PATTERN.test(color)
+		? color.toUpperCase()
+		: DEFAULT_STORE_COLOR
+
+	return {
+		backgroundColor: `${storeColor}18`,
+		borderColor: `${storeColor}4D`,
+		color: storeColor,
+	}
+}
+
 export interface FeaturedComplaintCardData {
 	id: string
 	correlative: string
@@ -129,6 +144,7 @@ export interface FeaturedComplaintCardData {
 	firstName: string
 	lastName: string
 	storeName: string
+	storeColor: string
 	status: string
 	priority: string
 	category: ComplaintCategorySummary | null
@@ -150,6 +166,7 @@ export const FeaturedComplaintCard: FC<FeaturedComplaintCardProps> = ({
 		complaint.createdAt,
 	)
 	const DeadlineIcon = deadline ? DEADLINE_ICON[deadline.level] : null
+	const storeBadgeStyle = getStoreBadgeStyle(complaint.storeColor)
 
 	return (
 		<Link
@@ -157,14 +174,18 @@ export const FeaturedComplaintCard: FC<FeaturedComplaintCardProps> = ({
 			className='group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 		>
 			<Card className='h-full transition-[border-color,box-shadow,transform] group-hover:-translate-y-0.5 group-hover:border-primary/30 group-hover:shadow-md'>
-				<CardContent className='flex h-full flex-col gap-3 px-4 py-3'>
+				<CardContent className='flex h-full flex-col gap-3 px-4 py-0'>
 					<div className='flex items-start justify-between gap-2'>
-						<div className='flex min-w-0 items-center gap-1.5'>
-							<StoreIcon className='size-3.5 shrink-0 text-muted-foreground' />
-							<span className='truncate text-xs font-medium text-muted-foreground'>
+						<Badge
+							variant='outline'
+							className='h-5 min-w-0 max-w-[70%] px-2 text-[10px] font-semibold'
+							style={storeBadgeStyle}
+						>
+							<StoreIcon className='size-3 shrink-0' />
+							<span className='truncate'>
 								{complaint.storeName}
 							</span>
-						</div>
+						</Badge>
 						<span className='shrink-0 font-mono text-xs text-muted-foreground/70'>
 							{complaint.correlative}
 						</span>

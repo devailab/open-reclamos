@@ -21,6 +21,7 @@ export interface StoresTableFilters {
 export interface StoreMutationInput {
 	name: string
 	type: string
+	color: string
 	ubigeoId: string | null
 	addressType: string | null
 	address: string | null
@@ -30,6 +31,7 @@ export interface StoreMutationInput {
 export interface NormalizedStoreMutationInput {
 	name: string
 	type: string
+	color: string
 	ubigeoId: string | null
 	addressType: string | null
 	address: string | null
@@ -67,6 +69,7 @@ export const normalizeStoreMutationInput = (
 	return {
 		name: input.name.trim(),
 		type: input.type.trim(),
+		color: (input.color ?? '').trim().toUpperCase(),
 		ubigeoId: normalizeOptionalString(input.ubigeoId),
 		addressType: normalizeOptionalString(input.addressType),
 		address: normalizeOptionalString(input.address),
@@ -81,6 +84,16 @@ export const validateStoreId = (value: string): string | null => {
 
 	if (!/^[0-9a-fA-F-]{36}$/.test(value.trim())) {
 		return 'El identificador de tienda no es válido.'
+	}
+
+	return null
+}
+
+export const validateStoreColor = (
+	value: string | null | undefined,
+): string | null => {
+	if (!/^#[0-9A-F]{6}$/i.test(value?.trim() ?? '')) {
+		return 'El color de la tienda no es válido.'
 	}
 
 	return null
@@ -104,6 +117,9 @@ export const validateStoreMutationInput = (
 	if (!isStoreType(input.type)) {
 		return 'El tipo de tienda no es válido.'
 	}
+
+	const colorError = validateStoreColor(input.color)
+	if (colorError) return colorError
 
 	if (input.type === 'physical') {
 		if (!input.ubigeoId) return 'El distrito de la tienda es requerido.'

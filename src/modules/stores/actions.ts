@@ -94,6 +94,7 @@ const buildStorePersistenceInput = (
 	return {
 		name: input.name,
 		type: input.type,
+		color: input.color,
 		ubigeoId: isPhysical ? input.ubigeoId : null,
 		addressType: isPhysical ? input.addressType : null,
 		address: isPhysical ? input.address : null,
@@ -201,6 +202,7 @@ export async function $updateStoreAction(
 				oldData: {
 					name: currentStore.name,
 					type: currentStore.type,
+					color: currentStore.color,
 					ubigeoId: currentStore.ubigeoId,
 					addressType: currentStore.addressType,
 					address: currentStore.address,

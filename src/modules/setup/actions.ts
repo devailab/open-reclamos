@@ -288,6 +288,7 @@ async function resolveSetupStoreOrganizationId(
 export type SetupStoreInput = {
 	name: string
 	type: string
+	color: string
 	ubigeoId: string | null
 	addressType: string | null
 	address: string | null

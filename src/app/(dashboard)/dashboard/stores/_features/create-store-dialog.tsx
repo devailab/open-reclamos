@@ -19,6 +19,8 @@ import { Separator } from '@/components/ui/separator'
 import { ADDRESS_TYPE_OPTIONS, STORE_TYPE_OPTIONS } from '@/lib/constants'
 import { $searchUbigeosAction } from '@/modules/setup/actions'
 import { $createStoreAction } from '@/modules/stores/actions'
+import { StoreColorField } from '@/modules/stores/components/store-color-field'
+import { DEFAULT_STORE_COLOR } from '@/modules/stores/constants'
 import {
 	normalizeStoreMutationInput,
 	type StoreMutationInput,
@@ -34,6 +36,7 @@ interface CreateStoreDialogProps {
 interface StoreFormValues {
 	name: string | null
 	type: SelectOption | null
+	color: string
 	ubigeoOption: AutocompleteOption | null
 	addressType: SelectOption | null
 	address: string | null
@@ -43,6 +46,7 @@ interface StoreFormValues {
 const INITIAL_VALUES: StoreFormValues = {
 	name: null,
 	type: null,
+	color: DEFAULT_STORE_COLOR,
 	ubigeoOption: null,
 	addressType: null,
 	address: null,
@@ -67,6 +71,7 @@ export function CreateStoreDialog({
 		return {
 			name: values.name ?? '',
 			type: values.type?.value ?? '',
+			color: values.color,
 			ubigeoId: isPhysical ? (values.ubigeoOption?.value ?? null) : null,
 			addressType: isPhysical
 				? (values.addressType?.value ?? null)
@@ -145,6 +150,14 @@ export function CreateStoreDialog({
 							disabled={isPending}
 						/>
 					</div>
+
+					<StoreColorField
+						value={values.color}
+						onValueChange={(color) =>
+							setValues((previous) => ({ ...previous, color }))
+						}
+						disabled={isPending}
+					/>
 
 					{values.type && (
 						<>

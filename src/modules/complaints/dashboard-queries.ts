@@ -48,6 +48,7 @@ export interface ComplaintTableRow {
 	lastName: string
 	storeId: string
 	storeName: string
+	storeColor: string
 	status: string
 	priority: string
 	category: ComplaintCategorySummary | null
@@ -60,6 +61,7 @@ export interface ComplaintTableRow {
 export interface StoreOption {
 	id: string
 	name: string
+	color: string
 }
 
 export interface ComplaintsDashboardKpis {
@@ -195,6 +197,7 @@ export async function getComplaintsTableForOrganization({
 			lastName: complaints.lastName,
 			storeId: complaints.storeId,
 			storeName: stores.name,
+			storeColor: stores.color,
 			status: complaints.status,
 			priority: complaints.priority,
 			category: {
@@ -247,7 +250,7 @@ export async function getStoreOptionsForOrganization(
 
 	return (
 		db
-			.select({ id: stores.id, name: stores.name })
+			.select({ id: stores.id, name: stores.name, color: stores.color })
 			.from(stores)
 			// Las tiendas desactivadas no deben aparecer en opciones de uso activo
 			.where(and(condition, isNull(stores.deletedAt)))
@@ -349,6 +352,7 @@ export interface FeaturedComplaint {
 	firstName: string
 	lastName: string
 	storeName: string
+	storeColor: string
 	status: string
 	priority: string
 	category: ComplaintCategorySummary | null
@@ -409,6 +413,7 @@ export async function getFeaturedComplaintsForOrganization(
 			firstName: complaints.firstName,
 			lastName: complaints.lastName,
 			storeName: stores.name,
+			storeColor: stores.color,
 			status: complaints.status,
 			priority: complaints.priority,
 			category: {

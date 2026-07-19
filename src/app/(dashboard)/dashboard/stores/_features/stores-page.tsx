@@ -220,9 +220,17 @@ export const StoresPage: FC<StoresPageProps> = ({ initialState }) => {
 		{
 			header: { render: () => 'Nombre' },
 			cell: ({ row }) => (
-				<div className='space-y-0.5'>
-					<p className='text-sm font-medium'>{row.name}</p>
-					<p className='text-xs text-muted-foreground'>{row.slug}</p>
+				<div className='flex items-center gap-2.5'>
+					<span
+						className='size-3.5 shrink-0 rounded-full ring-1 ring-black/10'
+						style={{ backgroundColor: row.color }}
+					/>
+					<div className='space-y-0.5'>
+						<p className='text-sm font-medium'>{row.name}</p>
+						<p className='text-xs text-muted-foreground'>
+							{row.slug}
+						</p>
+					</div>
 				</div>
 			),
 		},

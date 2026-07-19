@@ -1,5 +1,6 @@
 import { ADDRESS_TYPE_OPTIONS, STORE_TYPE_OPTIONS } from '@/lib/constants'
 import { required } from '@/lib/validators'
+import { validateStoreColor } from '@/modules/stores/validation'
 
 export const validateRuc = (value: string | null): string | null => {
 	if (!value) return 'El RUC es requerido'
@@ -61,6 +62,7 @@ interface SetupOrganizationPayload {
 interface SetupStorePayload {
 	name: string
 	type: string
+	color: string
 	ubigeoId: string | null
 	addressType: string | null
 	address: string | null
@@ -134,6 +136,8 @@ export function validateSetupStorePayload(
 	if (!STORE_TYPES.has(input.type)) {
 		return 'El tipo de tienda no es válido.'
 	}
+	const colorError = validateStoreColor(input.color)
+	if (colorError) return colorError
 	if (input.ubigeoId !== null && !UUID_REGEX.test(input.ubigeoId)) {
 		return 'El distrito seleccionado no es válido.'
 	}
