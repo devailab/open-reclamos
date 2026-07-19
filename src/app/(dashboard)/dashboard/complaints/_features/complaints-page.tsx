@@ -107,20 +107,11 @@ const getDeadlineInfo = (
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
+	const { store } = initialState
+
 	const [rows, setRows] = useState(initialState.rows)
 	const [filters, setFilters] = useState<ComplaintsTableFilters>(
 		initialState.filters,
-	)
-
-	const storeFilterOptions: SelectOption[] = useMemo(
-		() => [
-			{ value: 'all', label: 'Todas las tiendas' },
-			...initialState.storeOptions.map((s) => ({
-				value: s.id,
-				label: s.name,
-			})),
-		],
-		[initialState.storeOptions],
 	)
 
 	const {
@@ -167,8 +158,7 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 		return (
 			filters.search.trim() !== '' ||
 			filters.type !== DEFAULT_COMPLAINTS_TABLE_FILTERS.type ||
-			filters.status !== DEFAULT_COMPLAINTS_TABLE_FILTERS.status ||
-			filters.storeId !== DEFAULT_COMPLAINTS_TABLE_FILTERS.storeId
+			filters.status !== DEFAULT_COMPLAINTS_TABLE_FILTERS.status
 		)
 	}, [filters])
 
@@ -179,10 +169,6 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 	const selectedStatusFilter =
 		STATUS_FILTER_OPTIONS.find((o) => o.value === filters.status) ??
 		STATUS_FILTER_OPTIONS[0]
-
-	const selectedStoreFilter =
-		storeFilterOptions.find((o) => o.value === filters.storeId) ??
-		storeFilterOptions[0]
 
 	const handleSearch = () => {
 		if (page !== 1) {
@@ -201,24 +187,20 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 	}
 
 	const handleClear = () => {
-		setFilters(DEFAULT_COMPLAINTS_TABLE_FILTERS)
+		const clearedFilters: ComplaintsTableFilters = {
+			...DEFAULT_COMPLAINTS_TABLE_FILTERS,
+			storeId: store.id,
+		}
+		setFilters(clearedFilters)
 		if (page !== 1) {
 			setPage(1)
 			return
 		}
 		// Consultar con los filtros por defecto sin esperar el re-render
-		void search(DEFAULT_COMPLAINTS_TABLE_FILTERS)
+		void search(clearedFilters)
 	}
 
 	const columns = defineColumns([
-		{
-			header: { render: () => 'Tienda' },
-			cell: ({ row }) => (
-				<span className='text-sm text-muted-foreground'>
-					{row.storeName}
-				</span>
-			),
-		},
 		{
 			header: { render: () => 'Correlativo' },
 			cell: ({ row }) => (
@@ -361,10 +343,11 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 	return (
 		<div className='space-y-6'>
 			<div>
-				<h1 className='text-2xl font-semibold'>Reclamos</h1>
+				<h1 className='text-2xl font-semibold'>
+					Reclamos · {store.name}
+				</h1>
 				<p className='mt-1 text-sm text-muted-foreground'>
-					Gestiona los reclamos y quejas registrados en tu
-					organización.
+					Reclamos y quejas registrados en {store.name}.
 				</p>
 			</div>
 
@@ -419,25 +402,6 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({ initialState }) => {
 								}}
 							/>,
 						]}
-						advancedFilters={
-							initialState.storeOptions.length > 1
-								? [
-										<SelectField
-											key='store-filter'
-											label='Tienda'
-											options={storeFilterOptions}
-											value={selectedStoreFilter}
-											onValueChange={(value) => {
-												setFilters((prev) => ({
-													...prev,
-													storeId:
-														value?.value ?? 'all',
-												}))
-											}}
-										/>,
-									]
-								: []
-						}
 						onSearch={handleSearch}
 						onClear={handleClear}
 						hasActiveFilters={hasActiveFilters}

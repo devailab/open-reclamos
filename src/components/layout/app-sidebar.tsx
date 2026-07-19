@@ -48,8 +48,10 @@ import {
 	sidebarNavigation,
 } from '@/lib/sidebar-navigation'
 import { $logoutAction } from '@/modules/auth/actions'
+import type { StoreOption } from '@/modules/complaints/dashboard-queries'
 import { $switchOrganizationAction } from '@/modules/rbac/actions'
 import type { UserOrganizationOption } from '@/modules/rbac/queries'
+import { SidebarComplaintsStores } from './sidebar-complaints-stores'
 import { SidebarOrganizationSwitcher } from './sidebar-organization-switcher'
 
 function getInitials(name: string): string {
@@ -152,6 +154,7 @@ export interface AppSidebarProps {
 	organizations: UserOrganizationOption[]
 	activeOrganization: UserOrganizationOption | null
 	ssoAccountUrl?: string | null
+	complaintStores?: StoreOption[]
 }
 
 export function AppSidebar({
@@ -161,6 +164,7 @@ export function AppSidebar({
 	organizations,
 	activeOrganization,
 	ssoAccountUrl = null,
+	complaintStores = [],
 }: AppSidebarProps) {
 	const pathname = usePathname()
 	const searchParams = useSearchParams()
@@ -225,6 +229,17 @@ export function AppSidebar({
 										<SidebarNavLink
 											key={entry.href}
 											item={entry}
+											pathname={pathname}
+										/>
+									)
+								}
+
+								if (entry.kind === 'complaintsStores') {
+									return (
+										<SidebarComplaintsStores
+											key={entry.href}
+											entry={entry}
+											stores={complaintStores}
 											pathname={pathname}
 										/>
 									)

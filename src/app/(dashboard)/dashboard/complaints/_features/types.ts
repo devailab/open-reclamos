@@ -12,7 +12,7 @@ export interface ComplaintsInitialState {
 	page: number
 	pageSize: number
 	filters: ComplaintsTableFilters
-	storeOptions: StoreOption[]
+	store: StoreOption
 }
 
 export interface ComplaintsPageProps {

@@ -1,17 +1,10 @@
+import { Store } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
-import {
-	getComplaintsTableForOrganization,
-	getStoreOptionsForOrganization,
-} from '@/modules/complaints/dashboard-queries'
-import { DEFAULT_COMPLAINTS_TABLE_FILTERS } from '@/modules/complaints/dashboard-validation'
+import { getStoreOptionsForOrganization } from '@/modules/complaints/dashboard-queries'
+import { buildComplaintsStorePath } from '@/modules/complaints/routes'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
-import { ComplaintsPage } from './_features/complaints-page'
-import type { ComplaintsInitialState } from './_features/types'
-
-const INITIAL_PAGE = 1
-const INITIAL_PAGE_SIZE = 10
 
 const ComplaintsRoute: FC = async () => {
 	const session = await getSession()
@@ -26,30 +19,30 @@ const ComplaintsRoute: FC = async () => {
 			? membership.storeIds
 			: undefined
 
-	const [{ rows, totalItems }, storeOptions] = await Promise.all([
-		getComplaintsTableForOrganization({
-			organizationId: membership.organizationId,
-			page: INITIAL_PAGE,
-			pageSize: INITIAL_PAGE_SIZE,
-			filters: DEFAULT_COMPLAINTS_TABLE_FILTERS,
-			allowedStoreIds,
-		}),
-		getStoreOptionsForOrganization(
-			membership.organizationId,
-			allowedStoreIds,
-		),
-	])
+	const stores = await getStoreOptionsForOrganization(
+		membership.organizationId,
+		allowedStoreIds,
+	)
 
-	const initialState: ComplaintsInitialState = {
-		rows,
-		totalItems,
-		page: INITIAL_PAGE,
-		pageSize: INITIAL_PAGE_SIZE,
-		filters: DEFAULT_COMPLAINTS_TABLE_FILTERS,
-		storeOptions,
+	if (stores.length > 0) {
+		redirect(buildComplaintsStorePath(stores[0].id))
 	}
 
-	return <ComplaintsPage initialState={initialState} />
+	return (
+		<div className='flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-16 text-center'>
+			<div className='flex size-12 items-center justify-center rounded-full bg-muted'>
+				<Store className='size-6 text-muted-foreground' />
+			</div>
+			<div className='space-y-1'>
+				<h1 className='text-lg font-semibold'>
+					Sin tiendas disponibles
+				</h1>
+				<p className='text-sm text-muted-foreground'>
+					No tienes tiendas asignadas para consultar reclamos.
+				</p>
+			</div>
+		</div>
+	)
 }
 
 export default ComplaintsRoute

@@ -17,6 +17,7 @@ import {
 	Users,
 	Webhook,
 } from 'lucide-react'
+import { COMPLAINTS_BASE_PATH } from '@/modules/complaints/routes'
 
 export type SidebarVisibility =
 	| { type: 'always' }
@@ -41,7 +42,15 @@ export interface SidebarGroup {
 	items: SidebarLink[]
 }
 
-export type SidebarEntry = SidebarLink | SidebarGroup
+export interface SidebarComplaintsStores {
+	kind: 'complaintsStores'
+	label: string
+	href: string
+	icon: LucideIcon
+	visibility: SidebarVisibility
+}
+
+export type SidebarEntry = SidebarLink | SidebarGroup | SidebarComplaintsStores
 
 export interface SidebarVisibilityContext {
 	permissionKeys: string[]
@@ -66,9 +75,9 @@ export const sidebarNavigation: SidebarEntry[] = [
 		visibility: { type: 'always' },
 	},
 	{
-		kind: 'link',
+		kind: 'complaintsStores',
 		label: 'Reclamos',
-		href: '/dashboard/complaints',
+		href: COMPLAINTS_BASE_PATH,
 		icon: ClipboardList,
 		visibility: { type: 'permission', key: 'complaints.view' },
 	},
@@ -250,8 +259,28 @@ export function isSidebarLinkActive(
 		: pathname === link.href || pathname.startsWith(`${link.href}/`)
 }
 
+function toAccessCheckableLinks(entry: SidebarEntry): SidebarLink[] {
+	if (entry.kind === 'group') {
+		return entry.items
+	}
+
+	if (entry.kind === 'complaintsStores') {
+		return [
+			{
+				kind: 'link',
+				label: entry.label,
+				href: entry.href,
+				icon: entry.icon,
+				visibility: entry.visibility,
+			},
+		]
+	}
+
+	return [entry]
+}
+
 const accessCheckableLinks: SidebarLink[] = sidebarNavigation
-	.flatMap((entry) => (entry.kind === 'link' ? [entry] : entry.items))
+	.flatMap(toAccessCheckableLinks)
 	.filter(
 		(link) =>
 			link.visibility.type === 'always' ||

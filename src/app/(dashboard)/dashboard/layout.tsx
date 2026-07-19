@@ -13,9 +13,11 @@ import { db } from '@/database/database'
 import { users } from '@/database/schema'
 import { getSession } from '@/lib/auth-server'
 import { SSO_ACCOUNT_URL, SSO_ENABLED } from '@/lib/config'
+import { getStoreOptionsForOrganization } from '@/modules/complaints/dashboard-queries'
 import {
 	getMembershipContext,
 	getUserOrganizationOptions,
+	hasPermission,
 } from '@/modules/rbac/queries'
 
 const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
@@ -54,6 +56,19 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 		(organization) => organization.id === membership?.organizationId,
 	)
 
+	const canViewComplaints = hasPermission(membership, 'complaints.view')
+	const allowedStoreIds =
+		membership?.storeAccessMode === 'selected'
+			? membership.storeIds
+			: undefined
+	const complaintStores =
+		membership && canViewComplaints
+			? await getStoreOptionsForOrganization(
+					membership.organizationId,
+					allowedStoreIds,
+				)
+			: []
+
 	return (
 		<SidebarProvider>
 			<AppSidebar
@@ -66,6 +81,7 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 				organizations={organizations}
 				activeOrganization={activeOrganization ?? null}
 				ssoAccountUrl={SSO_ENABLED ? SSO_ACCOUNT_URL || null : null}
+				complaintStores={complaintStores}
 			/>
 			<SidebarInset>
 				<header className='flex h-12 shrink-0 items-center gap-2 border-b px-4'>
