@@ -76,13 +76,6 @@ export const MESSAGES = {
 		duplicateName: 'Ya existe un rol con ese nombre.',
 	},
 	permissions: {
-		notFound: 'El permiso no fue encontrado.',
-		systemNotEditable: 'Los permisos base no se pueden editar.',
-		systemNotDeletable: 'Los permisos base no se pueden eliminar.',
-		createFailed: 'No se pudo crear el permiso. Inténtalo nuevamente.',
-		updateFailed: 'No se pudo actualizar el permiso. Inténtalo nuevamente.',
-		deleteFailed: 'No se pudo eliminar el permiso. Inténtalo nuevamente.',
-		duplicateName: 'Ya existe un permiso personalizado con ese nombre.',
 		invalidSelection: 'Uno de los permisos seleccionados no es válido.',
 	},
 	users: {

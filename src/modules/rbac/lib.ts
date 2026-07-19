@@ -40,7 +40,7 @@ export const slugifyRbacName = (value: string): string => {
 }
 
 export const buildOrganizationScopedKey = (
-	prefix: 'role' | 'permission',
+	prefix: 'role',
 	organizationId: string,
 	slug: string,
 ) => {
@@ -49,14 +49,6 @@ export const buildOrganizationScopedKey = (
 
 export function normalizeEmail(email: string): string {
 	return email.trim().toLowerCase()
-}
-
-export function normalizePermissionKey(value: string): string {
-	return value
-		.trim()
-		.toLowerCase()
-		.replace(/[^a-z0-9.\-_]/g, '-')
-		.replace(/-+/g, '-')
 }
 
 export function isSelectedStoreAccessMode(value: string | null | undefined) {

@@ -178,16 +178,9 @@ export const RolePermissionSelector: FC<RolePermissionSelectorProps> = ({
 													className='mt-0.5'
 												/>
 												<div className='min-w-0 space-y-0.5'>
-													<div className='flex items-center gap-2'>
-														<span className='text-sm font-medium'>
-															{permission.name}
-														</span>
-														{permission.isSystem && (
-															<Badge variant='outline'>
-																Base
-															</Badge>
-														)}
-													</div>
+													<span className='block text-sm font-medium'>
+														{permission.name}
+													</span>
 													<p className='truncate text-xs text-muted-foreground'>
 														{permission.key}
 													</p>

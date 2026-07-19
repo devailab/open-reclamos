@@ -163,13 +163,6 @@
             "description": "Permite consultar el catalogo de permisos."
         },
         {
-            "key": "permissions.manage",
-            "slug": "permissions-manage",
-            "module": "permissions",
-            "name": "Gestionar permisos",
-            "description": "Permite crear, editar y eliminar permisos personalizados."
-        },
-        {
             "key": "webhooks.view",
             "slug": "webhooks-view",
             "module": "webhooks",
@@ -220,7 +213,6 @@
                 "roles.view",
                 "roles.manage",
                 "permissions.view",
-                "permissions.manage",
                 "webhooks.view",
                 "webhooks.manage",
                 "exports.view"

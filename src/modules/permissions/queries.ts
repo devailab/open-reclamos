@@ -35,7 +35,6 @@ interface GetPermissionsTableForOrganizationParams {
 }
 
 const buildPermissionsTableConditions = (
-	organizationId: string,
 	filters: PermissionsTableFilters,
 ): SQL<unknown>[] => {
 	const conditions: SQL<unknown>[] = []
@@ -48,47 +47,7 @@ const buildPermissionsTableConditions = (
 		conditions.push(eq(permissions.module, filters.module))
 	}
 
-	if (filters.scope === 'system') {
-		conditions.push(eq(permissions.isSystem, true))
-	}
-
-	if (filters.scope === 'custom') {
-		conditions.push(eq(permissions.organizationId, organizationId))
-	}
-
 	return conditions
-}
-
-export async function getPermissionByIdForOrganization(
-	permissionId: string,
-	organizationId: string,
-) {
-	const [permission] = await db
-		.select({
-			id: permissions.id,
-			key: permissions.key,
-			slug: permissions.slug,
-			module: permissions.module,
-			name: permissions.name,
-			description: permissions.description,
-			isSystem: permissions.isSystem,
-			organizationId: permissions.organizationId,
-			deletedAt: permissions.deletedAt,
-		})
-		.from(permissions)
-		.where(
-			and(
-				eq(permissions.id, permissionId),
-				isNull(permissions.deletedAt),
-				or(
-					eq(permissions.isSystem, true),
-					eq(permissions.organizationId, organizationId),
-				),
-			),
-		)
-		.limit(1)
-
-	return permission ?? null
 }
 
 export async function getPermissionModuleOptionsForOrganization(
@@ -125,9 +84,7 @@ export async function getPermissionsTableForOrganization({
 			eq(permissions.isSystem, true),
 			eq(permissions.organizationId, organizationId),
 		),
-		...buildPermissionsTableConditions(organizationId, filters).filter(
-			Boolean,
-		),
+		...buildPermissionsTableConditions(filters).filter(Boolean),
 	)
 
 	if (!whereClause) return { rows: [], totalItems: 0 }
@@ -179,23 +136,4 @@ export async function getPermissionsTableForOrganization({
 		})),
 		totalItems: await countRows(permissions, whereClause),
 	}
-}
-
-export async function checkPermissionKeyExists(
-	key: string,
-	excludePermissionId?: string,
-) {
-	const rows = await db
-		.select({ id: permissions.id })
-		.from(permissions)
-		.where(and(eq(permissions.key, key), isNull(permissions.deletedAt)))
-
-	return rows.some((row) => row.id !== excludePermissionId)
-}
-
-export async function getPermissionUsageCount(permissionId: string) {
-	return countRows(
-		rolePermissions,
-		eq(rolePermissions.permissionId, permissionId),
-	)
 }
