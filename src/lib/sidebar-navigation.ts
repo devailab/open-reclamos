@@ -3,156 +3,279 @@ import {
 	ClipboardList,
 	Clock3,
 	FileDown,
+	FileText,
+	FlaskConical,
 	KeyRound,
 	LayoutDashboard,
+	type LucideIcon,
 	ScanText,
 	Settings,
 	ShieldCheck,
 	ShieldHalf,
 	Store,
+	UserRound,
 	Users,
 	Webhook,
 } from 'lucide-react'
 
-export interface SidebarNavigationItem {
+export type SidebarVisibility =
+	| { type: 'always' }
+	| { type: 'permission'; key: string }
+	| { type: 'superAdmin' }
+	| { type: 'devMode' }
+
+export interface SidebarLink {
+	kind: 'link'
 	label: string
 	href: string
-	icon: typeof LayoutDashboard
+	icon: LucideIcon
+	visibility: SidebarVisibility
 	exact?: boolean
-	permission: string | null
 }
 
-export const sidebarNavItems: SidebarNavigationItem[] = [
+export interface SidebarGroup {
+	kind: 'group'
+	label: string
+	icon: LucideIcon
+	visibility: SidebarVisibility
+	items: SidebarLink[]
+}
+
+export type SidebarEntry = SidebarLink | SidebarGroup
+
+export interface SidebarVisibilityContext {
+	permissionKeys: string[]
+	isSuperAdmin: boolean
+	isDevMode: boolean
+}
+
+export interface SidebarAccountItem {
+	label: string
+	href: string
+	icon: LucideIcon
+	external?: boolean
+}
+
+export const sidebarNavigation: SidebarEntry[] = [
 	{
+		kind: 'link',
 		label: 'Dashboard',
 		href: '/dashboard',
 		icon: LayoutDashboard,
 		exact: true,
-		permission: null,
+		visibility: { type: 'always' },
 	},
 	{
+		kind: 'link',
 		label: 'Reclamos',
 		href: '/dashboard/complaints',
 		icon: ClipboardList,
-		permission: 'complaints.view',
+		visibility: { type: 'permission', key: 'complaints.view' },
 	},
 	{
+		kind: 'link',
 		label: 'Exportar',
 		href: '/dashboard/exports',
 		icon: FileDown,
-		permission: 'exports.view',
+		visibility: { type: 'permission', key: 'exports.view' },
 	},
 	{
+		kind: 'link',
 		label: 'Auditoría',
 		href: '/dashboard/audit',
 		icon: Clock3,
-		permission: 'audit.view',
+		visibility: { type: 'permission', key: 'audit.view' },
 	},
 	{
+		kind: 'link',
 		label: 'Tiendas',
 		href: '/dashboard/stores',
 		icon: Store,
-		permission: 'stores.view',
+		visibility: { type: 'permission', key: 'stores.view' },
 	},
 	{
+		kind: 'link',
 		label: 'Motivos',
 		href: '/dashboard/reasons',
 		icon: BookOpen,
-		permission: 'reasons.view',
+		visibility: { type: 'permission', key: 'reasons.view' },
 	},
 	{
+		kind: 'link',
 		label: 'Categorías',
 		href: '/dashboard/categories',
 		icon: BookOpen,
-		permission: 'categories.view',
+		visibility: { type: 'permission', key: 'categories.view' },
 	},
 	{
+		kind: 'link',
 		label: 'Webhooks',
 		href: '/dashboard/webhooks',
 		icon: Webhook,
-		permission: 'webhooks.view',
+		visibility: { type: 'permission', key: 'webhooks.view' },
 	},
 	{
+		kind: 'link',
 		label: 'Configuración',
 		href: '/dashboard/settings',
 		icon: Settings,
-		permission: 'settings.view',
+		visibility: { type: 'permission', key: 'settings.view' },
 	},
-]
-
-export const sidebarNoticesItems: SidebarNavigationItem[] = [
 	{
-		label: 'Sitio web',
-		href: '/dashboard/notices/website',
+		kind: 'group',
+		label: 'Aviso',
 		icon: BookOpen,
-		permission: 'notices.view',
+		visibility: { type: 'always' },
+		items: [
+			{
+				kind: 'link',
+				label: 'Sitio web',
+				href: '/dashboard/notices/website',
+				icon: BookOpen,
+				visibility: { type: 'permission', key: 'notices.view' },
+			},
+			{
+				kind: 'link',
+				label: 'Imprimible',
+				href: '/dashboard/notices/printable',
+				icon: ScanText,
+				visibility: { type: 'permission', key: 'printable.view' },
+			},
+		],
 	},
 	{
-		label: 'Imprimible',
-		href: '/dashboard/notices/printable',
-		icon: ScanText,
-		permission: 'printable.view',
-	},
-]
-
-export const sidebarAdministrationItems: SidebarNavigationItem[] = [
-	{
-		label: 'Usuarios',
-		href: '/dashboard/users',
-		icon: Users,
-		permission: 'users.view',
-	},
-	{
-		label: 'Roles',
-		href: '/dashboard/roles',
+		kind: 'group',
+		label: 'Administración',
 		icon: ShieldCheck,
-		permission: 'roles.view',
+		visibility: { type: 'always' },
+		items: [
+			{
+				kind: 'link',
+				label: 'Usuarios',
+				href: '/dashboard/users',
+				icon: Users,
+				visibility: { type: 'permission', key: 'users.view' },
+			},
+			{
+				kind: 'link',
+				label: 'Roles',
+				href: '/dashboard/roles',
+				icon: ShieldCheck,
+				visibility: { type: 'permission', key: 'roles.view' },
+			},
+			{
+				kind: 'link',
+				label: 'Permisos',
+				href: '/dashboard/permissions',
+				icon: KeyRound,
+				visibility: { type: 'permission', key: 'permissions.view' },
+			},
+		],
 	},
 	{
-		label: 'Permisos',
-		href: '/dashboard/permissions',
-		icon: KeyRound,
-		permission: 'permissions.view',
-	},
-]
-
-export const sidebarPlatformItems: SidebarNavigationItem[] = [
-	{
+		kind: 'link',
 		label: 'Admin Plataforma',
 		href: '/dashboard/admin-settings',
 		icon: ShieldHalf,
-		permission: null,
+		visibility: { type: 'superAdmin' },
+	},
+	{
+		kind: 'group',
+		label: 'Dev Tools',
+		icon: FlaskConical,
+		visibility: { type: 'devMode' },
+		items: [
+			{
+				kind: 'link',
+				label: 'Vista previa PDF',
+				href: '/dashboard/dev/pdf-preview',
+				icon: FileText,
+				exact: true,
+				visibility: { type: 'always' },
+			},
+		],
 	},
 ]
 
-// sidebarPlatformItems is intentionally excluded — access is guarded
-// at the page level via isSuperAdmin, not via permission keys
-const allNavigationItems = [
-	...sidebarNavItems,
-	...sidebarNoticesItems,
-	...sidebarAdministrationItems,
-]
+export function getSidebarAccountItems(
+	ssoAccountUrl: string | null,
+): SidebarAccountItem[] {
+	if (ssoAccountUrl) {
+		return [
+			{
+				label: 'Administrar cuenta',
+				href: ssoAccountUrl,
+				icon: UserRound,
+				external: true,
+			},
+			{
+				label: 'Claves API',
+				href: '/dashboard/account',
+				icon: KeyRound,
+			},
+		]
+	}
 
-function matchesPathname(pathname: string, href: string, exact = false) {
-	return exact
-		? pathname === href
-		: pathname === href || pathname.startsWith(`${href}/`)
+	return [
+		{
+			label: 'Administrar cuenta',
+			href: '/dashboard/account',
+			icon: UserRound,
+		},
+	]
 }
+
+export function isSidebarEntryVisible(
+	visibility: SidebarVisibility,
+	context: SidebarVisibilityContext,
+): boolean {
+	switch (visibility.type) {
+		case 'always':
+			return true
+		case 'permission':
+			return context.permissionKeys.includes(visibility.key)
+		case 'superAdmin':
+			return context.isSuperAdmin
+		case 'devMode':
+			return context.isDevMode
+	}
+}
+
+export function isSidebarLinkActive(
+	pathname: string,
+	link: Pick<SidebarLink, 'href' | 'exact'>,
+): boolean {
+	return link.exact
+		? pathname === link.href
+		: pathname === link.href || pathname.startsWith(`${link.href}/`)
+}
+
+const accessCheckableLinks: SidebarLink[] = sidebarNavigation
+	.flatMap((entry) => (entry.kind === 'link' ? [entry] : entry.items))
+	.filter(
+		(link) =>
+			link.visibility.type === 'always' ||
+			link.visibility.type === 'permission',
+	)
 
 export function canAccessSidebarPathname(
 	pathname: string,
 	permissionKeys: string[],
 ): boolean {
-	const matchedItem = allNavigationItems.find((item) =>
-		matchesPathname(pathname, item.href, item.exact),
+	const matchedLink = accessCheckableLinks.find((link) =>
+		isSidebarLinkActive(pathname, link),
 	)
 
-	if (!matchedItem) {
+	if (!matchedLink) {
+		return true
+	}
+
+	if (matchedLink.visibility.type === 'always') {
 		return true
 	}
 
 	return (
-		matchedItem.permission === null ||
-		permissionKeys.includes(matchedItem.permission)
+		matchedLink.visibility.type === 'permission' &&
+		permissionKeys.includes(matchedLink.visibility.key)
 	)
 }

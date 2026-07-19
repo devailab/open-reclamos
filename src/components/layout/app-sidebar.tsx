@@ -1,16 +1,10 @@
 'use client'
 
 import {
-	BookOpen,
 	ChevronRight,
 	ChevronsUpDown,
 	ExternalLink,
-	FileText,
-	FlaskConical,
-	KeyRound,
 	LogOut,
-	ShieldCheck,
-	UserRound,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
@@ -45,10 +39,13 @@ import {
 	SidebarRail,
 } from '@/components/ui/sidebar'
 import {
-	sidebarAdministrationItems,
-	sidebarNavItems,
-	sidebarNoticesItems,
-	sidebarPlatformItems,
+	getSidebarAccountItems,
+	isSidebarEntryVisible,
+	isSidebarLinkActive,
+	type SidebarGroup as SidebarGroupEntry,
+	type SidebarLink,
+	type SidebarVisibilityContext,
+	sidebarNavigation,
 } from '@/lib/sidebar-navigation'
 import { $logoutAction } from '@/modules/auth/actions'
 import { $switchOrganizationAction } from '@/modules/rbac/actions'
@@ -62,6 +59,87 @@ function getInitials(name: string): string {
 		.map((word) => word[0] ?? '')
 		.join('')
 		.toUpperCase()
+}
+
+function SidebarNavLink({
+	item,
+	pathname,
+}: {
+	item: SidebarLink
+	pathname: string
+}) {
+	return (
+		<SidebarMenuItem>
+			<SidebarMenuButton
+				render={<Link href={item.href} />}
+				isActive={isSidebarLinkActive(pathname, item)}
+				tooltip={item.label}
+			>
+				<item.icon />
+				<span>{item.label}</span>
+			</SidebarMenuButton>
+		</SidebarMenuItem>
+	)
+}
+
+function SidebarNavGroup({
+	group,
+	pathname,
+	context,
+}: {
+	group: SidebarGroupEntry
+	pathname: string
+	context: SidebarVisibilityContext
+}) {
+	const visibleItems = group.items.filter((item) =>
+		isSidebarEntryVisible(item.visibility, context),
+	)
+	const isActive = visibleItems.some((item) =>
+		isSidebarLinkActive(pathname, item),
+	)
+	const [isOpen, setIsOpen] = useState(isActive)
+
+	useEffect(() => {
+		if (isActive) setIsOpen(true)
+	}, [isActive])
+
+	if (visibleItems.length === 0) {
+		return null
+	}
+
+	return (
+		<SidebarMenuItem>
+			<Collapsible open={isOpen} onOpenChange={setIsOpen}>
+				<CollapsibleTrigger
+					render={
+						<SidebarMenuButton tooltip={group.label}>
+							<group.icon />
+							<span>{group.label}</span>
+							<ChevronRight className='ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
+						</SidebarMenuButton>
+					}
+				/>
+				<CollapsibleContent>
+					<SidebarMenuSub>
+						{visibleItems.map((item) => (
+							<SidebarMenuSubItem key={item.href}>
+								<SidebarMenuSubButton
+									render={<Link href={item.href} />}
+									isActive={isSidebarLinkActive(
+										pathname,
+										item,
+									)}
+								>
+									<item.icon />
+									<span>{item.label}</span>
+								</SidebarMenuSubButton>
+							</SidebarMenuSubItem>
+						))}
+					</SidebarMenuSub>
+				</CollapsibleContent>
+			</Collapsible>
+		</SidebarMenuItem>
+	)
 }
 
 export interface AppSidebarProps {
@@ -87,50 +165,13 @@ export function AppSidebar({
 	const pathname = usePathname()
 	const searchParams = useSearchParams()
 	const [isPending, startTransition] = useTransition()
-	const visibleNavItems = sidebarNavItems.filter(
-		(item) =>
-			item.permission === null ||
-			permissionKeys.includes(item.permission),
-	)
-	const visibleNoticesItems = sidebarNoticesItems.filter(
-		(item) =>
-			item.permission !== null &&
-			permissionKeys.includes(item.permission),
-	)
-	const isNoticesActive = visibleNoticesItems.some(
-		(item) =>
-			pathname === item.href || pathname.startsWith(`${item.href}/`),
-	)
-	const [isNoticesOpen, setIsNoticesOpen] = useState(isNoticesActive)
 
-	const visibleAdministrationItems = sidebarAdministrationItems.filter(
-		(item) =>
-			item.permission !== null &&
-			permissionKeys.includes(item.permission),
-	)
-	const isAdministrationActive = visibleAdministrationItems.some(
-		(item) =>
-			pathname === item.href || pathname.startsWith(`${item.href}/`),
-	)
-	const [isAdministrationOpen, setIsAdministrationOpen] = useState(
-		isAdministrationActive,
-	)
-
-	const isDevMode = process.env.NODE_ENV === 'development'
-	const isDevActive = pathname.startsWith('/dashboard/dev/')
-	const [isDevOpen, setIsDevOpen] = useState(isDevActive)
-
-	useEffect(() => {
-		if (isNoticesActive) setIsNoticesOpen(true)
-	}, [isNoticesActive])
-
-	useEffect(() => {
-		if (isAdministrationActive) setIsAdministrationOpen(true)
-	}, [isAdministrationActive])
-
-	useEffect(() => {
-		if (isDevActive) setIsDevOpen(true)
-	}, [isDevActive])
+	const visibilityContext: SidebarVisibilityContext = {
+		permissionKeys,
+		isSuperAdmin,
+		isDevMode: process.env.NODE_ENV === 'development',
+	}
+	const accountItems = getSidebarAccountItems(ssoAccountUrl)
 
 	const handleLogout = () => {
 		startTransition(async () => {
@@ -169,201 +210,35 @@ export function AppSidebar({
 					<SidebarGroupLabel>Menú principal</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{visibleNavItems.map((item) => {
-								const isActive = item.exact
-									? pathname === item.href
-									: pathname === item.href ||
-										pathname.startsWith(`${item.href}/`)
+							{sidebarNavigation.map((entry) => {
+								if (
+									!isSidebarEntryVisible(
+										entry.visibility,
+										visibilityContext,
+									)
+								) {
+									return null
+								}
+
+								if (entry.kind === 'link') {
+									return (
+										<SidebarNavLink
+											key={entry.href}
+											item={entry}
+											pathname={pathname}
+										/>
+									)
+								}
 
 								return (
-									<SidebarMenuItem key={item.href}>
-										<SidebarMenuButton
-											render={<Link href={item.href} />}
-											isActive={isActive}
-											tooltip={item.label}
-										>
-											<item.icon />
-											<span>{item.label}</span>
-										</SidebarMenuButton>
-									</SidebarMenuItem>
+									<SidebarNavGroup
+										key={entry.label}
+										group={entry}
+										pathname={pathname}
+										context={visibilityContext}
+									/>
 								)
 							})}
-
-							{visibleNoticesItems.length > 0 && (
-								<SidebarMenuItem>
-									<Collapsible
-										open={isNoticesOpen}
-										onOpenChange={setIsNoticesOpen}
-									>
-										<CollapsibleTrigger
-											render={
-												<SidebarMenuButton tooltip='Aviso'>
-													<BookOpen />
-													<span>Aviso</span>
-													<ChevronRight className='ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
-												</SidebarMenuButton>
-											}
-										/>
-										<CollapsibleContent>
-											<SidebarMenuSub>
-												{visibleNoticesItems.map(
-													(item) => {
-														const isActive =
-															pathname ===
-																item.href ||
-															pathname.startsWith(
-																`${item.href}/`,
-															)
-														return (
-															<SidebarMenuSubItem
-																key={item.href}
-															>
-																<SidebarMenuSubButton
-																	render={
-																		<Link
-																			href={
-																				item.href
-																			}
-																		/>
-																	}
-																	isActive={
-																		isActive
-																	}
-																>
-																	<item.icon />
-																	<span>
-																		{
-																			item.label
-																		}
-																	</span>
-																</SidebarMenuSubButton>
-															</SidebarMenuSubItem>
-														)
-													},
-												)}
-											</SidebarMenuSub>
-										</CollapsibleContent>
-									</Collapsible>
-								</SidebarMenuItem>
-							)}
-
-							{visibleAdministrationItems.length > 0 && (
-								<SidebarMenuItem>
-									<Collapsible
-										open={isAdministrationOpen}
-										onOpenChange={setIsAdministrationOpen}
-									>
-										<CollapsibleTrigger
-											render={
-												<SidebarMenuButton tooltip='Administración'>
-													<ShieldCheck />
-													<span>Administración</span>
-													<ChevronRight className='ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
-												</SidebarMenuButton>
-											}
-										/>
-										<CollapsibleContent>
-											<SidebarMenuSub>
-												{visibleAdministrationItems.map(
-													(item) => {
-														const isActive =
-															pathname ===
-																item.href ||
-															pathname.startsWith(
-																`${item.href}/`,
-															)
-														return (
-															<SidebarMenuSubItem
-																key={item.href}
-															>
-																<SidebarMenuSubButton
-																	render={
-																		<Link
-																			href={
-																				item.href
-																			}
-																		/>
-																	}
-																	isActive={
-																		isActive
-																	}
-																>
-																	<item.icon />
-																	<span>
-																		{
-																			item.label
-																		}
-																	</span>
-																</SidebarMenuSubButton>
-															</SidebarMenuSubItem>
-														)
-													},
-												)}
-											</SidebarMenuSub>
-										</CollapsibleContent>
-									</Collapsible>
-								</SidebarMenuItem>
-							)}
-
-							{isSuperAdmin &&
-								sidebarPlatformItems.map((item) => {
-									const isActive =
-										pathname === item.href ||
-										pathname.startsWith(`${item.href}/`)
-									return (
-										<SidebarMenuItem key={item.href}>
-											<SidebarMenuButton
-												render={
-													<Link href={item.href} />
-												}
-												isActive={isActive}
-												tooltip={item.label}
-											>
-												<item.icon />
-												<span>{item.label}</span>
-											</SidebarMenuButton>
-										</SidebarMenuItem>
-									)
-								})}
-
-							{isDevMode && (
-								<SidebarMenuItem>
-									<Collapsible
-										open={isDevOpen}
-										onOpenChange={setIsDevOpen}
-									>
-										<CollapsibleTrigger
-											render={
-												<SidebarMenuButton tooltip='Dev Tools'>
-													<FlaskConical />
-													<span>Dev Tools</span>
-													<ChevronRight className='ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
-												</SidebarMenuButton>
-											}
-										/>
-										<CollapsibleContent>
-											<SidebarMenuSub>
-												<SidebarMenuSubItem>
-													<SidebarMenuSubButton
-														render={
-															<Link href='/dashboard/dev/pdf-preview' />
-														}
-														isActive={
-															pathname ===
-															'/dashboard/dev/pdf-preview'
-														}
-													>
-														<FileText />
-														<span>
-															Vista previa PDF
-														</span>
-													</SidebarMenuSubButton>
-												</SidebarMenuSubItem>
-											</SidebarMenuSub>
-										</CollapsibleContent>
-									</Collapsible>
-								</SidebarMenuItem>
-							)}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
@@ -417,40 +292,32 @@ export function AppSidebar({
 
 								<DropdownMenuSeparator />
 
-								{ssoAccountUrl ? (
-									<>
+								{accountItems.map((item) =>
+									item.external ? (
 										<DropdownMenuItem
+											key={item.href}
 											render={
 												// biome-ignore lint/a11y/useAnchorContent: el contenido lo inyecta DropdownMenuItem vía render prop
 												<a
-													href={ssoAccountUrl}
+													href={item.href}
 													target='_blank'
 													rel='noopener noreferrer'
 												/>
 											}
 										>
-											<UserRound />
-											Administrar cuenta
+											<item.icon />
+											{item.label}
 											<ExternalLink className='ml-auto size-3.5 opacity-60' />
 										</DropdownMenuItem>
+									) : (
 										<DropdownMenuItem
-											render={
-												<Link href='/dashboard/account' />
-											}
+											key={item.href}
+											render={<Link href={item.href} />}
 										>
-											<KeyRound />
-											Claves API
+											<item.icon />
+											{item.label}
 										</DropdownMenuItem>
-									</>
-								) : (
-									<DropdownMenuItem
-										render={
-											<Link href='/dashboard/account' />
-										}
-									>
-										<UserRound />
-										Administrar cuenta
-									</DropdownMenuItem>
+									),
 								)}
 
 								<DropdownMenuSeparator />
