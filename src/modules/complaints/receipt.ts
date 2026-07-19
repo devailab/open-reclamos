@@ -210,7 +210,7 @@ function formatItemSummary(params: BuildComplaintReceiptParams['complaint']) {
 }
 
 function formatAmount(params: BuildComplaintReceiptParams['complaint']) {
-	if (!params.amount) return 'No consignado'
+	if (!params.amount) return 'No se incluyó un reclamo por monto'
 
 	const currency = getOptionLabel(CURRENCY_OPTIONS, params.currency)
 	return currency ? `${currency} ${params.amount}` : params.amount
@@ -220,6 +220,9 @@ function formatProofOfPayment(
 	params: BuildComplaintReceiptParams['complaint'],
 ) {
 	if (!params.hasProofOfPayment) {
+		if (!params.amount) {
+			return 'No se incluyó un reclamo por monto'
+		}
 		return 'El consumidor indicó que no cuenta con comprobante de pago'
 	}
 

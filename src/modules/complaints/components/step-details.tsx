@@ -1,6 +1,6 @@
 'use client'
 
-import type { FC } from 'react'
+import { type FC, useState } from 'react'
 import BooleanField from '@/components/forms/boolean-field'
 import ChoiceCardField from '@/components/forms/choice-card-field'
 import DateField from '@/components/forms/date-field'
@@ -81,6 +81,13 @@ export const StepDetails: FC<StepDetailsProps> = ({
 }) => {
 	const isClaim = values.complaintType === 'claim'
 
+	const [claimsAmount, setClaimsAmount] = useState(
+		() =>
+			values.currency !== null ||
+			values.amount !== null ||
+			values.hasProofOfPayment,
+	)
+
 	return (
 		<div className='space-y-6'>
 			{/* Tipo de reclamo */}
@@ -121,46 +128,61 @@ export const StepDetails: FC<StepDetailsProps> = ({
 							disabled={disabled}
 						/>
 
-						<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-							<SelectField
-								{...register('currency')}
-								label='Moneda'
-								placeholder='Selecciona...'
-								options={CURRENCY_OPTIONS}
-								disabled={disabled}
-							/>
-							<NumberField
-								{...register('amount')}
-								label='Monto reclamado'
-								placeholder='0.00'
-								min={0}
-								allowDecimals
-								disabled={disabled}
-							/>
-						</div>
-
 						<BooleanField
-							{...register('hasProofOfPayment')}
-							label='Tengo comprobante de pago'
+							label='Deseo reclamar un monto'
+							description='Active esta opción si su reclamo involucra un monto económico (opcional)'
 							variant='normal'
+							value={claimsAmount}
+							onValueChange={setClaimsAmount}
 							disabled={disabled}
 						/>
 
-						{values.hasProofOfPayment && (
-							<div className='grid grid-cols-1 gap-4 rounded-lg border bg-muted/30 p-4 sm:grid-cols-2'>
-								<SelectField
-									{...register('proofOfPaymentType')}
-									label='Tipo de comprobante'
-									placeholder='Selecciona...'
-									options={PROOF_TYPE_OPTIONS}
+						{claimsAmount && (
+							<div className='space-y-4'>
+								<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+									<SelectField
+										{...register('currency')}
+										label='Moneda'
+										placeholder='Selecciona...'
+										options={CURRENCY_OPTIONS}
+										disabled={disabled}
+									/>
+									<NumberField
+										{...register('amount')}
+										label='Monto reclamado'
+										placeholder='0.00'
+										min={0}
+										allowDecimals
+										disabled={disabled}
+									/>
+								</div>
+
+								<BooleanField
+									{...register('hasProofOfPayment')}
+									label='Tengo comprobante de pago'
+									variant='normal'
 									disabled={disabled}
 								/>
-								<TextField
-									{...register('proofOfPaymentNumber')}
-									label='Número de comprobante'
-									placeholder='F001-00001234'
-									disabled={disabled}
-								/>
+
+								{values.hasProofOfPayment && (
+									<div className='grid grid-cols-1 gap-4 rounded-lg border bg-muted/30 p-4 sm:grid-cols-2'>
+										<SelectField
+											{...register('proofOfPaymentType')}
+											label='Tipo de comprobante'
+											placeholder='Selecciona...'
+											options={PROOF_TYPE_OPTIONS}
+											disabled={disabled}
+										/>
+										<TextField
+											{...register(
+												'proofOfPaymentNumber',
+											)}
+											label='Número de comprobante'
+											placeholder='F001-00001234'
+											disabled={disabled}
+										/>
+									</div>
+								)}
 							</div>
 						)}
 					</div>
