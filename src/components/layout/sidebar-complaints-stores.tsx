@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronLeft, ChevronRight, Store } from 'lucide-react'
+import { ChevronLeft, ChevronRight, LayoutGrid, Store } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -56,21 +56,6 @@ export function SidebarComplaintsStores({
 		setPage(activeStorePage)
 	}, [activeStorePage])
 
-	if (stores.length === 0) {
-		return (
-			<SidebarMenuItem>
-				<SidebarMenuButton
-					render={<Link href={entry.href} />}
-					isActive={isGroupActive}
-					tooltip={entry.label}
-				>
-					<entry.icon />
-					<span>{entry.label}</span>
-				</SidebarMenuButton>
-			</SidebarMenuItem>
-		)
-	}
-
 	const safePage = Math.min(page, totalPages - 1)
 	const visibleStores = stores.slice(
 		safePage * STORES_PER_PAGE,
@@ -91,6 +76,15 @@ export function SidebarComplaintsStores({
 				/>
 				<CollapsibleContent>
 					<SidebarMenuSub>
+						<SidebarMenuSubItem>
+							<SidebarMenuSubButton
+								render={<Link href={entry.href} />}
+								isActive={pathname === entry.href}
+							>
+								<LayoutGrid />
+								<span>Vista general</span>
+							</SidebarMenuSubButton>
+						</SidebarMenuSubItem>
 						{visibleStores.map((store) => (
 							<SidebarMenuSubItem key={store.id}>
 								<SidebarMenuSubButton

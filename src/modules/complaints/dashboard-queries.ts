@@ -52,6 +52,7 @@ export interface ComplaintTableRow {
 	priority: string
 	category: ComplaintCategorySummary | null
 	responseDeadline: Date | null
+	responseDeadlineDays: number | null
 	hasResponse: boolean
 	createdAt: Date
 }
@@ -76,12 +77,15 @@ interface GetComplaintsTableForOrganizationParams {
 	filters: ComplaintsTableFilters
 	/** Cuando está definido, solo se devuelven reclamos de estas tiendas. */
 	allowedStoreIds?: string[]
+	/** Limita la consulta a reclamos que todavía requieren atención. */
+	activeOnly?: boolean
 }
 
 const buildComplaintsTableConditions = (
 	organizationId: string,
 	filters: ComplaintsTableFilters,
 	allowedStoreIds?: string[],
+	activeOnly = false,
 ): SQL<unknown>[] => {
 	const conditions: SQL<unknown>[] = [
 		eq(complaints.organizationId, organizationId),
@@ -94,6 +98,12 @@ const buildComplaintsTableConditions = (
 		} else {
 			conditions.push(inArray(complaints.storeId, allowedStoreIds))
 		}
+	}
+
+	if (activeOnly) {
+		conditions.push(
+			inArray(complaints.status, ['open', 'in_review', 'in_progress']),
+		)
 	}
 
 	if (filters.search.trim()) {
@@ -112,11 +122,19 @@ const buildComplaintsTableConditions = (
 	}
 
 	if (filters.status !== 'all') {
-		conditions.push(eq(complaints.status, filters.status))
+		conditions.push(
+			filters.status === 'in_review'
+				? inArray(complaints.status, ['in_review', 'in_progress'])
+				: eq(complaints.status, filters.status),
+		)
 	}
 
 	if (filters.storeId !== 'all') {
 		conditions.push(eq(complaints.storeId, filters.storeId))
+	}
+
+	if (filters.categoryId !== 'all') {
+		conditions.push(eq(complaints.categoryId, filters.categoryId))
 	}
 
 	return conditions
@@ -128,6 +146,7 @@ export async function getComplaintsTableForOrganization({
 	pageSize,
 	filters,
 	allowedStoreIds,
+	activeOnly = false,
 }: GetComplaintsTableForOrganizationParams): Promise<{
 	rows: ComplaintTableRow[]
 	totalItems: number
@@ -137,6 +156,7 @@ export async function getComplaintsTableForOrganization({
 			organizationId,
 			filters,
 			allowedStoreIds,
+			activeOnly,
 		),
 	)
 
@@ -145,6 +165,27 @@ export async function getComplaintsTableForOrganization({
 	}
 
 	const offset = (page - 1) * pageSize
+	const priorityOrder = sql<number>`CASE ${complaints.priority}
+		WHEN 'urgent' THEN 0
+		WHEN 'high' THEN 1
+		WHEN 'medium' THEN 2
+		WHEN 'low' THEN 3
+		ELSE 2
+	END`
+	const featuredOrder = sql<number>`CASE
+		WHEN ${complaints.status} IN ('open', 'in_review', 'in_progress')
+			AND ${complaints.responseDeadline} IS NOT NULL THEN
+			EXTRACT(epoch FROM (${complaints.responseDeadline} - NOW())) / 86400.0 * 4 + ${priorityOrder}
+		WHEN ${complaints.status} IN ('open', 'in_review', 'in_progress') THEN
+			9999 + ${priorityOrder}
+		ELSE 20000 + ${priorityOrder}
+	END`
+	const orderBy =
+		filters.sort === 'featured'
+			? [asc(featuredOrder), desc(complaints.createdAt)]
+			: filters.sort === 'priority'
+				? [asc(priorityOrder), desc(complaints.createdAt)]
+				: [desc(complaints.createdAt)]
 	const rows = await db
 		.select({
 			id: complaints.id,
@@ -162,6 +203,7 @@ export async function getComplaintsTableForOrganization({
 				description: complaintCategories.description,
 			},
 			responseDeadline: complaints.responseDeadline,
+			responseDeadlineDays: complaints.responseDeadlineDays,
 			hasResponse: sql<boolean>`${complaintDetails.officialResponse} IS NOT NULL`,
 			createdAt: complaints.createdAt,
 		})
@@ -176,7 +218,7 @@ export async function getComplaintsTableForOrganization({
 			eq(complaints.categoryId, complaintCategories.id),
 		)
 		.where(whereClause)
-		.orderBy(desc(complaints.createdAt))
+		.orderBy(...orderBy)
 		.limit(pageSize)
 		.offset(offset)
 
@@ -309,13 +351,14 @@ export interface FeaturedComplaint {
 	storeName: string
 	status: string
 	priority: string
+	category: ComplaintCategorySummary | null
 	responseDeadline: Date | null
 	responseDeadlineDays: number | null
 	createdAt: Date
 }
 
 /**
- * Devuelve los 6 reclamos más urgentes activos para el dashboard.
+ * Devuelve los 4 reclamos más urgentes activos para el dashboard.
  *
  * El score combina días restantes al vencimiento (peso mayor) con la prioridad:
  *   score = days_remaining * 4 + priority_order   (ASC → más urgente primero)
@@ -368,12 +411,21 @@ export async function getFeaturedComplaintsForOrganization(
 			storeName: stores.name,
 			status: complaints.status,
 			priority: complaints.priority,
+			category: {
+				id: complaintCategories.id,
+				name: complaintCategories.name,
+				description: complaintCategories.description,
+			},
 			responseDeadline: complaints.responseDeadline,
 			responseDeadlineDays: complaints.responseDeadlineDays,
 			createdAt: complaints.createdAt,
 		})
 		.from(complaints)
 		.innerJoin(stores, eq(complaints.storeId, stores.id))
+		.leftJoin(
+			complaintCategories,
+			eq(complaints.categoryId, complaintCategories.id),
+		)
 		.where(
 			and(
 				eq(complaints.organizationId, organizationId),
@@ -387,5 +439,11 @@ export async function getFeaturedComplaintsForOrganization(
 			),
 		)
 		.orderBy(asc(urgencyScore))
-		.limit(6)
+		.limit(4)
+		.then((rows) =>
+			rows.map((row) => ({
+				...row,
+				category: row.category?.id ? row.category : null,
+			})),
+		)
 }

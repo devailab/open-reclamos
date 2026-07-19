@@ -27,11 +27,20 @@ export type ComplaintStatusFilter = (typeof COMPLAINT_STATUS_FILTERS)[number]
 export const COMPLAINT_TYPE_FILTERS = ['all', ...COMPLAINT_TYPES] as const
 export type ComplaintTypeFilter = (typeof COMPLAINT_TYPE_FILTERS)[number]
 
+export const COMPLAINT_OVERVIEW_SORTS = [
+	'featured',
+	'newest',
+	'priority',
+] as const
+export type ComplaintOverviewSort = (typeof COMPLAINT_OVERVIEW_SORTS)[number]
+
 export interface ComplaintsTableFilters {
 	search: string
 	type: ComplaintTypeFilter
 	status: ComplaintStatusFilter
 	storeId: string
+	categoryId: string
+	sort: ComplaintOverviewSort
 }
 
 export const DEFAULT_COMPLAINTS_TABLE_FILTERS: ComplaintsTableFilters = {
@@ -39,6 +48,8 @@ export const DEFAULT_COMPLAINTS_TABLE_FILTERS: ComplaintsTableFilters = {
 	type: 'all',
 	status: 'all',
 	storeId: 'all',
+	categoryId: 'all',
+	sort: 'newest',
 }
 
 const isComplaintStatusFilter = (
@@ -48,6 +59,11 @@ const isComplaintStatusFilter = (
 
 const isComplaintTypeFilter = (value: string): value is ComplaintTypeFilter =>
 	COMPLAINT_TYPE_FILTERS.includes(value as ComplaintTypeFilter)
+
+const isComplaintOverviewSort = (
+	value: string,
+): value is ComplaintOverviewSort =>
+	COMPLAINT_OVERVIEW_SORTS.includes(value as ComplaintOverviewSort)
 
 export const normalizeComplaintsTableFilters = (
 	filters?: Partial<ComplaintsTableFilters>,
@@ -65,8 +81,13 @@ export const normalizeComplaintsTableFilters = (
 		: DEFAULT_COMPLAINTS_TABLE_FILTERS.status
 
 	const storeId = filters?.storeId ?? 'all'
+	const categoryId = filters?.categoryId ?? 'all'
+	const requestedSort = filters?.sort
+	const sort = isComplaintOverviewSort(requestedSort ?? '')
+		? (requestedSort ?? DEFAULT_COMPLAINTS_TABLE_FILTERS.sort)
+		: DEFAULT_COMPLAINTS_TABLE_FILTERS.sort
 
-	return { search, type, status, storeId }
+	return { search, type, status, storeId, categoryId, sort }
 }
 
 export const normalizeComplaintsPagination = (

@@ -43,6 +43,8 @@ export interface GetComplaintsDashboardMetricsActionResult {
 	trend: DashboardTrendPoint[]
 }
 
+export type GetComplaintsOverviewActionInput = GetComplaintsTableActionInput
+
 function resolveAllowedStoreIds(
 	storeAccessMode: 'all' | 'selected',
 	storeIds: string[],
@@ -76,6 +78,43 @@ export async function $getComplaintsTableAction(
 		pageSize,
 		filters,
 		allowedStoreIds,
+	})
+
+	return { rows, totalItems, page, pageSize, filters }
+}
+
+export async function $getComplaintsOverviewAction(
+	input: GetComplaintsOverviewActionInput,
+): Promise<GetComplaintsTableActionResult> {
+	const access = await requireAccess('complaints.view')
+
+	const { page, pageSize } = normalizeComplaintsPagination(
+		input.page,
+		input.pageSize,
+	)
+	const filters = {
+		...normalizeComplaintsTableFilters(input.filters),
+		// La vista general siempre reúne todas las tiendas accesibles y todos
+		// los estados pendientes; esos alcances no dependen del cliente.
+		storeId: 'all',
+		status: 'all' as const,
+	}
+
+	if ('error' in access) {
+		return { rows: [], totalItems: 0, page, pageSize, filters }
+	}
+
+	const allowedStoreIds = resolveAllowedStoreIds(
+		access.membership.storeAccessMode,
+		access.membership.storeIds,
+	)
+	const { rows, totalItems } = await getComplaintsTableForOrganization({
+		organizationId: access.membership.organizationId,
+		page,
+		pageSize,
+		filters,
+		allowedStoreIds,
+		activeOnly: true,
 	})
 
 	return { rows, totalItems, page, pageSize, filters }

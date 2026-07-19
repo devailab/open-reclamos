@@ -1,10 +1,15 @@
-import { Store } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
-import { getStoreOptionsForOrganization } from '@/modules/complaints/dashboard-queries'
-import { buildComplaintsStorePath } from '@/modules/complaints/routes'
+import { getComplaintCategoriesForOrganization } from '@/modules/categories/queries'
+import { getComplaintsTableForOrganization } from '@/modules/complaints/dashboard-queries'
+import { DEFAULT_COMPLAINTS_TABLE_FILTERS } from '@/modules/complaints/dashboard-validation'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { ComplaintsOverviewPage } from './_features/complaints-overview-page'
+import type { ComplaintsOverviewInitialState } from './_features/overview-types'
+
+const INITIAL_PAGE = 1
+const INITIAL_PAGE_SIZE = 16
 
 const ComplaintsRoute: FC = async () => {
 	const session = await getSession()
@@ -18,31 +23,33 @@ const ComplaintsRoute: FC = async () => {
 		membership.storeAccessMode === 'selected'
 			? membership.storeIds
 			: undefined
-
-	const stores = await getStoreOptionsForOrganization(
-		membership.organizationId,
-		allowedStoreIds,
-	)
-
-	if (stores.length > 0) {
-		redirect(buildComplaintsStorePath(stores[0].id))
+	const filters = {
+		...DEFAULT_COMPLAINTS_TABLE_FILTERS,
+		sort: 'featured' as const,
 	}
 
-	return (
-		<div className='flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-16 text-center'>
-			<div className='flex size-12 items-center justify-center rounded-full bg-muted'>
-				<Store className='size-6 text-muted-foreground' />
-			</div>
-			<div className='space-y-1'>
-				<h1 className='text-lg font-semibold'>
-					Sin tiendas disponibles
-				</h1>
-				<p className='text-sm text-muted-foreground'>
-					No tienes tiendas asignadas para consultar reclamos.
-				</p>
-			</div>
-		</div>
-	)
+	const [{ rows, totalItems }, categories] = await Promise.all([
+		getComplaintsTableForOrganization({
+			organizationId: membership.organizationId,
+			page: INITIAL_PAGE,
+			pageSize: INITIAL_PAGE_SIZE,
+			filters,
+			allowedStoreIds,
+			activeOnly: true,
+		}),
+		getComplaintCategoriesForOrganization(membership.organizationId),
+	])
+
+	const initialState: ComplaintsOverviewInitialState = {
+		rows,
+		totalItems,
+		page: INITIAL_PAGE,
+		pageSize: INITIAL_PAGE_SIZE,
+		filters,
+		categories,
+	}
+
+	return <ComplaintsOverviewPage initialState={initialState} />
 }
 
 export default ComplaintsRoute

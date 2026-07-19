@@ -1,4 +1,4 @@
-import { endOfDay, isValid, startOfDay } from 'date-fns'
+import { endOfDay, isValid, startOfDay, startOfMonth } from 'date-fns'
 
 const DEFAULT_PAGE = 1
 const DEFAULT_PAGE_SIZE = 10
@@ -26,9 +26,9 @@ export interface AuditTableFilters {
 	createdAtEnd: Date
 }
 
-export const getTodayAuditDateRange = (baseDate = new Date()) => {
+export const getCurrentMonthAuditDateRange = (baseDate = new Date()) => {
 	return {
-		createdAtStart: startOfDay(baseDate),
+		createdAtStart: startOfMonth(baseDate),
 		createdAtEnd: endOfDay(baseDate),
 	}
 }
@@ -36,7 +36,8 @@ export const getTodayAuditDateRange = (baseDate = new Date()) => {
 export const createDefaultAuditTableFilters = (
 	baseDate = new Date(),
 ): AuditTableFilters => {
-	const { createdAtStart, createdAtEnd } = getTodayAuditDateRange(baseDate)
+	const { createdAtStart, createdAtEnd } =
+		getCurrentMonthAuditDateRange(baseDate)
 
 	return {
 		action: '',

@@ -60,6 +60,9 @@ export interface UseDataTableParams<T, F> {
 	// true cuando la página hidrata filas iniciales desde el servidor:
 	// `autoSearch()` omite la primera ejecución para no duplicar la consulta
 	hasInitialData?: boolean
+	initialPage?: number
+	initialPageSize?: number
+	initialTotalItems?: number
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: Is necessary to allow flexibility in filter types
@@ -76,10 +79,13 @@ export const useDataTable = <T, F = any>({
 	isEnableSorting = false,
 	isEnableRowSelection = false,
 	hasInitialData = false,
+	initialPage = 1,
+	initialPageSize = 10,
+	initialTotalItems = 0,
 }: UseDataTableParams<T, F>) => {
-	const [page, setPage] = useState(1)
-	const [pageSize, setPageSize] = useState(10)
-	const [totalItems, setTotalItems] = useState(0)
+	const [page, setPage] = useState(initialPage)
+	const [pageSize, setPageSize] = useState(initialPageSize)
+	const [totalItems, setTotalItems] = useState(initialTotalItems)
 	const [isLoading, setIsLoading] = useState(true)
 
 	const debouncedFilters = useDebounce(filters, 300)
