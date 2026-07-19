@@ -16,6 +16,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
 	title: 'Open Reclamos',
 	description: 'Libro de reclamaciones',
+	icons: {
+		icon: '/icon.svg',
+	},
 }
 
 const RootLayout: FC<PropsWithChildren> = ({ children }) => {
