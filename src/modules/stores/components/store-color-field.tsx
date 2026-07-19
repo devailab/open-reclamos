@@ -108,7 +108,7 @@ export function StoreColorField({
 					<div
 						role='radiogroup'
 						aria-label='Colores de tienda'
-						className='grid grid-cols-5 gap-4 px-2 py-4'
+						className='grid grid-cols-4 gap-4 px-2 py-4'
 					>
 						{STORE_COLOR_OPTIONS.map((option) => {
 							const isSelected = draftColor === option.value

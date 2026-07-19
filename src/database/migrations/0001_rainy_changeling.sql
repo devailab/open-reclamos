@@ -1,1 +1,1 @@
-ALTER TABLE "org"."stores" ADD COLUMN "color" text DEFAULT '#4F46E5' NOT NULL;
+ALTER TABLE "org"."stores" ADD COLUMN "color" text DEFAULT '#8B5CF6' NOT NULL;

@@ -1,13 +1,11 @@
-export const DEFAULT_STORE_COLOR = '#4F46E5'
+export const DEFAULT_STORE_COLOR = '#3B82F6'
 
 export const STORE_COLOR_OPTIONS = [
-	{ value: '#4F46E5', label: 'Índigo' },
-	{ value: '#2563EB', label: 'Azul' },
-	{ value: '#0284C7', label: 'Celeste' },
-	{ value: '#0F766E', label: 'Turquesa' },
-	{ value: '#059669', label: 'Esmeralda' },
-	{ value: '#D97706', label: 'Ámbar' },
-	{ value: '#EA580C', label: 'Naranja' },
-	{ value: '#E11D48', label: 'Rosa' },
-	{ value: '#7C3AED', label: 'Violeta' },
+	{ value: '#8B5CF6', label: 'Violeta' },
+	{ value: '#14B8A6', label: 'Verde azulado' },
+	{ value: '#F59E0B', label: 'Ámbar' },
+	{ value: '#22C55E', label: 'Verde' },
+	{ value: '#3B82F6', label: 'Azul' },
+	{ value: '#EC4899', label: 'Rosa' },
+	{ value: '#F97316', label: 'Naranja' },
 ] as const

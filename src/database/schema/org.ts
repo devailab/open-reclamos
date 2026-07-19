@@ -11,6 +11,7 @@ import {
 	uniqueIndex,
 	uuid,
 } from 'drizzle-orm/pg-core'
+import { DEFAULT_STORE_COLOR } from '@/modules/stores/constants'
 import { users } from './auth'
 import { ubigeos } from './core'
 
@@ -242,7 +243,7 @@ export const stores = orgSchema.table('stores', {
 	slug: text('slug').notNull().unique(),
 	name: text('name').notNull(),
 	type: text('type').notNull(),
-	color: text('color').notNull().default('#4F46E5'),
+	color: text('color').notNull().default(DEFAULT_STORE_COLOR),
 	addressType: text('address_type'),
 	address: text('address'),
 	url: text('url'),
