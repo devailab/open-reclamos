@@ -12,6 +12,7 @@ export interface RolesInitialState {
 	pageSize: number
 	filters: RolesTableFilters
 	permissions: PermissionOptionRow[]
+	actorPermissionKeys: string[]
 }
 
 export interface RolesPageProps {

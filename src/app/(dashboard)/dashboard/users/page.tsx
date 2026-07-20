@@ -1,7 +1,11 @@
 import { redirect } from 'next/navigation'
 import type { FC } from 'react'
 import { getSession } from '@/lib/auth-server'
-import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import {
+	getMembershipContext,
+	hasPermission,
+	isSuperAdminUser,
+} from '@/modules/rbac/queries'
 import {
 	getInvitationsTableForOrganization,
 	getUserAccessOptionsForOrganization,
@@ -26,6 +30,7 @@ const UsersRoute: FC = async () => {
 		{ rows: users, totalItems: usersTotalItems },
 		{ rows: invitations, totalItems: invitationsTotalItems },
 		accessOptions,
+		actorIsSuperAdmin,
 	] = await Promise.all([
 		getUsersTableForOrganization({
 			organizationId: membership.organizationId,
@@ -40,6 +45,7 @@ const UsersRoute: FC = async () => {
 			filters: DEFAULT_USERS_TABLE_FILTERS,
 		}),
 		getUserAccessOptionsForOrganization(membership.organizationId),
+		isSuperAdminUser(session.user.id),
 	])
 
 	const initialState: UsersInitialState = {
@@ -52,6 +58,13 @@ const UsersRoute: FC = async () => {
 		roleOptions: accessOptions.rolesOptions,
 		permissionOptions: accessOptions.permissionsOptions,
 		storeOptions: accessOptions.storeOptions,
+		actorPermissionKeys: membership.permissionKeys,
+		actorStoreAccess: {
+			storeAccessMode: membership.storeAccessMode,
+			storeIds: membership.storeIds,
+		},
+		actorRoleLevel: membership.roleLevel,
+		actorIsSuperAdmin,
 	}
 
 	return <UsersPage initialState={initialState} />

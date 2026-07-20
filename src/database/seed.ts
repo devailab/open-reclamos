@@ -150,6 +150,17 @@ async function seedRbac(db: ReturnType<typeof drizzle>) {
 	// Para cada rol definido en rbac.json, buscar todos los roles de organización
 	// con ese key y asignar los permisos faltantes.
 	for (const roleDef of rbacData.roles) {
+		await db
+			.update(roles)
+			.set({ level: roleDef.level })
+			.where(
+				and(
+					eq(roles.key, roleDef.key),
+					eq(roles.isSystem, true),
+					isNull(roles.deletedAt),
+				),
+			)
+
 		const expectedPermissionIds = roleDef.permissionKeys
 			.map((k) => permissionIdByKey[k])
 			.filter(Boolean) as string[]

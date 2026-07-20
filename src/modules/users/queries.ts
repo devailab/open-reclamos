@@ -50,6 +50,8 @@ export interface UserTableRow {
 	roleId: string
 	roleName: string
 	roleSlug: string
+	roleLevel: number
+	isSuperAdmin: boolean
 	storeAccessMode: UserStoreAccessMode
 	storeIds: string[]
 	permissionIds: string[]
@@ -106,6 +108,8 @@ export interface UserAccessRow {
 	roleId: string
 	roleName: string
 	roleSlug: string
+	roleLevel: number
+	isSuperAdmin: boolean
 	storeAccessMode: UserStoreAccessMode
 	storeIds: string[]
 	permissionIds: string[]
@@ -269,6 +273,8 @@ export async function getUsersTableForOrganization({
 			roleId: organizationMembers.roleId,
 			roleName: roles.name,
 			roleSlug: roles.slug,
+			roleLevel: roles.level,
+			isSuperAdmin: users.isSuperAdmin,
 			storeAccessMode: organizationMembers.storeAccessMode,
 			createdAt: organizationMembers.createdAt,
 			updatedAt: organizationMembers.updatedAt,
@@ -287,6 +293,8 @@ export async function getUsersTableForOrganization({
 		roleId: string
 		roleName: string
 		roleSlug: string
+		roleLevel: number
+		isSuperAdmin: boolean
 		storeAccessMode: string
 		createdAt: Date
 		updatedAt: Date | null
@@ -365,6 +373,8 @@ export async function getUsersTableForOrganization({
 		roleId: row.roleId,
 		roleName: row.roleName,
 		roleSlug: row.roleSlug,
+		roleLevel: row.roleLevel,
+		isSuperAdmin: row.isSuperAdmin,
 		storeAccessMode: row.storeAccessMode as UserStoreAccessMode,
 		storeIds: storeIdsByUserId.get(row.userId) ?? [],
 		permissionIds: permissionIdsByUserId.get(row.userId) ?? [],
@@ -756,6 +766,8 @@ export async function getUserTableRowByIdForOrganization(
 			roleId: organizationMembers.roleId,
 			roleName: roles.name,
 			roleSlug: roles.slug,
+			roleLevel: roles.level,
+			isSuperAdmin: users.isSuperAdmin,
 			storeAccessMode: organizationMembers.storeAccessMode,
 		})
 		.from(organizationMembers)

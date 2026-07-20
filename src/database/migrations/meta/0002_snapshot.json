@@ -1,6 +1,6 @@
 {
-    "id": "582f9006-ef3e-4130-8257-164755026ee2",
-    "prevId": "338be503-0129-4fd9-aece-45a006a1f5a9",
+    "id": "640af4ff-7ede-4ada-898d-9341bac5ef54",
+    "prevId": "582f9006-ef3e-4130-8257-164755026ee2",
     "version": "7",
     "dialect": "postgresql",
     "tables": {
@@ -2826,6 +2826,12 @@
                     "type": "text",
                     "primaryKey": false,
                     "notNull": false
+                },
+                "level": {
+                    "name": "level",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
                 },
                 "is_system": {
                     "name": "is_system",

@@ -61,6 +61,7 @@ export const roles = orgSchema.table(
 		slug: text('slug').notNull(),
 		name: text('name').notNull(),
 		description: text('description'),
+		level: integer('level').notNull(),
 		isSystem: boolean('is_system').notNull().default(false),
 		deletedAt: timestamp('deleted_at', {
 			withTimezone: true,

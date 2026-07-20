@@ -1,0 +1,1 @@
+ALTER TABLE "org"."roles" ADD COLUMN "level" integer NOT NULL;

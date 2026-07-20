@@ -41,6 +41,7 @@ const RolesRoute: FC = async () => {
 		pageSize: INITIAL_PAGE_SIZE,
 		filters: DEFAULT_ROLES_TABLE_FILTERS,
 		permissions,
+		actorPermissionKeys: membership.permissionKeys,
 	}
 
 	return <RolesPage initialState={initialState} />

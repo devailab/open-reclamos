@@ -17,7 +17,9 @@ import {
 import { getActiveOrganizationCookie } from './cookies'
 import {
 	BASE_ROLE_DEFINITIONS,
+	canGrantPermissionKeys,
 	getDefaultMemberPermissionKeysForRoleKey,
+	getUngrantablePermissionKeys,
 	isRoleAssignableSystemPermissionKey,
 	SYSTEM_PERMISSION_DEFINITIONS,
 } from './lib'
@@ -32,6 +34,7 @@ export interface MembershipContext {
 	roleKey: string
 	roleSlug: string
 	roleName: string
+	roleLevel: number
 	storeAccessMode: 'all' | 'selected'
 	permissionKeys: string[]
 	storeIds: string[]
@@ -41,6 +44,7 @@ export interface RoleOption {
 	id: string
 	name: string
 	slug: string
+	level: number
 	isSystem: boolean
 }
 
@@ -156,6 +160,7 @@ async function getMembershipContextByOrganization(
 			roleKey: roles.key,
 			roleSlug: roles.slug,
 			roleName: roles.name,
+			roleLevel: roles.level,
 		})
 		.from(organizationMembers)
 		.innerJoin(roles, eq(organizationMembers.roleId, roles.id))
@@ -169,19 +174,7 @@ async function getMembershipContextByOrganization(
 
 	if (!membership) return null
 
-	const permissionRows = await db
-		.select({ key: permissions.key })
-		.from(rolePermissions)
-		.innerJoin(
-			permissions,
-			eq(rolePermissions.permissionId, permissions.id),
-		)
-		.where(
-			and(
-				eq(rolePermissions.roleId, membership.roleId),
-				isNull(permissions.deletedAt),
-			),
-		)
+	const rolePermissionKeys = await getRolePermissionKeys(membership.roleId)
 
 	const memberPermissionRows = await db
 		.select({ key: permissions.key })
@@ -238,10 +231,11 @@ async function getMembershipContextByOrganization(
 		roleKey: membership.roleKey,
 		roleSlug: membership.roleSlug,
 		roleName: membership.roleName,
+		roleLevel: membership.roleLevel,
 		storeAccessMode: membership.storeAccessMode as 'all' | 'selected',
 		permissionKeys: Array.from(
 			new Set([
-				...permissionRows.map((permission) => permission.key),
+				...rolePermissionKeys,
 				...memberPermissionRows.map((permission) => permission.key),
 			]),
 		),
@@ -277,11 +271,84 @@ export async function getMembershipContext(
 	return getMembershipContextByOrganization(userId, organizationId)
 }
 
+export const isSuperAdminUser = cache(async (userId: string) => {
+	const [user] = await db
+		.select({ isSuperAdmin: users.isSuperAdmin })
+		.from(users)
+		.where(eq(users.id, userId))
+		.limit(1)
+
+	return user?.isSuperAdmin ?? false
+})
+
 export function hasPermission(
 	context: MembershipContext | null,
 	permissionKey: string,
 ) {
 	return context?.permissionKeys.includes(permissionKey) ?? false
+}
+
+export async function getRolePermissionKeys(
+	roleId: string,
+	client: DatabaseExecutor = db,
+): Promise<string[]> {
+	const rows = await client
+		.select({ key: permissions.key })
+		.from(rolePermissions)
+		.innerJoin(
+			permissions,
+			eq(rolePermissions.permissionId, permissions.id),
+		)
+		.where(
+			and(
+				eq(rolePermissions.roleId, roleId),
+				isNull(permissions.deletedAt),
+			),
+		)
+
+	return rows.map((row) => row.key)
+}
+
+export async function canActorGrantRole(
+	actorPermissionKeys: string[],
+	roleId: string,
+): Promise<boolean> {
+	const rolePermissionKeys = await getRolePermissionKeys(roleId)
+
+	return canGrantPermissionKeys({
+		actorPermissionKeys,
+		requestedPermissionKeys: rolePermissionKeys,
+	})
+}
+
+export async function getUngrantablePermissionKeysByIds(params: {
+	actorPermissionKeys: string[]
+	requestedPermissionIds: string[]
+	alreadyGrantedPermissionIds?: string[]
+}): Promise<string[]> {
+	const alreadyGrantedPermissionIds = params.alreadyGrantedPermissionIds ?? []
+	const involvedPermissions = await getPermissionsByIds(
+		Array.from(
+			new Set([
+				...params.requestedPermissionIds,
+				...alreadyGrantedPermissionIds,
+			]),
+		),
+	)
+	const keyById = new Map(
+		involvedPermissions.map((permission) => [
+			permission.id,
+			permission.key,
+		]),
+	)
+	const toKeys = (permissionIds: string[]) =>
+		permissionIds.flatMap((permissionId) => keyById.get(permissionId) ?? [])
+
+	return getUngrantablePermissionKeys({
+		actorPermissionKeys: params.actorPermissionKeys,
+		requestedPermissionKeys: toKeys(params.requestedPermissionIds),
+		alreadyGrantedPermissionKeys: toKeys(alreadyGrantedPermissionIds),
+	})
 }
 
 export async function getSystemRoleByKey(key: string) {
@@ -341,6 +408,7 @@ export async function getRoleOptionsForOrganization(
 			id: roles.id,
 			name: roles.name,
 			slug: roles.slug,
+			level: roles.level,
 			isSystem: roles.isSystem,
 		})
 		.from(roles)
@@ -350,7 +418,7 @@ export async function getRoleOptionsForOrganization(
 				eq(roles.organizationId, organizationId),
 			),
 		)
-		.orderBy(asc(roles.isSystem), asc(roles.name))
+		.orderBy(asc(roles.level), asc(roles.name))
 }
 
 export async function getRoleOptionsWithPermissionsForOrganization(
@@ -492,6 +560,7 @@ export async function ensureOrganizationRoles(
 				slug: definition.slug,
 				name: definition.name,
 				description: definition.description,
+				level: definition.level,
 				isSystem: true,
 				createdBy: params.userId,
 			})),

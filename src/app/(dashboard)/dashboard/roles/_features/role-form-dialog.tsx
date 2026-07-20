@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { Info } from 'lucide-react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import TextField from '@/components/forms/text-field'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog'
 import { useForm } from '@/hooks/use-form'
+import { canGrantPermissionKeys } from '@/modules/rbac/lib'
 import type { PermissionOption } from '@/modules/rbac/queries'
 import type { RoleDetailRow } from '@/modules/roles/queries'
 import {
@@ -36,6 +38,7 @@ interface RoleFormDialogProps {
 	mode: 'create' | 'edit'
 	role?: RoleDetailRow | null
 	permissions: PermissionOption[]
+	actorPermissionKeys: string[]
 	onOpenChange: (open: boolean) => void
 	onSubmit: (
 		input: RoleMutationInput,
@@ -47,6 +50,7 @@ export function RoleFormDialog({
 	mode,
 	role,
 	permissions,
+	actorPermissionKeys,
 	onOpenChange,
 	onSubmit,
 }: RoleFormDialogProps) {
@@ -60,6 +64,26 @@ export function RoleFormDialog({
 		setValues,
 		initialValues: INITIAL_VALUES,
 	})
+
+	const ungrantablePermissionIds = useMemo(() => {
+		const currentRoleIds = new Set(role?.permissionIds ?? [])
+		const currentRoleKeys = permissions
+			.filter((permission) => currentRoleIds.has(permission.id))
+			.map((permission) => permission.key)
+
+		return new Set(
+			permissions
+				.filter(
+					(permission) =>
+						!canGrantPermissionKeys({
+							actorPermissionKeys,
+							requestedPermissionKeys: [permission.key],
+							alreadyGrantedPermissionKeys: currentRoleKeys,
+						}),
+				)
+				.map((permission) => permission.id),
+		)
+	}, [actorPermissionKeys, permissions, role])
 
 	useEffect(() => {
 		if (!open) {
@@ -175,11 +199,24 @@ export function RoleFormDialog({
 						/>
 					</div>
 
+					{ungrantablePermissionIds.size > 0 && (
+						<div className='flex items-start gap-2 rounded-xl border border-dashed bg-muted/25 p-3 text-sm text-muted-foreground'>
+							<Info className='mt-0.5 size-4 shrink-0' />
+							<p>
+								Los permisos deshabilitados no forman parte de
+								tu acceso, por lo que no puedes asignarlos. Si
+								quitas un permiso que no posees y guardas, no
+								podrás volver a agregarlo.
+							</p>
+						</div>
+					)}
+
 					<RolePermissionSelector
 						permissions={permissions}
 						value={selectedPermissionIds}
 						onChange={setSelectedPermissionIds}
 						disabled={isPending}
+						disabledPermissionIds={ungrantablePermissionIds}
 					/>
 				</div>
 

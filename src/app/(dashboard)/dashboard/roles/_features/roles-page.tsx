@@ -1,6 +1,13 @@
 'use client'
 
-import { Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react'
+import {
+	ArrowDown,
+	ArrowUp,
+	Pencil,
+	Plus,
+	ShieldCheck,
+	Trash2,
+} from 'lucide-react'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import DataTable from '@/components/data-table'
@@ -17,6 +24,7 @@ import {
 	$deleteRoleAction,
 	$getRoleAction,
 	$getRolesTableAction,
+	$moveRoleAction,
 	$updateRoleAction,
 } from '@/modules/roles/actions'
 import type { RoleDetailRow } from '@/modules/roles/queries'
@@ -42,6 +50,9 @@ export function RolesPage({ initialState }: RolesPageProps) {
 	const [editingRole, setEditingRole] = useState<RoleDetailRow | null>(null)
 	const [isDeleting, startDeleteTransition] = useTransition()
 	const [isLoadingRole, startRoleTransition] = useTransition()
+	const [isMoving, startMoveTransition] = useTransition()
+	const canReorderRoles =
+		initialState.actorPermissionKeys.includes('roles.reorder')
 
 	const {
 		controller,
@@ -161,6 +172,24 @@ export function RolesPage({ initialState }: RolesPageProps) {
 			})
 	}
 
+	const handleMove = (role: RoleRow, direction: 'up' | 'down') => {
+		if (role.isSystem) return
+
+		startMoveTransition(async () => {
+			const result = await $moveRoleAction(role.id, direction)
+			if ('error' in result) {
+				sileo.error({
+					title: 'Error al mover rol',
+					description: result.error,
+				})
+				return
+			}
+
+			sileo.success({ title: 'Orden de roles actualizado' })
+			void search()
+		})
+	}
+
 	const columns = defineColumns([
 		{
 			header: { render: () => 'Rol' },
@@ -180,6 +209,10 @@ export function RolesPage({ initialState }: RolesPageProps) {
 			),
 		},
 		{
+			header: { render: () => 'Nivel' },
+			cell: ({ row }) => row.level,
+		},
+		{
 			header: { render: () => 'Permisos' },
 			cell: ({ row }) => row.permissionsCount,
 		},
@@ -196,12 +229,53 @@ export function RolesPage({ initialState }: RolesPageProps) {
 			header: { render: () => 'Acciones' },
 			cell: ({ row }) => (
 				<div className='flex items-center gap-1'>
+					{canReorderRoles && (
+						<>
+							<Button
+								type='button'
+								variant='ghost'
+								size='icon-sm'
+								title='Subir rol'
+								disabled={
+									row.isSystem || !row.canMoveUp || isMoving
+								}
+								onClick={(event) => {
+									event.stopPropagation()
+									handleMove(row, 'up')
+								}}
+							>
+								<ArrowUp />
+								<span className='sr-only'>Subir rol</span>
+							</Button>
+							<Button
+								type='button'
+								variant='ghost'
+								size='icon-sm'
+								title='Bajar rol'
+								disabled={
+									row.isSystem || !row.canMoveDown || isMoving
+								}
+								onClick={(event) => {
+									event.stopPropagation()
+									handleMove(row, 'down')
+								}}
+							>
+								<ArrowDown />
+								<span className='sr-only'>Bajar rol</span>
+							</Button>
+						</>
+					)}
 					<Button
 						type='button'
 						variant='ghost'
 						size='icon-sm'
 						title='Editar rol'
-						disabled={row.isSystem || isDeleting || isLoadingRole}
+						disabled={
+							row.isSystem ||
+							isDeleting ||
+							isLoadingRole ||
+							isMoving
+						}
 						onClick={(event) => {
 							event.stopPropagation()
 							handleEdit(row)
@@ -215,7 +289,7 @@ export function RolesPage({ initialState }: RolesPageProps) {
 						variant='ghost'
 						size='icon-sm'
 						title='Eliminar rol'
-						disabled={row.isSystem || isDeleting}
+						disabled={row.isSystem || isDeleting || isMoving}
 						onClick={(event) => {
 							event.stopPropagation()
 							handleDelete(row)
@@ -256,8 +330,8 @@ export function RolesPage({ initialState }: RolesPageProps) {
 						</p>
 						<p className='text-sm text-muted-foreground'>
 							Los roles base vienen listos para arrancar y no se
-							pueden editar ni eliminar. Crea roles personalizados
-							si necesitas una combinación distinta de permisos.
+							pueden editar, eliminar ni mover. Los roles
+							personalizados siempre permanecen debajo de ellos.
 						</p>
 					</div>
 				</div>
@@ -321,6 +395,7 @@ export function RolesPage({ initialState }: RolesPageProps) {
 				open={isCreateDialogOpen}
 				mode='create'
 				permissions={initialState.permissions}
+				actorPermissionKeys={initialState.actorPermissionKeys}
 				onOpenChange={setCreateDialogOpen}
 				onSubmit={async (input) => {
 					const result = await $createRoleAction(input)
@@ -336,6 +411,7 @@ export function RolesPage({ initialState }: RolesPageProps) {
 				mode='edit'
 				role={editingRole}
 				permissions={initialState.permissions}
+				actorPermissionKeys={initialState.actorPermissionKeys}
 				onOpenChange={(open) => {
 					if (!open) setEditingRole(null)
 				}}

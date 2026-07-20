@@ -14,6 +14,7 @@ interface RolePermissionSelectorProps {
 	value: string[]
 	onChange: (permissionIds: string[]) => void
 	disabled?: boolean
+	disabledPermissionIds?: Set<string>
 }
 
 interface PermissionGroup {
@@ -33,7 +34,12 @@ export const RolePermissionSelector: FC<RolePermissionSelectorProps> = ({
 	value,
 	onChange,
 	disabled,
+	disabledPermissionIds,
 }) => {
+	const isPermissionDisabled = (permissionId: string) => {
+		return disabledPermissionIds?.has(permissionId) ?? false
+	}
+
 	const groups = permissions.reduce<PermissionGroup[]>((acc, permission) => {
 		const current = acc.find((group) => group.module === permission.module)
 		if (current) {
@@ -106,10 +112,14 @@ export const RolePermissionSelector: FC<RolePermissionSelectorProps> = ({
 			<ScrollArea className='h-150 max-w-full rounded-xl border'>
 				<div className='space-y-4 p-4'>
 					{groups.map((group) => {
-						const permissionIds = group.items.map((item) => item.id)
-						const isSelected = permissionIds.every((id) =>
-							value.includes(id),
-						)
+						const selectablePermissionIds = group.items
+							.filter((item) => !isPermissionDisabled(item.id))
+							.map((item) => item.id)
+						const isSelected =
+							selectablePermissionIds.length > 0 &&
+							selectablePermissionIds.every((id) =>
+								value.includes(id),
+							)
 
 						return (
 							<div
@@ -133,9 +143,14 @@ export const RolePermissionSelector: FC<RolePermissionSelectorProps> = ({
 										variant='outline'
 										size='sm'
 										onClick={() =>
-											selectModule(permissionIds)
+											selectModule(
+												selectablePermissionIds,
+											)
 										}
-										disabled={disabled}
+										disabled={
+											disabled ||
+											selectablePermissionIds.length === 0
+										}
 									>
 										{isSelected ? (
 											<>
@@ -156,6 +171,8 @@ export const RolePermissionSelector: FC<RolePermissionSelectorProps> = ({
 										const checked = value.includes(
 											permission.id,
 										)
+										const isUngrantable =
+											isPermissionDisabled(permission.id)
 
 										return (
 											<div
@@ -165,6 +182,8 @@ export const RolePermissionSelector: FC<RolePermissionSelectorProps> = ({
 													checked
 														? 'border-primary/40 bg-primary/5'
 														: 'hover:bg-muted/40',
+													isUngrantable &&
+														'opacity-50',
 												)}
 											>
 												<Checkbox
@@ -174,7 +193,10 @@ export const RolePermissionSelector: FC<RolePermissionSelectorProps> = ({
 															permission.id,
 														)
 													}
-													disabled={disabled}
+													disabled={
+														disabled ||
+														isUngrantable
+													}
 													className='mt-0.5'
 												/>
 												<div className='min-w-0 space-y-0.5'>

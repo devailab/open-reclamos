@@ -5,16 +5,22 @@ import { revalidatePath } from 'next/cache'
 import { db } from '@/database/database'
 import { rolePermissions, roles } from '@/database/schema'
 import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
-import { syncRolePermissions } from '@/modules/rbac/queries'
+import {
+	getUngrantablePermissionKeysByIds,
+	syncRolePermissions,
+} from '@/modules/rbac/queries'
 import { requireAccess } from '@/modules/shared/access'
 import { MESSAGES } from '@/modules/shared/messages'
 import {
 	checkRoleKeyExists,
+	getAdjacentCustomRoleForOrganization,
 	getAvailablePermissionIdsForOrganization,
+	getNextRoleLevelForOrganization,
 	getRoleDetailForOrganization,
 	getRolesTableForOrganization,
 	getRoleUsageCount,
 	type RoleDetailRow,
+	type RoleMoveDirection,
 	type RoleTableRow,
 } from './queries'
 import {
@@ -124,6 +130,14 @@ export async function $createRoleAction(
 		return { error: MESSAGES.permissions.invalidSelection }
 	}
 
+	const ungrantableKeys = await getUngrantablePermissionKeysByIds({
+		actorPermissionKeys: access.membership.permissionKeys,
+		requestedPermissionIds: normalizedInput.permissionIds,
+	})
+	if (ungrantableKeys.length > 0) {
+		return { error: MESSAGES.permissions.beyondActor }
+	}
+
 	const key = buildCustomRoleKey(
 		access.membership.organizationId,
 		normalizedInput,
@@ -131,6 +145,9 @@ export async function $createRoleAction(
 	if (await checkRoleKeyExists(key)) {
 		return { error: MESSAGES.roles.duplicateName }
 	}
+	const level = await getNextRoleLevelForOrganization(
+		access.membership.organizationId,
+	)
 
 	try {
 		await db.transaction(async (tx) => {
@@ -142,6 +159,7 @@ export async function $createRoleAction(
 					slug: normalizedInput.slug,
 					name: normalizedInput.name,
 					description: normalizedInput.description,
+					level,
 					isSystem: false,
 					createdBy: access.session.user.id,
 				})
@@ -217,6 +235,15 @@ export async function $updateRoleAction(
 		return { error: MESSAGES.permissions.invalidSelection }
 	}
 
+	const ungrantableKeys = await getUngrantablePermissionKeysByIds({
+		actorPermissionKeys: access.membership.permissionKeys,
+		requestedPermissionIds: normalizedInput.permissionIds,
+		alreadyGrantedPermissionIds: role.permissionIds,
+	})
+	if (ungrantableKeys.length > 0) {
+		return { error: MESSAGES.permissions.beyondActor }
+	}
+
 	const nextKey = buildCustomRoleKey(
 		access.membership.organizationId,
 		normalizedInput,
@@ -280,6 +307,90 @@ export async function $updateRoleAction(
 		})
 	} catch {
 		return { error: MESSAGES.roles.updateFailed }
+	}
+
+	revalidatePath('/dashboard/roles')
+	return { success: true }
+}
+
+export async function $moveRoleAction(
+	id: string,
+	direction: RoleMoveDirection,
+): Promise<RoleActionResult> {
+	const access = await requireAccess('roles.reorder')
+	if ('error' in access) return { error: access.error }
+	if (direction !== 'up' && direction !== 'down') {
+		return { error: MESSAGES.roles.reorderFailed }
+	}
+
+	const idError = validateRoleId(id)
+	if (idError) return { error: idError }
+
+	const role = await getRoleDetailForOrganization(
+		id,
+		access.membership.organizationId,
+	)
+	if (!role) return { error: MESSAGES.roles.notFound }
+	if (role.isSystem) return { error: MESSAGES.roles.systemNotReorderable }
+
+	const adjacentRole = await getAdjacentCustomRoleForOrganization({
+		organizationId: access.membership.organizationId,
+		level: role.level,
+		direction,
+	})
+	if (!adjacentRole) return { error: MESSAGES.roles.reorderBoundary }
+
+	try {
+		await db.transaction(async (tx) => {
+			const updatedAt = new Date()
+			await tx
+				.update(roles)
+				.set({
+					level: adjacentRole.level,
+					updatedAt,
+					updatedBy: access.session.user.id,
+				})
+				.where(
+					and(
+						eq(roles.id, role.id),
+						eq(
+							roles.organizationId,
+							access.membership.organizationId,
+						),
+						eq(roles.isSystem, false),
+					),
+				)
+
+			await tx
+				.update(roles)
+				.set({
+					level: role.level,
+					updatedAt,
+					updatedBy: access.session.user.id,
+				})
+				.where(
+					and(
+						eq(roles.id, adjacentRole.id),
+						eq(
+							roles.organizationId,
+							access.membership.organizationId,
+						),
+						eq(roles.isSystem, false),
+					),
+				)
+
+			await createAuditLog({
+				organizationId: access.membership.organizationId,
+				userId: access.session.user.id,
+				action: AUDIT_LOG.ROLE_REORDERED,
+				entityType: 'role',
+				entityId: role.id,
+				oldData: { level: role.level },
+				newData: { level: adjacentRole.level },
+			})
+		})
+	} catch {
+		return { error: MESSAGES.roles.reorderFailed }
 	}
 
 	revalidatePath('/dashboard/roles')

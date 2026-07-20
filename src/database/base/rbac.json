@@ -156,11 +156,12 @@
             "description": "Permite crear, editar y eliminar roles."
         },
         {
-            "key": "permissions.view",
-            "slug": "permissions-view",
-            "module": "permissions",
-            "name": "Ver permisos",
-            "description": "Permite consultar el catalogo de permisos."
+            "key": "roles.reorder",
+            "slug": "roles-reorder",
+            "module": "roles",
+            "name": "Ordenar roles",
+            "description": "Permite cambiar el orden de los roles personalizados.",
+            "assignment": "system"
         },
         {
             "key": "webhooks.view",
@@ -190,6 +191,7 @@
             "slug": "admin",
             "name": "Administrador",
             "description": "Acceso total al panel administrativo de la organizacion.",
+            "level": 1,
             "defaultMemberPermissionKeys": ["complaints.notify"],
             "permissionKeys": [
                 "complaints.view",
@@ -212,7 +214,7 @@
                 "users.revoke",
                 "roles.view",
                 "roles.manage",
-                "permissions.view",
+                "roles.reorder",
                 "webhooks.view",
                 "webhooks.manage",
                 "exports.view"
@@ -223,6 +225,7 @@
             "slug": "operator",
             "name": "Operador",
             "description": "Atiende reclamos y consulta la configuracion operativa.",
+            "level": 2,
             "defaultMemberPermissionKeys": ["complaints.notify"],
             "permissionKeys": [
                 "complaints.view",
@@ -243,6 +246,7 @@
             "slug": "viewer",
             "name": "Visualizador",
             "description": "Solo lectura sobre la informacion operativa de la organizacion.",
+            "level": 3,
             "permissionKeys": [
                 "complaints.view",
                 "stores.view",

@@ -1,3 +1,4 @@
+import type { StoreAccessGrant } from '@/modules/rbac/lib'
 import type {
 	PermissionOption,
 	RoleOptionWithPermissions,
@@ -19,6 +20,10 @@ export interface UsersInitialState {
 	roleOptions: RoleOptionWithPermissions[]
 	permissionOptions: PermissionOption[]
 	storeOptions: StoreOption[]
+	actorPermissionKeys: string[]
+	actorStoreAccess: StoreAccessGrant
+	actorRoleLevel: number
+	actorIsSuperAdmin: boolean
 }
 
 export interface UsersPageProps {

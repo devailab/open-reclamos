@@ -3,6 +3,7 @@
 import SelectField, { type SelectOption } from '@/components/forms/select-field'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
+import { canGrantStoreAccess, type StoreAccessGrant } from '@/modules/rbac/lib'
 import type { StoreOption } from '@/modules/rbac/queries'
 import type { StoreAccessMode } from '@/modules/users/validation'
 
@@ -15,6 +16,8 @@ interface UserStoreAccessEditorProps {
 	storeAccessMode: StoreAccessMode
 	storeIds: string[]
 	storeOptions: StoreOption[]
+	actorStoreAccess: StoreAccessGrant
+	grantedStoreAccess?: StoreAccessGrant
 	onStoreAccessModeChange: (mode: StoreAccessMode) => void
 	onStoreIdsChange: (storeIds: string[]) => void
 	disabled?: boolean
@@ -24,14 +27,31 @@ export function UserStoreAccessEditor({
 	storeAccessMode,
 	storeIds,
 	storeOptions,
+	actorStoreAccess,
+	grantedStoreAccess,
 	onStoreAccessModeChange,
 	onStoreIdsChange,
 	disabled = false,
 }: UserStoreAccessEditorProps) {
+	const isGrantable = (requestedAccess: StoreAccessGrant) => {
+		return canGrantStoreAccess({
+			actorAccess: actorStoreAccess,
+			requestedAccess,
+			alreadyGrantedAccess: grantedStoreAccess,
+		})
+	}
+
+	const canGrantAllStores = isGrantable({
+		storeAccessMode: 'all',
+		storeIds: [],
+	})
+	const modeOptions = STORE_ACCESS_OPTIONS.map((option) => ({
+		...option,
+		disabled: option.value === 'all' && !canGrantAllStores,
+	}))
 	const selectedMode =
-		STORE_ACCESS_OPTIONS.find(
-			(option) => option.value === storeAccessMode,
-		) ?? STORE_ACCESS_OPTIONS[0]
+		modeOptions.find((option) => option.value === storeAccessMode) ??
+		modeOptions[0]
 
 	const toggleStore = (storeId: string, checked: boolean) => {
 		if (checked) {
@@ -46,17 +66,25 @@ export function UserStoreAccessEditor({
 
 	return (
 		<div className='space-y-4 rounded-xl border p-4'>
-			<SelectField
-				label='Acceso a tiendas'
-				options={STORE_ACCESS_OPTIONS}
-				value={selectedMode}
-				onValueChange={(value) =>
-					onStoreAccessModeChange(
-						(value?.value as StoreAccessMode) ?? 'all',
-					)
-				}
-				disabled={disabled}
-			/>
+			<div className='space-y-1'>
+				<SelectField
+					label='Acceso a tiendas'
+					options={modeOptions}
+					value={selectedMode}
+					onValueChange={(value) =>
+						onStoreAccessModeChange(
+							(value?.value as StoreAccessMode) ?? 'all',
+						)
+					}
+					disabled={disabled}
+				/>
+				{!canGrantAllStores && (
+					<p className='text-xs text-muted-foreground'>
+						Solo puedes otorgar acceso a tiendas que tienes
+						asignadas.
+					</p>
+				)}
+			</div>
 
 			{storeAccessMode === 'selected' && (
 				<div className='space-y-2'>
@@ -64,6 +92,12 @@ export function UserStoreAccessEditor({
 					<div className='max-h-56 space-y-2 overflow-y-auto pr-1'>
 						{storeOptions.map((store) => {
 							const checked = storeIds.includes(store.id)
+							const isStoreDisabled =
+								disabled ||
+								!isGrantable({
+									storeAccessMode: 'selected',
+									storeIds: [store.id],
+								})
 							return (
 								<div
 									key={store.id}
@@ -72,7 +106,7 @@ export function UserStoreAccessEditor({
 										checked
 											? 'border-primary bg-primary/5'
 											: 'border-border',
-										disabled &&
+										isStoreDisabled &&
 											'cursor-not-allowed opacity-60',
 									)}
 								>
@@ -84,17 +118,17 @@ export function UserStoreAccessEditor({
 												Boolean(nextChecked),
 											)
 										}
-										disabled={disabled}
+										disabled={isStoreDisabled}
 									/>
 									<span
 										className='text-sm'
 										onClick={() =>
-											!disabled &&
+											!isStoreDisabled &&
 											toggleStore(store.id, !checked)
 										}
 										onKeyDown={(event) => {
 											if (
-												disabled ||
+												isStoreDisabled ||
 												(event.key !== 'Enter' &&
 													event.key !== ' ')
 											) {
@@ -104,7 +138,7 @@ export function UserStoreAccessEditor({
 											toggleStore(store.id, !checked)
 										}}
 										role='button'
-										tabIndex={disabled ? -1 : 0}
+										tabIndex={isStoreDisabled ? -1 : 0}
 									>
 										{store.name}
 									</span>

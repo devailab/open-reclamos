@@ -1,6 +1,11 @@
 'use server'
 
-import { requireAccess } from '@/modules/shared/access'
+import { eq } from 'drizzle-orm'
+import { redirect } from 'next/navigation'
+import { db } from '@/database/database'
+import { users } from '@/database/schema'
+import { getSession } from '@/lib/auth-server'
+import { getMembershipContext } from '@/modules/rbac/queries'
 import {
 	getPermissionsTableForOrganization,
 	type PermissionTableRow,
@@ -28,8 +33,15 @@ export interface GetPermissionsTableActionResult {
 export async function $getPermissionsTableAction(
 	input: GetPermissionsTableActionInput,
 ): Promise<GetPermissionsTableActionResult> {
-	const access = await requireAccess('permissions.view')
-	if ('error' in access) {
+	const session = await getSession()
+	if (!session) redirect('/login')
+
+	const [user] = await db
+		.select({ isSuperAdmin: users.isSuperAdmin })
+		.from(users)
+		.where(eq(users.id, session.user.id))
+		.limit(1)
+	if (!user?.isSuperAdmin) {
 		return {
 			rows: [],
 			totalItems: 0,
@@ -38,6 +50,8 @@ export async function $getPermissionsTableAction(
 			filters: normalizePermissionsTableFilters(),
 		}
 	}
+	const membership = await getMembershipContext(session.user.id)
+	if (!membership) redirect('/setup')
 
 	const { page, pageSize } = normalizePermissionsPagination(
 		input.page,
@@ -45,7 +59,7 @@ export async function $getPermissionsTableAction(
 	)
 	const filters = normalizePermissionsTableFilters(input.filters)
 	const { rows, totalItems } = await getPermissionsTableForOrganization({
-		organizationId: access.membership.organizationId,
+		organizationId: membership.organizationId,
 		page,
 		pageSize,
 		filters,

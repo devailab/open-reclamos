@@ -17,6 +17,7 @@ export const AUDIT_LOG = {
 	INVITATION_ACCEPTED: 'invitation.accepted',
 	ROLE_CREATED: 'role.created',
 	ROLE_UPDATED: 'role.updated',
+	ROLE_REORDERED: 'role.reordered',
 	ROLE_DELETED: 'role.deleted',
 	STORE_CREATED: 'store.created',
 	STORE_UPDATED: 'store.updated',

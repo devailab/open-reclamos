@@ -2,7 +2,7 @@ import rbacData from '@/database/base/rbac.json'
 
 export type PermissionDefinition = (typeof rbacData.permissions)[number]
 export type RoleDefinition = (typeof rbacData.roles)[number]
-export type PermissionAssignment = 'role' | 'member'
+export type PermissionAssignment = 'role' | 'member' | 'system'
 
 export const SYSTEM_PERMISSION_DEFINITIONS = rbacData.permissions
 export const BASE_ROLE_DEFINITIONS = rbacData.roles
@@ -51,6 +51,96 @@ export function normalizeEmail(email: string): string {
 	return email.trim().toLowerCase()
 }
 
+export interface PermissionGrantCheck {
+	actorPermissionKeys: string[]
+	requestedPermissionKeys: string[]
+	alreadyGrantedPermissionKeys?: string[]
+}
+
+export function getUngrantablePermissionKeys({
+	actorPermissionKeys,
+	requestedPermissionKeys,
+	alreadyGrantedPermissionKeys = [],
+}: PermissionGrantCheck): string[] {
+	const grantableKeys = new Set([
+		...actorPermissionKeys,
+		...alreadyGrantedPermissionKeys,
+	])
+
+	return Array.from(new Set(requestedPermissionKeys)).filter(
+		(key) => !grantableKeys.has(key),
+	)
+}
+
+export function canGrantPermissionKeys(check: PermissionGrantCheck): boolean {
+	return getUngrantablePermissionKeys(check).length === 0
+}
+
+export interface RoleLevelAssignmentCheck {
+	actorRoleLevel: number
+	roleLevel: number
+	actorIsSuperAdmin?: boolean
+}
+
+export function canAssignRoleLevel({
+	actorRoleLevel,
+	roleLevel,
+	actorIsSuperAdmin = false,
+}: RoleLevelAssignmentCheck): boolean {
+	if (actorIsSuperAdmin) return true
+
+	return roleLevel > actorRoleLevel
+}
+
+export interface MemberManagementCheck {
+	actorRoleLevel: number
+	targetRoleLevel: number
+	targetIsSuperAdmin: boolean
+	actorIsSuperAdmin?: boolean
+}
+
+export function canManageMember({
+	actorRoleLevel,
+	targetRoleLevel,
+	targetIsSuperAdmin,
+	actorIsSuperAdmin = false,
+}: MemberManagementCheck): boolean {
+	if (targetIsSuperAdmin) return false
+	if (actorIsSuperAdmin) return true
+
+	return targetRoleLevel >= actorRoleLevel
+}
+
+export interface StoreAccessGrant {
+	storeAccessMode: 'all' | 'selected'
+	storeIds: string[]
+}
+
+export interface StoreAccessGrantCheck {
+	actorAccess: StoreAccessGrant
+	requestedAccess: StoreAccessGrant
+	alreadyGrantedAccess?: StoreAccessGrant
+}
+
+export function canGrantStoreAccess({
+	actorAccess,
+	requestedAccess,
+	alreadyGrantedAccess,
+}: StoreAccessGrantCheck): boolean {
+	if (actorAccess.storeAccessMode === 'all') return true
+	if (alreadyGrantedAccess?.storeAccessMode === 'all') return true
+	if (requestedAccess.storeAccessMode === 'all') return false
+
+	const grantableStoreIds = new Set([
+		...actorAccess.storeIds,
+		...(alreadyGrantedAccess?.storeIds ?? []),
+	])
+
+	return requestedAccess.storeIds.every((storeId) =>
+		grantableStoreIds.has(storeId),
+	)
+}
+
 export function isSelectedStoreAccessMode(value: string | null | undefined) {
 	return value === STORE_ACCESS_SELECTED
 }
@@ -58,7 +148,9 @@ export function isSelectedStoreAccessMode(value: string | null | undefined) {
 export function getPermissionAssignment(
 	definition: PermissionDefinition,
 ): PermissionAssignment {
-	return definition.assignment === 'member' ? 'member' : 'role'
+	if (definition.assignment === 'member') return 'member'
+	if (definition.assignment === 'system') return 'system'
+	return 'role'
 }
 
 export function isRoleAssignableSystemPermissionKey(key: string) {

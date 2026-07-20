@@ -13,6 +13,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog'
+import type { StoreAccessGrant } from '@/modules/rbac/lib'
 import type { RoleOption, StoreOption } from '@/modules/rbac/queries'
 import {
 	$createUserInvitationAction,
@@ -31,6 +32,8 @@ interface CreateInvitationDialogProps {
 	onCreated: (payload: { inviteUrl: string; token: string }) => void
 	roles: RoleOption[]
 	stores: StoreOption[]
+	assignableRoleIds: string[]
+	actorStoreAccess: StoreAccessGrant
 }
 
 interface InvitationFormValues {
@@ -53,8 +56,17 @@ export function CreateInvitationDialog({
 	onCreated,
 	roles,
 	stores,
+	assignableRoleIds,
+	actorStoreAccess,
 }: CreateInvitationDialogProps) {
-	const [values, setValues] = useState(INITIAL_VALUES)
+	const initialValues = useMemo<InvitationFormValues>(
+		() => ({
+			...INITIAL_VALUES,
+			storeAccessMode: actorStoreAccess.storeAccessMode,
+		}),
+		[actorStoreAccess],
+	)
+	const [values, setValues] = useState(initialValues)
 	const [lastInvitationUrl, setLastInvitationUrl] = useState<string | null>(
 		null,
 	)
@@ -67,12 +79,14 @@ export function CreateInvitationDialog({
 			roles.map((role) => ({
 				value: role.id,
 				label: role.name,
+				disabled: !assignableRoleIds.includes(role.id),
 			})),
-		[roles],
+		[assignableRoleIds, roles],
 	)
+	const hasUnassignableRoles = roleOptions.some((option) => option.disabled)
 
 	const resetForm = () => {
-		setValues(INITIAL_VALUES)
+		setValues(initialValues)
 		setLastInvitationUrl(null)
 		setEmailSent(false)
 	}
@@ -169,24 +183,33 @@ export function CreateInvitationDialog({
 						disabled={isPending}
 					/>
 
-					<SelectField
-						label='Rol'
-						placeholder='Selecciona un rol'
-						options={roleOptions}
-						value={values.role}
-						onValueChange={(value) =>
-							setValues((previous) => ({
-								...previous,
-								role: value,
-							}))
-						}
-						disabled={isPending}
-					/>
+					<div className='space-y-1'>
+						<SelectField
+							label='Rol'
+							placeholder='Selecciona un rol'
+							options={roleOptions}
+							value={values.role}
+							onValueChange={(value) =>
+								setValues((previous) => ({
+									...previous,
+									role: value,
+								}))
+							}
+							disabled={isPending}
+						/>
+						{hasUnassignableRoles && (
+							<p className='text-xs text-muted-foreground'>
+								Solo puedes asignar roles de nivel inferior al
+								tuyo y cuyos permisos ya posees.
+							</p>
+						)}
+					</div>
 
 					<UserStoreAccessEditor
 						storeAccessMode={values.storeAccessMode}
 						storeIds={values.storeIds}
 						storeOptions={stores}
+						actorStoreAccess={actorStoreAccess}
 						onStoreAccessModeChange={(storeAccessMode) =>
 							setValues((previous) => ({
 								...previous,

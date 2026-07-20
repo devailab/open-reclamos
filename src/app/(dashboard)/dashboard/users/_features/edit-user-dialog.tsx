@@ -18,6 +18,11 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import {
+	canGrantPermissionKeys,
+	canGrantStoreAccess,
+	type StoreAccessGrant,
+} from '@/modules/rbac/lib'
 import type {
 	PermissionOption,
 	RoleOptionWithPermissions,
@@ -38,6 +43,9 @@ interface EditUserDialogProps {
 	roles: RoleOptionWithPermissions[]
 	permissions: PermissionOption[]
 	stores: StoreOption[]
+	assignableRoleIds: string[]
+	actorPermissionKeys: string[]
+	actorStoreAccess: StoreAccessGrant
 }
 
 const STORE_ACCESS_OPTIONS: SelectOption[] = [
@@ -111,6 +119,7 @@ interface PermissionGroupProps {
 	items: PermissionOption[]
 	rolePermissionIds: Set<string>
 	selectedPermissionIds: string[]
+	ungrantablePermissionIds: Set<string>
 	disabled: boolean
 	onToggle: (id: string) => void
 }
@@ -120,6 +129,7 @@ function PermissionGroup({
 	items,
 	rolePermissionIds,
 	selectedPermissionIds,
+	ungrantablePermissionIds,
 	disabled,
 	onToggle,
 }: PermissionGroupProps) {
@@ -135,7 +145,10 @@ function PermissionGroup({
 						permission={permission}
 						checked={selectedPermissionIds.includes(permission.id)}
 						fromRole={rolePermissionIds.has(permission.id)}
-						disabled={disabled}
+						disabled={
+							disabled ||
+							ungrantablePermissionIds.has(permission.id)
+						}
 						onToggle={() => onToggle(permission.id)}
 					/>
 				))}
@@ -153,6 +166,9 @@ export function EditUserDialog({
 	roles,
 	permissions,
 	stores,
+	assignableRoleIds,
+	actorPermissionKeys,
+	actorStoreAccess,
 }: EditUserDialogProps) {
 	const open = user !== null
 	const [role, setRole] = useState<SelectOption | null>(null)
@@ -170,9 +186,54 @@ export function EditUserDialog({
 			roles.map((r) => ({
 				value: r.id,
 				label: r.name,
+				disabled:
+					r.id !== user?.roleId && !assignableRoleIds.includes(r.id),
 			})),
-		[roles],
+		[assignableRoleIds, roles, user],
 	)
+	const hasUnassignableRoles = roleOptions.some((option) => option.disabled)
+
+	const isStoreAccessGrantable = (requestedAccess: StoreAccessGrant) => {
+		return canGrantStoreAccess({
+			actorAccess: actorStoreAccess,
+			requestedAccess,
+			alreadyGrantedAccess: user
+				? {
+						storeAccessMode: user.storeAccessMode,
+						storeIds: user.storeIds,
+					}
+				: undefined,
+		})
+	}
+
+	const canGrantAllStores = isStoreAccessGrantable({
+		storeAccessMode: 'all',
+		storeIds: [],
+	})
+	const storeAccessOptions = STORE_ACCESS_OPTIONS.map((option) => ({
+		...option,
+		disabled: option.value === 'all' && !canGrantAllStores,
+	}))
+
+	const ungrantablePermissionIds = useMemo(() => {
+		const grantedIds = new Set(user?.permissionIds ?? [])
+		const grantedKeys = permissions
+			.filter((permission) => grantedIds.has(permission.id))
+			.map((permission) => permission.key)
+
+		return new Set(
+			permissions
+				.filter(
+					(permission) =>
+						!canGrantPermissionKeys({
+							actorPermissionKeys,
+							requestedPermissionKeys: [permission.key],
+							alreadyGrantedPermissionKeys: grantedKeys,
+						}),
+				)
+				.map((permission) => permission.id),
+		)
+	}, [actorPermissionKeys, permissions, user])
 
 	const rolePermissionIds = useMemo(() => {
 		const selected = roles.find((r) => r.id === role?.value)
@@ -300,22 +361,39 @@ export function EditUserDialog({
 						</div>
 
 						<div className='grid gap-4 sm:grid-cols-2'>
-							<SelectField
-								label='Rol'
-								placeholder='Selecciona un rol'
-								options={roleOptions}
-								value={role}
-								onValueChange={setRole}
-								disabled={isPending}
-							/>
-							<SelectField
-								label='Acceso a tiendas'
-								placeholder='Selecciona un alcance'
-								options={STORE_ACCESS_OPTIONS}
-								value={storeAccessMode}
-								onValueChange={setStoreAccessMode}
-								disabled={isPending}
-							/>
+							<div className='space-y-1'>
+								<SelectField
+									label='Rol'
+									placeholder='Selecciona un rol'
+									options={roleOptions}
+									value={role}
+									onValueChange={setRole}
+									disabled={isPending}
+								/>
+								{hasUnassignableRoles && (
+									<p className='text-xs text-muted-foreground'>
+										Solo puedes asignar roles de nivel
+										inferior al tuyo y cuyos permisos ya
+										posees.
+									</p>
+								)}
+							</div>
+							<div className='space-y-1'>
+								<SelectField
+									label='Acceso a tiendas'
+									placeholder='Selecciona un alcance'
+									options={storeAccessOptions}
+									value={storeAccessMode}
+									onValueChange={setStoreAccessMode}
+									disabled={isPending}
+								/>
+								{!canGrantAllStores && (
+									<p className='text-xs text-muted-foreground'>
+										Solo puedes otorgar acceso a tiendas que
+										tienes asignadas.
+									</p>
+								)}
+							</div>
 						</div>
 
 						<Separator />
@@ -327,6 +405,8 @@ export function EditUserDialog({
 								</p>
 								<p className='text-sm text-muted-foreground'>
 									Estos permisos se suman al rol asignado.
+									{ungrantablePermissionIds.size > 0 &&
+										' Solo puedes otorgar permisos que tu usuario ya posee.'}
 								</p>
 							</div>
 							<div className='rounded-xl border p-3 space-y-4'>
@@ -338,6 +418,9 @@ export function EditUserDialog({
 										rolePermissionIds={rolePermissionIds}
 										selectedPermissionIds={
 											selectedPermissionIds
+										}
+										ungrantablePermissionIds={
+											ungrantablePermissionIds
 										}
 										disabled={isPending}
 										onToggle={togglePermission}
@@ -360,6 +443,13 @@ export function EditUserDialog({
 													selectedStoreIds.includes(
 														store.id,
 													)
+												const isStoreDisabled =
+													isPending ||
+													!isStoreAccessGrantable({
+														storeAccessMode:
+															'selected',
+														storeIds: [store.id],
+													})
 												return (
 													<div
 														key={store.id}
@@ -367,6 +457,8 @@ export function EditUserDialog({
 															'flex items-center gap-2 rounded-lg border px-3 py-2',
 															checked &&
 																'border-primary/40 bg-primary/5',
+															isStoreDisabled &&
+																'opacity-60',
 														)}
 													>
 														<Checkbox
@@ -376,11 +468,18 @@ export function EditUserDialog({
 																	store.id,
 																)
 															}
-															disabled={isPending}
+															disabled={
+																isStoreDisabled
+															}
 														/>
 														<Label
-															className='flex-1 cursor-pointer'
+															className={cn(
+																'flex-1 cursor-pointer',
+																isStoreDisabled &&
+																	'cursor-not-allowed',
+															)}
 															onClick={() =>
+																!isStoreDisabled &&
 																toggleStore(
 																	store.id,
 																)

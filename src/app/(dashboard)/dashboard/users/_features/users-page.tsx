@@ -22,6 +22,11 @@ import { useDataTable } from '@/hooks/use-data-table'
 import { feedback } from '@/lib/feedback'
 import { formatDateDisplay } from '@/lib/formatters'
 import {
+	canAssignRoleLevel,
+	canGrantPermissionKeys,
+	canManageMember,
+} from '@/modules/rbac/lib'
+import {
 	$getInvitationsTableAction,
 	$getUsersTableAction,
 	$revokeInvitationAction,
@@ -52,6 +57,42 @@ export function UsersPage({ initialState }: UsersPageProps) {
 	const [editingUser, setEditingUser] = useState<UserRow | null>(null)
 	const [isRevoking, startRevokingTransition] = useTransition()
 
+	const assignableRoleIds = useMemo(() => {
+		const permissionKeyById = new Map(
+			initialState.permissionOptions.map((permission) => [
+				permission.id,
+				permission.key,
+			]),
+		)
+
+		return initialState.roleOptions
+			.filter((role) =>
+				canAssignRoleLevel({
+					actorRoleLevel: initialState.actorRoleLevel,
+					roleLevel: role.level,
+					actorIsSuperAdmin: initialState.actorIsSuperAdmin,
+				}),
+			)
+			.filter((role) =>
+				canGrantPermissionKeys({
+					actorPermissionKeys: initialState.actorPermissionKeys,
+					requestedPermissionKeys: role.permissionIds.flatMap(
+						(permissionId) =>
+							permissionKeyById.get(permissionId) ?? [],
+					),
+				}),
+			)
+			.map((role) => role.id)
+	}, [initialState])
+
+	const canManageRow = (row: UserRow) =>
+		canManageMember({
+			actorRoleLevel: initialState.actorRoleLevel,
+			targetRoleLevel: row.roleLevel,
+			targetIsSuperAdmin: row.isSuperAdmin,
+			actorIsSuperAdmin: initialState.actorIsSuperAdmin,
+		})
+
 	const {
 		controller: userController,
 		defineColumns: defineUserColumns,
@@ -80,7 +121,9 @@ export function UsersPage({ initialState }: UsersPageProps) {
 		},
 		filters: userFilters,
 		setFilters: setUserFilters,
-		onRowClick: (row) => setEditingUser(row),
+		onRowClick: (row) => {
+			if (canManageRow(row)) setEditingUser(row)
+		},
 		hasInitialData: true,
 	})
 
@@ -187,21 +230,31 @@ export function UsersPage({ initialState }: UsersPageProps) {
 		},
 		{
 			header: { render: () => 'Acciones' },
-			cell: ({ row }) => (
-				<Button
-					type='button'
-					variant='outline'
-					size='icon-sm'
-					title='Editar acceso'
-					onClick={(event) => {
-						event.stopPropagation()
-						setEditingUser(row)
-					}}
-				>
-					<ShieldUser />
-					<span className='sr-only'>Editar acceso</span>
-				</Button>
-			),
+			cell: ({ row }) => {
+				const isManageable = canManageRow(row)
+				return (
+					<Button
+						type='button'
+						variant='outline'
+						size='icon-sm'
+						disabled={!isManageable}
+						title={
+							isManageable
+								? 'Editar acceso'
+								: row.isSuperAdmin
+									? 'El acceso de un super administrador no se puede modificar'
+									: 'No puedes gestionar a un usuario con un rol de nivel superior al tuyo'
+						}
+						onClick={(event) => {
+							event.stopPropagation()
+							if (isManageable) setEditingUser(row)
+						}}
+					>
+						<ShieldUser />
+						<span className='sr-only'>Editar acceso</span>
+					</Button>
+				)
+			},
 		},
 	])
 
@@ -474,6 +527,8 @@ export function UsersPage({ initialState }: UsersPageProps) {
 				onCreated={setCreatedInvitation}
 				roles={initialState.roleOptions}
 				stores={initialState.storeOptions}
+				assignableRoleIds={assignableRoleIds}
+				actorStoreAccess={initialState.actorStoreAccess}
 			/>
 
 			<EditUserDialog
@@ -486,6 +541,9 @@ export function UsersPage({ initialState }: UsersPageProps) {
 				roles={initialState.roleOptions}
 				permissions={initialState.permissionOptions}
 				stores={initialState.storeOptions}
+				assignableRoleIds={assignableRoleIds}
+				actorPermissionKeys={initialState.actorPermissionKeys}
+				actorStoreAccess={initialState.actorStoreAccess}
 			/>
 		</div>
 	)

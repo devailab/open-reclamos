@@ -20,8 +20,17 @@ import { SSO_ENABLED, SSO_PROVIDER_NAME } from '@/lib/config'
 import { sendEmail } from '@/lib/email'
 import { setActiveOrganizationCookie } from '@/modules/rbac/cookies'
 import {
+	canAssignRoleLevel,
+	canGrantStoreAccess,
+	canManageMember,
+} from '@/modules/rbac/lib'
+import {
 	assignDefaultMemberPermissionsForRole,
+	canActorGrantRole,
 	getAvailablePermissionIdsForOrganization,
+	getUngrantablePermissionKeysByIds,
+	isSuperAdminUser,
+	type MembershipContext,
 } from '@/modules/rbac/queries'
 import { getRoleByIdForOrganization } from '@/modules/roles/queries'
 import { requireAccess } from '@/modules/shared/access'
@@ -95,18 +104,60 @@ export interface UserAccessActionResult {
 	storeIds: string[]
 }
 
+interface GrantedMemberAccess {
+	roleId: string
+	storeAccessMode: StoreAccessMode
+	storeIds: string[]
+}
+
 async function validateRoleAndStores(
-	organizationId: string,
+	actor: MembershipContext,
+	actorIsSuperAdmin: boolean,
 	roleId: string,
 	storeAccessMode: StoreAccessMode,
 	storeIds: string[],
+	granted?: GrantedMemberAccess,
 ) {
-	const role = await getRoleByIdForOrganization(roleId, organizationId)
+	const role = await getRoleByIdForOrganization(roleId, actor.organizationId)
 	if (!role) return { error: MESSAGES.users.invalidRole } as const
+
+	const keepsGrantedRole = role.id === granted?.roleId
+	if (!keepsGrantedRole) {
+		const isRoleLevelAssignable = canAssignRoleLevel({
+			actorRoleLevel: actor.roleLevel,
+			roleLevel: role.level,
+			actorIsSuperAdmin,
+		})
+		if (!isRoleLevelAssignable) {
+			return { error: MESSAGES.users.roleLevelAboveActor } as const
+		}
+
+		if (!(await canActorGrantRole(actor.permissionKeys, role.id))) {
+			return { error: MESSAGES.users.roleBeyondActorPermissions } as const
+		}
+	}
+
+	const isStoreAccessGrantable = canGrantStoreAccess({
+		actorAccess: {
+			storeAccessMode: actor.storeAccessMode,
+			storeIds: actor.storeIds,
+		},
+		requestedAccess: { storeAccessMode, storeIds },
+		alreadyGrantedAccess: granted && {
+			storeAccessMode: granted.storeAccessMode,
+			storeIds: granted.storeIds,
+		},
+	})
+	if (!isStoreAccessGrantable) {
+		return { error: MESSAGES.users.storeAccessBeyondActor } as const
+	}
 
 	const validStoreIds =
 		storeAccessMode === 'selected'
-			? await getValidStoreIdsForOrganization(organizationId, storeIds)
+			? await getValidStoreIdsForOrganization(
+					actor.organizationId,
+					storeIds,
+				)
 			: []
 
 	if (
@@ -212,8 +263,10 @@ export async function $createUserInvitationAction(
 		}
 	}
 
+	const actorIsSuperAdmin = await isSuperAdminUser(access.session.user.id)
 	const roleAndStores = await validateRoleAndStores(
-		access.membership.organizationId,
+		access.membership,
+		actorIsSuperAdmin,
 		normalizedInput.roleId,
 		normalizedInput.storeAccessMode,
 		normalizedInput.storeIds,
@@ -356,11 +409,32 @@ export async function $updateUserAccessAction(
 	)
 	if (!member) return { error: MESSAGES.users.notFound }
 
+	if (member.isSuperAdmin) {
+		return { error: MESSAGES.users.cannotEditSuperAdmin }
+	}
+
+	const actorIsSuperAdmin = await isSuperAdminUser(access.session.user.id)
+	const isMemberManageable = canManageMember({
+		actorRoleLevel: access.membership.roleLevel,
+		targetRoleLevel: member.roleLevel,
+		targetIsSuperAdmin: member.isSuperAdmin,
+		actorIsSuperAdmin,
+	})
+	if (!isMemberManageable) {
+		return { error: MESSAGES.users.cannotManageHigherLevelUser }
+	}
+
 	const roleAndStores = await validateRoleAndStores(
-		access.membership.organizationId,
+		access.membership,
+		actorIsSuperAdmin,
 		normalizedInput.roleId,
 		normalizedInput.storeAccessMode,
 		normalizedInput.storeIds,
+		{
+			roleId: member.roleId,
+			storeAccessMode: member.storeAccessMode,
+			storeIds: member.storeIds,
+		},
 	)
 	if ('error' in roleAndStores) {
 		return {
@@ -377,6 +451,15 @@ export async function $updateUserAccessAction(
 	)
 	if (invalidPermissionId) {
 		return { error: MESSAGES.permissions.invalidSelection }
+	}
+
+	const ungrantableKeys = await getUngrantablePermissionKeysByIds({
+		actorPermissionKeys: access.membership.permissionKeys,
+		requestedPermissionIds: normalizedInput.permissionIds,
+		alreadyGrantedPermissionIds: member.permissionIds,
+	})
+	if (ungrantableKeys.length > 0) {
+		return { error: MESSAGES.permissions.beyondActor }
 	}
 
 	try {
@@ -550,6 +633,20 @@ export async function $removeUserFromOrganizationAction(
 		access.membership.organizationId,
 	)
 	if (!member) return { error: MESSAGES.users.notFound }
+
+	if (member.isSuperAdmin) {
+		return { error: MESSAGES.users.cannotEditSuperAdmin }
+	}
+
+	const isMemberManageable = canManageMember({
+		actorRoleLevel: access.membership.roleLevel,
+		targetRoleLevel: member.roleLevel,
+		targetIsSuperAdmin: member.isSuperAdmin,
+		actorIsSuperAdmin: await isSuperAdminUser(access.session.user.id),
+	})
+	if (!isMemberManageable) {
+		return { error: MESSAGES.users.cannotManageHigherLevelUser }
+	}
 
 	try {
 		await db.transaction(async (tx) => {

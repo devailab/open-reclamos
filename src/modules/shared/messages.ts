@@ -68,21 +68,35 @@ export const MESSAGES = {
 		notFound: 'El rol no fue encontrado.',
 		systemNotEditable: 'Los roles base no se pueden editar.',
 		systemNotDeletable: 'Los roles base no se pueden eliminar.',
+		systemNotReorderable: 'Los roles base no se pueden mover.',
+		reorderBoundary: 'El rol ya se encuentra en el límite permitido.',
 		assignedNotDeletable:
 			'No puedes eliminar un rol que ya está asignado a usuarios.',
 		createFailed: 'No se pudo crear el rol. Inténtalo nuevamente.',
 		updateFailed: 'No se pudo actualizar el rol. Inténtalo nuevamente.',
 		deleteFailed: 'No se pudo eliminar el rol. Inténtalo nuevamente.',
+		reorderFailed: 'No se pudo mover el rol. Inténtalo nuevamente.',
 		duplicateName: 'Ya existe un rol con ese nombre.',
 	},
 	permissions: {
 		invalidSelection: 'Uno de los permisos seleccionados no es válido.',
+		beyondActor: 'Solo puedes asignar permisos que tu usuario ya posee.',
 	},
 	users: {
 		notFound: 'El usuario no fue encontrado.',
 		invalidInvitationData: 'Datos de invitación inválidos.',
 		ssoDisabled: 'El acceso SSO no está habilitado.',
 		invalidRole: 'El rol seleccionado no es válido.',
+		roleBeyondActorPermissions:
+			'No puedes asignar un rol con permisos que tu usuario no posee.',
+		roleLevelAboveActor:
+			'Solo puedes asignar roles de nivel inferior al tuyo.',
+		cannotEditSuperAdmin:
+			'No se puede modificar el acceso de un super administrador.',
+		cannotManageHigherLevelUser:
+			'No puedes gestionar a un usuario con un rol de nivel superior al tuyo.',
+		storeAccessBeyondActor:
+			'No puedes otorgar acceso a tiendas que tu usuario no tiene asignadas.',
 		emailAlreadyMember: 'Ese correo ya pertenece a esta organización.',
 		emailHasAccountInviteOnly:
 			'Ese correo ya tiene una cuenta registrada. Por ahora solo se admiten usuarios nuevos por invitación.',

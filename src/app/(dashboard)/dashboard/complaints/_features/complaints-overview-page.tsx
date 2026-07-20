@@ -278,8 +278,7 @@ export const ComplaintsOverviewPage: FC<ComplaintsOverviewPageProps> = ({
 								¡Todo está al día!
 							</h2>
 							<p className='mt-1 max-w-md text-sm text-muted-foreground'>
-								Felicitaciones, no tienes reclamos pendientes
-								por atender en tus tiendas.
+								Felicitaciones, no tienes reclamos pendientes.
 							</p>
 						</div>
 					)}

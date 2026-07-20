@@ -1,11 +1,16 @@
 import {
 	and,
+	asc,
 	count,
 	desc,
 	eq,
+	gt,
 	ilike,
 	inArray,
 	isNull,
+	lt,
+	max,
+	min,
 	or,
 	type SQL,
 } from 'drizzle-orm'
@@ -26,12 +31,15 @@ export interface RoleTableRow {
 	slug: string
 	name: string
 	description: string | null
+	level: number
 	isSystem: boolean
 	deletedAt: Date | null
 	createdAt: Date
 	updatedAt: Date | null
 	permissionsCount: number
 	membersCount: number
+	canMoveUp: boolean
+	canMoveDown: boolean
 }
 
 export interface RoleDetailRow {
@@ -40,6 +48,7 @@ export interface RoleDetailRow {
 	slug: string
 	name: string
 	description: string | null
+	level: number
 	isSystem: boolean
 	deletedAt: Date | null
 	createdAt: Date
@@ -96,6 +105,7 @@ export async function getRoleByIdForOrganization(
 			slug: roles.slug,
 			name: roles.name,
 			description: roles.description,
+			level: roles.level,
 			isSystem: roles.isSystem,
 			deletedAt: roles.deletedAt,
 			createdAt: roles.createdAt,
@@ -163,6 +173,7 @@ export async function getRolesTableForOrganization({
 			slug: roles.slug,
 			name: roles.name,
 			description: roles.description,
+			level: roles.level,
 			isSystem: roles.isSystem,
 			deletedAt: roles.deletedAt,
 			createdAt: roles.createdAt,
@@ -170,9 +181,23 @@ export async function getRolesTableForOrganization({
 		})
 		.from(roles)
 		.where(whereClause)
-		.orderBy(desc(roles.isSystem), roles.name)
+		.orderBy(asc(roles.level), asc(roles.name))
 		.limit(pageSize)
 		.offset(offset)
+
+	const [customLevelBounds] = await db
+		.select({
+			minLevel: min(roles.level),
+			maxLevel: max(roles.level),
+		})
+		.from(roles)
+		.where(
+			and(
+				eq(roles.organizationId, organizationId),
+				eq(roles.isSystem, false),
+				isNull(roles.deletedAt),
+			),
+		)
 
 	const roleIds = rows.map((row) => row.id)
 	const permissionCounts = roleIds.length
@@ -209,9 +234,60 @@ export async function getRolesTableForOrganization({
 			...row,
 			permissionsCount: permissionCountByRoleId.get(row.id) ?? 0,
 			membersCount: memberCountByRoleId.get(row.id) ?? 0,
+			canMoveUp:
+				!row.isSystem &&
+				customLevelBounds?.minLevel !== null &&
+				row.level > customLevelBounds.minLevel,
+			canMoveDown:
+				!row.isSystem &&
+				customLevelBounds?.maxLevel !== null &&
+				row.level < customLevelBounds.maxLevel,
 		})),
 		totalItems: await countRows(roles, whereClause),
 	}
+}
+
+export async function getNextRoleLevelForOrganization(
+	organizationId: string,
+): Promise<number> {
+	const [result] = await db
+		.select({ maxLevel: max(roles.level) })
+		.from(roles)
+		.where(
+			and(
+				eq(roles.organizationId, organizationId),
+				isNull(roles.deletedAt),
+			),
+		)
+
+	return (result?.maxLevel ?? 0) + 1
+}
+
+export type RoleMoveDirection = 'up' | 'down'
+
+export async function getAdjacentCustomRoleForOrganization(params: {
+	organizationId: string
+	level: number
+	direction: RoleMoveDirection
+}) {
+	const isMovingUp = params.direction === 'up'
+	const [role] = await db
+		.select({ id: roles.id, level: roles.level })
+		.from(roles)
+		.where(
+			and(
+				eq(roles.organizationId, params.organizationId),
+				eq(roles.isSystem, false),
+				isNull(roles.deletedAt),
+				isMovingUp
+					? lt(roles.level, params.level)
+					: gt(roles.level, params.level),
+			),
+		)
+		.orderBy(isMovingUp ? desc(roles.level) : asc(roles.level))
+		.limit(1)
+
+	return role ?? null
 }
 
 export async function checkRoleKeyExists(key: string, excludeRoleId?: string) {

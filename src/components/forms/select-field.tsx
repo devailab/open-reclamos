@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 export interface SelectOption {
 	value: string
 	label: string
+	disabled?: boolean
 }
 
 export interface SelectFieldProps extends FormFieldProps<SelectOption | null> {
@@ -118,7 +119,11 @@ const SelectField: FC<SelectFieldProps> = ({
 					</SelectTrigger>
 					<SelectContent>
 						{options.map((option) => (
-							<SelectItem key={option.value} value={option.value}>
+							<SelectItem
+								key={option.value}
+								value={option.value}
+								disabled={option.disabled}
+							>
 								{option.label}
 							</SelectItem>
 						))}
