@@ -28,6 +28,7 @@ COPY --from=builder --chown=bun:bun /usr/src/app/docker-entrypoint.sh ./docker-e
 COPY --from=builder --chown=bun:bun /usr/src/app/tsconfig.json ./tsconfig.json
 COPY --from=builder --chown=bun:bun /usr/src/app/src/lib ./src/lib
 COPY --from=builder --chown=bun:bun /usr/src/app/src/database ./src/database
+COPY --from=builder --chown=bun:bun /usr/src/app/src/modules/stores/constants.ts ./src/modules/stores/constants.ts
 
 RUN chmod +x ./docker-entrypoint.sh
 
