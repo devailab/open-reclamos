@@ -1,5 +1,6 @@
 import type { NextPage } from 'next'
 import { redirect } from 'next/navigation'
+import { getSession } from '@/lib/auth-server'
 import {
 	ALLOW_PUBLIC_REGISTRATION,
 	EMAIL_VERIFICATION_ENABLED,
@@ -12,6 +13,11 @@ import { RegistrationClosed } from './_features/registration-closed'
 export const dynamic = 'force-dynamic'
 
 const RegisterPage: NextPage = async () => {
+	const session = await getSession()
+	if (session) {
+		redirect('/dashboard')
+	}
+
 	if (SSO_ENABLED) redirect('/login')
 
 	const anyUser = await hasAnyUser()
