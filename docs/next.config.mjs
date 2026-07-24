@@ -8,6 +8,7 @@ const config = {
 	turbopack: {
 		root: import.meta.dirname,
 	},
+	basePath: '/docs',
 }
 
 export default withMDX(config)
