@@ -1,13 +1,33 @@
 ---
-title: Hello World
-description: Your first document
+title: Open Reclamos
+description: Libro de Reclamaciones Virtual para empresas en Perú — documentación e integraciones.
+icon: House
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+**Open Reclamos** es una plataforma open source para crear y gestionar Libros de Reclamaciones Virtual alineado con las regulaciones de INDECOPI (Perú)
 
-## What is Next?
+Esta documentación cubre las **integraciones**: cómo conectar Open Reclamos con
+tus propios sistemas.
 
 <Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
+	<Card
+		title="API"
+		description="Consulta reclamos y quejas desde tu backend con una API key."
+		href="/api"
+	/>
+	<Card
+		title="Autenticación"
+		description="Genera tu API key y entiende su alcance."
+		href="/api/authentication"
+	/>
+	<Card
+		title="Webhooks"
+		description="Recibe notificaciones firmadas cuando ocurre algo en el libro."
+		href="/api/webhooks"
+	/>
+	<Card
+		title="Servidor MCP"
+		description="Conecta Claude o Cursor para consultar el libro en lenguaje natural."
+		href="/api/mcp"
+	/>
 </Cards>

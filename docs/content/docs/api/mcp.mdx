@@ -1,0 +1,181 @@
+---
+title: Servidor MCP
+description: Conecta Claude, Cursor u otro cliente compatible con MCP para consultar tu libro de reclamaciones en lenguaje natural.
+icon: Bot
+---
+
+Open Reclamos expone un servidor **MCP** ([Model Context Protocol](https://modelcontextprotocol.io))
+para que asistentes de IA consulten los reclamos de tu organización con lenguaje
+natural: _"¿cuántos reclamos vencidos tenemos en la tienda de Miraflores?"_.
+
+Es el mismo motor de datos que la API REST, con las mismas reglas de aislamiento
+por organización, permisos y acceso por tienda — pero expuesto como herramientas
+que el modelo puede invocar.
+
+<Callout type="info" title="Solo lectura">
+	Todas las herramientas están anotadas como `readOnlyHint`. El servidor MCP
+	consulta información; no crea, modifica ni elimina reclamos.
+</Callout>
+
+## Endpoint
+
+| | |
+| --- | --- |
+| **URL** | `https://tu-dominio.com/api/mcp/mcp` |
+| **Transporte** | Streamable HTTP |
+| **Autenticación** | `Authorization: Bearer or_...` ([tu API key](/api/authentication)) |
+
+La clave viaja únicamente en el header `Authorization`, nunca en la URL, para que
+no termine en logs ni en historiales compartidos. Si falta o es inválida, el
+servidor responde `401`.
+
+## Conectar un cliente
+
+<Tabs items={['Claude Code', 'Claude Desktop', 'Cursor', 'mcp.json']}>
+
+<Tab value="Claude Code">
+
+```bash title="Terminal"
+claude mcp add --transport http open-reclamos \
+  https://tu-dominio.com/api/mcp/mcp \
+  --header "Authorization: Bearer $OPEN_RECLAMOS_API_KEY"
+```
+
+Verifica la conexión con `/mcp` dentro de Claude Code: deberías ver el servidor
+`open-reclamos` y sus herramientas disponibles.
+
+</Tab>
+
+<Tab value="Claude Desktop">
+
+Edita `claude_desktop_config.json` y añade el servidor usando el puente
+`mcp-remote` (Claude Desktop se conecta por stdio):
+
+```json title="claude_desktop_config.json"
+{
+	"mcpServers": {
+		"open-reclamos": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"mcp-remote",
+				"https://tu-dominio.com/api/mcp/mcp",
+				"--header",
+				"Authorization: Bearer or_tu_api_key"
+			]
+		}
+	}
+}
+```
+
+Reinicia Claude Desktop para que tome la configuración.
+
+</Tab>
+
+<Tab value="Cursor">
+
+```json title=".cursor/mcp.json"
+{
+	"mcpServers": {
+		"open-reclamos": {
+			"url": "https://tu-dominio.com/api/mcp/mcp",
+			"headers": {
+				"Authorization": "Bearer or_tu_api_key"
+			}
+		}
+	}
+}
+```
+
+</Tab>
+
+<Tab value="mcp.json">
+
+Configuración compartida con el equipo, en la raíz del proyecto:
+
+```json title=".mcp.json"
+{
+	"mcpServers": {
+		"open-reclamos": {
+			"type": "http",
+			"url": "https://tu-dominio.com/api/mcp/mcp",
+			"headers": {
+				"Authorization": "Bearer or_tu_api_key"
+			}
+		}
+	}
+}
+```
+
+<Callout type="warn">
+	No subas al repositorio un archivo con la clave en texto plano. Usa el archivo
+	local de cada desarrollador o inyecta la clave desde tu gestor de secretos.
+</Callout>
+
+</Tab>
+
+</Tabs>
+
+## Configuración por organización
+
+Desde **Dashboard → Configuración** controlas cómo se comporta el servidor MCP:
+
+<Steps>
+
+<Step>
+
+### Herramientas habilitadas
+
+Puedes desactivar herramientas individualmente. Las deshabilitadas no aparecen en
+`tools/list` y, si un cliente las invoca de todos modos, reciben un error
+explicativo.
+
+</Step>
+
+<Step>
+
+### Datos sensibles
+
+Por defecto, **los datos personales se enmascaran** antes de salir hacia el modelo:
+
+| Campo | Valor devuelto |
+| --- | --- |
+| Nombres y apellidos | `***` |
+| Documento de identidad | `4****912` (primer y últimos 3 dígitos) |
+| Correo electrónico | `m***@example.com` |
+| Teléfono y dirección | `***` |
+| Datos del apoderado | Mismo tratamiento |
+
+Activa **Mostrar datos sensibles** solo si tu caso de uso lo requiere y tu
+proveedor de IA cumple con tus obligaciones de protección de datos personales.
+
+</Step>
+
+</Steps>
+
+## Seguridad
+
+- **Aislamiento por organización.** El servidor deriva la organización del API key;
+  ningún parámetro de herramienta puede apuntar a datos de otra organización.
+- **Permisos RBAC.** Cada herramienta valida el permiso del rol en cada llamada. Si
+  el rol pierde el permiso, la herramienta deja de responder aunque siga habilitada.
+- **Acceso por tienda.** Si el miembro está limitado a ciertas tiendas, las
+  consultas se filtran a esas tiendas automáticamente.
+- **Enmascaramiento por defecto.** Los datos personales salen ofuscados salvo que
+  se active explícitamente lo contrario.
+
+<Callout type="warn" title="Elige bien la cuenta">
+	Un API key hereda los permisos de su usuario. Para una integración con IA, crea
+	un usuario con un rol de solo lectura acotado a las tiendas necesarias y genera
+	la clave desde esa cuenta.
+</Callout>
+
+## Ejemplos de uso
+
+Una vez conectado, puedes pedirle a tu asistente cosas como:
+
+- _"Resume los reclamos abiertos de esta semana por tienda."_
+- _"¿Cuántos reclamos vencidos tenemos ahora mismo?"_
+- _"Busca el reclamo con código A1B2C3D4 y dime en qué estado está."_
+- _"¿Cuáles son los tres motivos de reclamo más frecuentes este mes?"_
+- _"Compara la cantidad de quejas y reclamos de la tienda de Miraflores."_

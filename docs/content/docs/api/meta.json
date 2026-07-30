@@ -1,0 +1,13 @@
+{
+    "title": "API",
+    "icon": "Plug",
+    "defaultOpen": true,
+    "pages": [
+        "index",
+        "authentication",
+        "errors",
+        "webhooks",
+        "mcp",
+        "reference"
+    ]
+}

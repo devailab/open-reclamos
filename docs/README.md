@@ -9,7 +9,18 @@ Run development server:
 bun run dev
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+Open http://localhost:3020/docs with your browser to see the result.
+
+## API reference (OpenAPI)
+
+The API reference pages under `content/docs/api/reference` are **generated** from
+`openapi.yml` — don't edit them by hand. After changing the spec, regenerate them:
+
+```bash
+bun run docs:api
+```
+
+The spec must be kept in sync with the routes in `src/app/api/v1` of the main app.
 
 ## Explore
 

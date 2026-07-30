@@ -1,0 +1,60 @@
+---
+title: Errores
+description: Formato de errores, códigos de estado y cómo manejarlos.
+icon: TriangleAlert
+---
+
+Todos los errores devuelven un JSON con una sola propiedad `error`, en español y
+legible para personas:
+
+```json
+{
+	"error": "Parámetro status inválido: \"abierto\"."
+}
+```
+
+## Códigos de estado
+
+| Código | Significado | Causas típicas |
+| --- | --- | --- |
+| `200` | Éxito | La consulta se resolvió correctamente. |
+| `400` | Petición inválida | Un parámetro de consulta tiene un valor o formato no permitido. |
+| `401` | No autenticado | Falta el header `Authorization`, no usa el esquema `Bearer`, o el API key no existe. |
+| `403` | Sin permisos | El API key es válido pero el rol del usuario no tiene el permiso requerido. |
+| `404` | No encontrado | El reclamo no existe, pertenece a otra organización, o a una tienda fuera del alcance del miembro. |
+
+<Callout type="info" title="404 en vez de 403 para recursos ajenos">
+	Cuando un reclamo existe pero pertenece a otra organización o a una tienda a la
+	que no tienes acceso, la API responde `404`. Es intencional: evita confirmar la
+	existencia de recursos ajenos.
+</Callout>
+
+## Manejo recomendado
+
+```ts title="TypeScript"
+async function request(path: string, init?: RequestInit) {
+	const response = await fetch(`${baseUrl}${path}`, {
+		...init,
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			...init?.headers,
+		},
+	})
+
+	if (response.ok) return response.json()
+
+	const { error } = (await response.json().catch(() => ({}))) as {
+		error?: string
+	}
+
+	// 401/403 no se reintentan: hay que corregir la credencial o los permisos
+	if (response.status === 401 || response.status === 403) {
+		throw new Error(`Credencial o permisos inválidos: ${error}`)
+	}
+
+	throw new Error(error ?? `Error HTTP ${response.status}`)
+}
+```
+
+Reintenta únicamente ante errores de red o respuestas `5xx`, con backoff
+exponencial. Los `4xx` indican un problema en la petición y se repetirán igual.

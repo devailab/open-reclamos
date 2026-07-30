@@ -1,0 +1,880 @@
+openapi: 3.1.0
+
+info:
+    title: Open Reclamos API
+    version: '1.0.0'
+    summary: API pública para consultar los reclamos y quejas de tu organización.
+    description: |
+        La API de Open Reclamos permite integrar el Libro de Reclamaciones Virtual
+        con tus propios sistemas (CRM, ERP, data warehouse, dashboards internos).
+
+        Todas las respuestas son JSON y todos los endpoints bajo `/api/v1` requieren
+        autenticación mediante **API key** en el header `Authorization`.
+
+        - Los datos siempre se limitan a la organización dueña del API key.
+        - Los permisos y las tiendas asignadas al miembro se respetan en cada consulta.
+        - Las fechas se devuelven en formato ISO 8601 con zona horaria (UTC).
+    contact:
+        name: Open Reclamos
+        url: https://github.com/devailab/open-reclamos
+    license:
+        name: MIT
+        url: https://github.com/devailab/open-reclamos/blob/main/LICENSE
+
+servers:
+    - url: https://tu-dominio.com
+      description: Tu instancia de Open Reclamos
+    - url: http://localhost:3000
+      description: Entorno de desarrollo local
+
+tags:
+    - name: Reclamos
+      description: Consulta de reclamos y quejas registrados en el libro.
+    - name: Webhooks
+      description: |
+        Eventos salientes que Open Reclamos envía a los endpoints HTTPS
+        registrados por tu organización.
+    - name: Sistema
+      description: Endpoints de estado del servicio.
+
+security:
+    - ApiKeyAuth: []
+
+paths:
+    /api/v1/complaints:
+        get:
+            tags: [Reclamos]
+            operationId: listComplaints
+            summary: Listar reclamos
+            description: |
+                Devuelve los reclamos y quejas de la organización, ordenados por
+                fecha de creación descendente (más recientes primero).
+
+                Requiere el permiso `complaints.view`. Si el miembro dueño del API key
+                tiene acceso restringido a ciertas tiendas, solo se devuelven los
+                reclamos de esas tiendas.
+            parameters:
+                - name: page
+                  in: query
+                  description: Número de página (empieza en 1).
+                  required: false
+                  schema:
+                      type: integer
+                      minimum: 1
+                      default: 1
+                  example: 1
+                - name: pageSize
+                  in: query
+                  description: Cantidad de resultados por página. El valor máximo es 100.
+                  required: false
+                  schema:
+                      type: integer
+                      minimum: 1
+                      maximum: 100
+                      default: 20
+                  example: 20
+                - name: status
+                  in: query
+                  description: Filtra por estado del reclamo.
+                  required: false
+                  schema:
+                      $ref: '#/components/schemas/ComplaintStatus'
+                - name: type
+                  in: query
+                  description: |
+                      Filtra por tipo: `claim` (reclamo, disconformidad con el producto o
+                      servicio) o `complaint` (queja, disconformidad con la atención).
+                  required: false
+                  schema:
+                      $ref: '#/components/schemas/ComplaintType'
+                - name: storeId
+                  in: query
+                  description: Filtra por tienda (UUID).
+                  required: false
+                  schema:
+                      type: string
+                      format: uuid
+                  example: 0192f3a0-9c5b-7b3e-8f1a-2c4d5e6f7a8b
+                - name: search
+                  in: query
+                  description: |
+                      Búsqueda parcial (case-insensitive) sobre el correlativo, el nombre,
+                      el apellido o el código de seguimiento del consumidor.
+                  required: false
+                  schema:
+                      type: string
+                  example: RECL-000123
+                - name: from
+                  in: query
+                  description: |
+                      Fecha de creación desde (inclusive). Acepta una fecha ISO
+                      (`YYYY-MM-DD`) o una fecha-hora ISO; se toma el inicio del día.
+                  required: false
+                  schema:
+                      type: string
+                      format: date
+                  example: '2026-01-01'
+                - name: to
+                  in: query
+                  description: |
+                      Fecha de creación hasta (inclusive). Acepta una fecha ISO
+                      (`YYYY-MM-DD`) o una fecha-hora ISO; se toma el fin del día.
+                  required: false
+                  schema:
+                      type: string
+                      format: date
+                  example: '2026-01-31'
+            responses:
+                '200':
+                    description: Listado paginado de reclamos.
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [data, pagination]
+                                properties:
+                                    data:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/ComplaintListItem'
+                                    pagination:
+                                        $ref: '#/components/schemas/Pagination'
+                            example:
+                                data:
+                                    - id: 0192f3a0-9c5b-7b3e-8f1a-2c4d5e6f7a8b
+                                      correlative: '000123'
+                                      trackingCode: A1B2C3D4
+                                      type: claim
+                                      status: open
+                                      priority: medium
+                                      storeId: 0192f39c-1d2e-7a4b-9c8d-1e2f3a4b5c6d
+                                      storeName: Tienda Miraflores
+                                      reasonLabel: Producto defectuoso
+                                      firstName: María
+                                      lastName: Quispe
+                                      personType: natural
+                                      legalName: null
+                                      legalTaxId: null
+                                      documentType: DNI
+                                      documentNumber: '45678912'
+                                      email: maria.quispe@example.com
+                                      itemType: product
+                                      incidentDate: '2026-01-12T00:00:00.000Z'
+                                      hasResponse: false
+                                      respondedAt: null
+                                      responseDeadline: '2026-01-30T23:59:59.000Z'
+                                      receiptDeliveryStatus: sent
+                                      responseDeliveryStatus: null
+                                      createdAt: '2026-01-15T14:32:10.123Z'
+                                      updatedAt: null
+                                pagination:
+                                    page: 1
+                                    pageSize: 20
+                                    total: 137
+                                    totalPages: 7
+                '400':
+                    $ref: '#/components/responses/BadRequest'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+
+    /api/v1/complaints/{id}:
+        get:
+            tags: [Reclamos]
+            operationId: getComplaint
+            summary: Obtener el detalle de un reclamo
+            description: |
+                Devuelve el detalle completo de un reclamo, incluyendo los datos del
+                consumidor, la respuesta oficial, el estado de las entregas por correo,
+                los archivos adjuntos y el historial de eventos.
+
+                Requiere el permiso `complaints.view`. El reclamo debe pertenecer a la
+                organización del API key y a una tienda accesible por el miembro; en
+                caso contrario se responde `404` (no se revela la existencia del recurso).
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  description: UUID del reclamo.
+                  schema:
+                      type: string
+                      format: uuid
+                  example: 0192f3a0-9c5b-7b3e-8f1a-2c4d5e6f7a8b
+            responses:
+                '200':
+                    description: Detalle del reclamo.
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [data]
+                                properties:
+                                    data:
+                                        $ref: '#/components/schemas/ComplaintDetail'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '404':
+                    $ref: '#/components/responses/NotFound'
+
+    /api/health:
+        get:
+            tags: [Sistema]
+            operationId: getHealth
+            summary: Estado del servicio
+            description: Endpoint público de verificación de estado. No requiere autenticación.
+            security: []
+            responses:
+                '200':
+                    description: El servicio está operativo.
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [status]
+                                properties:
+                                    status:
+                                        type: string
+                                        const: ok
+                            example:
+                                status: ok
+
+webhooks:
+    complaint.submitted:
+        post:
+            tags: [Webhooks]
+            operationId: webhookComplaintSubmitted
+            summary: complaint.submitted
+            description: |
+                Se envía cuando un consumidor registra un nuevo reclamo o queja.
+            security: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            allOf:
+                                - $ref: '#/components/schemas/WebhookEnvelope'
+                                - type: object
+                                  properties:
+                                      event:
+                                          const: complaint.submitted
+                                      payload:
+                                          type: object
+                                          properties:
+                                              trackingCode:
+                                                  type: string
+                                              correlative:
+                                                  type: string
+                                              type:
+                                                  $ref: '#/components/schemas/ComplaintType'
+                                              status:
+                                                  type: string
+                                                  const: open
+                        example:
+                            event: complaint.submitted
+                            entityType: complaint
+                            entityId: 0192f3a0-9c5b-7b3e-8f1a-2c4d5e6f7a8b
+                            organizationId: 0192f39a-3b4c-7d5e-8f6a-1b2c3d4e5f6a
+                            payload:
+                                trackingCode: A1B2C3D4
+                                correlative: '000123'
+                                type: claim
+                                status: open
+                            timestamp: '2026-01-15T14:32:10.123Z'
+            responses:
+                '200':
+                    description: |
+                        Devuelve cualquier código 2xx para confirmar la recepción. Las
+                        respuestas 5xx, 408, 425 y 429 se reintentan (hasta 4 veces con
+                        backoff); el resto de códigos 4xx marcan la entrega como fallida.
+
+    complaint.responded:
+        post:
+            tags: [Webhooks]
+            operationId: webhookComplaintResponded
+            summary: complaint.responded
+            description: |
+                Se envía cuando la empresa registra una respuesta oficial al reclamo.
+            security: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            allOf:
+                                - $ref: '#/components/schemas/WebhookEnvelope'
+                                - type: object
+                                  properties:
+                                      event:
+                                          const: complaint.responded
+                                      payload:
+                                          type: object
+                                          properties:
+                                              status:
+                                                  type: string
+                                                  const: resolved
+                                              respondedAt:
+                                                  type: string
+                                                  format: date-time
+                        example:
+                            event: complaint.responded
+                            entityType: complaint
+                            entityId: 0192f3a0-9c5b-7b3e-8f1a-2c4d5e6f7a8b
+                            organizationId: 0192f39a-3b4c-7d5e-8f6a-1b2c3d4e5f6a
+                            payload:
+                                status: resolved
+                                respondedAt: '2026-01-20T10:05:00.000Z'
+                            timestamp: '2026-01-20T10:05:00.500Z'
+            responses:
+                '200':
+                    description: Recepción confirmada.
+
+    complaint.status_changed:
+        post:
+            tags: [Webhooks]
+            operationId: webhookComplaintStatusChanged
+            summary: complaint.status_changed
+            description: |
+                Se envía cuando el estado del reclamo cambia (por ejemplo, de `open`
+                a `in_review`).
+            security: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            allOf:
+                                - $ref: '#/components/schemas/WebhookEnvelope'
+                                - type: object
+                                  properties:
+                                      event:
+                                          const: complaint.status_changed
+                                      payload:
+                                          type: object
+                                          properties:
+                                              fromStatus:
+                                                  $ref: '#/components/schemas/ComplaintStatus'
+                                              toStatus:
+                                                  $ref: '#/components/schemas/ComplaintStatus'
+                        example:
+                            event: complaint.status_changed
+                            entityType: complaint
+                            entityId: 0192f3a0-9c5b-7b3e-8f1a-2c4d5e6f7a8b
+                            organizationId: 0192f39a-3b4c-7d5e-8f6a-1b2c3d4e5f6a
+                            payload:
+                                fromStatus: open
+                                toStatus: in_review
+                            timestamp: '2026-01-16T09:12:44.000Z'
+            responses:
+                '200':
+                    description: Recepción confirmada.
+
+components:
+    securitySchemes:
+        ApiKeyAuth:
+            type: http
+            scheme: bearer
+            description: |
+                API key personal con el prefijo `or_`, enviada como
+                `Authorization: Bearer or_xxxxxxxx`.
+
+                Se genera desde **Dashboard → Mi cuenta → API key**. La clave solo se
+                muestra una vez: en la base de datos se guarda únicamente su hash SHA-256.
+
+    responses:
+        BadRequest:
+            description: Parámetros inválidos.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+                    example:
+                        error: 'Parámetro status inválido: "abierto".'
+        Unauthorized:
+            description: Falta el header `Authorization` o el API key no es válido.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+                    example:
+                        error: API key inválida o no autorizada.
+        Forbidden:
+            description: El API key es válido pero no tiene el permiso requerido.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+                    example:
+                        error: El API key no tiene permiso para ver reclamos.
+        NotFound:
+            description: El recurso no existe o no es accesible con este API key.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+                    example:
+                        error: Reclamo no encontrado.
+
+    schemas:
+        WebhookEnvelope:
+            type: object
+            description: |
+                Cuerpo común de todos los webhooks. Se firma con HMAC-SHA256 y se envía
+                junto con los headers `X-Webhook-Signature`, `X-Webhook-Timestamp` y
+                `X-Webhook-Id`.
+            required:
+                [event, entityType, entityId, organizationId, payload, timestamp]
+            properties:
+                event:
+                    type: string
+                    description: Clave del evento.
+                    enum:
+                        [
+                            complaint.submitted,
+                            complaint.responded,
+                            complaint.status_changed,
+                        ]
+                entityType:
+                    type: string
+                    description: Tipo de entidad afectada.
+                    example: complaint
+                entityId:
+                    type: string
+                    format: uuid
+                    description: ID del reclamo afectado.
+                organizationId:
+                    type: string
+                    format: uuid
+                payload:
+                    type: object
+                    description: Datos específicos del evento.
+                    additionalProperties: true
+                timestamp:
+                    type: string
+                    format: date-time
+                    description: Momento en que se generó la entrega.
+
+        Error:
+            type: object
+            required: [error]
+            properties:
+                error:
+                    type: string
+                    description: Mensaje de error legible, en español.
+
+        Pagination:
+            type: object
+            required: [page, pageSize, total, totalPages]
+            properties:
+                page:
+                    type: integer
+                    description: Página actual.
+                    example: 1
+                pageSize:
+                    type: integer
+                    description: Resultados por página aplicados (máximo 100).
+                    example: 20
+                total:
+                    type: integer
+                    description: Total de reclamos que cumplen el filtro.
+                    example: 137
+                totalPages:
+                    type: integer
+                    description: Total de páginas disponibles.
+                    example: 7
+
+        ComplaintStatus:
+            type: string
+            description: |
+                Estado del reclamo:
+                - `open`: recibido, pendiente de atención.
+                - `in_review`: en revisión por el equipo.
+                - `resolved`: con respuesta oficial registrada.
+            enum: [open, in_review, resolved]
+
+        ComplaintType:
+            type: string
+            description: '`claim` = reclamo, `complaint` = queja.'
+            enum: [claim, complaint]
+
+        ComplaintPriority:
+            type: string
+            description: Prioridad asignada internamente al reclamo. Por defecto `medium`.
+            enum: [low, medium, high, urgent]
+
+        PersonType:
+            type: string
+            description: '`natural` = persona natural, `legal` = persona jurídica.'
+            enum: [natural, legal]
+
+        DocumentType:
+            type: string
+            description: Tipo de documento de identidad del consumidor.
+            enum: [DNI, CE, PASAPORTE]
+
+        ItemType:
+            type: string
+            description: Naturaleza de lo reclamado.
+            enum: [product, service]
+
+        Currency:
+            type: string
+            enum: [PEN, USD]
+
+        ProofOfPaymentType:
+            type: string
+            enum: [FACTURA, BOLETA, TICKET, RECIBO]
+
+        DeliveryStatus:
+            type: [string, 'null']
+            description: |
+                Estado del envío por correo del documento correspondiente
+                (constancia de recepción o respuesta oficial). `null` cuando
+                todavía no se ha intentado ningún envío.
+            enum: [queued, processing, sent, failed, null]
+
+        ComplaintListItem:
+            type: object
+            description: Reclamo en su versión resumida, tal como aparece en el listado.
+            required:
+                [
+                    id,
+                    correlative,
+                    trackingCode,
+                    type,
+                    status,
+                    priority,
+                    storeId,
+                    storeName,
+                    firstName,
+                    lastName,
+                    personType,
+                    documentType,
+                    documentNumber,
+                    email,
+                    hasResponse,
+                    createdAt,
+                ]
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                correlative:
+                    type: string
+                    description: Correlativo del reclamo, único por tienda.
+                trackingCode:
+                    type: string
+                    description: Código de seguimiento entregado al consumidor.
+                type:
+                    $ref: '#/components/schemas/ComplaintType'
+                status:
+                    $ref: '#/components/schemas/ComplaintStatus'
+                priority:
+                    $ref: '#/components/schemas/ComplaintPriority'
+                storeId:
+                    type: string
+                    format: uuid
+                storeName:
+                    type: string
+                reasonLabel:
+                    type: [string, 'null']
+                    description: Motivo del reclamo, si se registró uno.
+                firstName:
+                    type: string
+                lastName:
+                    type: string
+                personType:
+                    $ref: '#/components/schemas/PersonType'
+                legalName:
+                    type: [string, 'null']
+                    description: Razón social, cuando el consumidor es persona jurídica.
+                legalTaxId:
+                    type: [string, 'null']
+                    description: RUC de la empresa, cuando el consumidor es persona jurídica.
+                documentType:
+                    $ref: '#/components/schemas/DocumentType'
+                documentNumber:
+                    type: string
+                email:
+                    type: string
+                    format: email
+                itemType:
+                    oneOf:
+                        - $ref: '#/components/schemas/ItemType'
+                        - type: 'null'
+                incidentDate:
+                    type: [string, 'null']
+                    format: date-time
+                    description: Fecha en que ocurrió el hecho reclamado.
+                hasResponse:
+                    type: boolean
+                    description: Indica si ya existe una respuesta oficial registrada.
+                respondedAt:
+                    type: [string, 'null']
+                    format: date-time
+                responseDeadline:
+                    type: [string, 'null']
+                    format: date-time
+                    description: Fecha límite para responder el reclamo.
+                receiptDeliveryStatus:
+                    $ref: '#/components/schemas/DeliveryStatus'
+                responseDeliveryStatus:
+                    $ref: '#/components/schemas/DeliveryStatus'
+                createdAt:
+                    type: string
+                    format: date-time
+                updatedAt:
+                    type: [string, 'null']
+                    format: date-time
+
+        ComplaintDetail:
+            type: object
+            description: Reclamo completo, con consumidor, respuesta, adjuntos e historial.
+            required:
+                [
+                    id,
+                    correlative,
+                    trackingCode,
+                    type,
+                    status,
+                    organizationId,
+                    store,
+                    consumer,
+                    claim,
+                    response,
+                    delivery,
+                    deadline,
+                    attachments,
+                    history,
+                    createdAt,
+                ]
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                correlative:
+                    type: string
+                trackingCode:
+                    type: string
+                type:
+                    $ref: '#/components/schemas/ComplaintType'
+                status:
+                    $ref: '#/components/schemas/ComplaintStatus'
+                organizationId:
+                    type: string
+                    format: uuid
+                store:
+                    type: object
+                    required: [id, name]
+                    properties:
+                        id:
+                            type: string
+                            format: uuid
+                        name:
+                            type: string
+                reason:
+                    type: [string, 'null']
+                    description: Motivo del reclamo.
+                consumer:
+                    $ref: '#/components/schemas/Consumer'
+                claim:
+                    $ref: '#/components/schemas/ClaimDetails'
+                response:
+                    $ref: '#/components/schemas/OfficialResponse'
+                delivery:
+                    $ref: '#/components/schemas/DeliveryInfo'
+                deadline:
+                    type: object
+                    description: Plazo de respuesta configurado para la organización.
+                    properties:
+                        days:
+                            type: [integer, 'null']
+                            description: Días hábiles configurados (por defecto 15).
+                            example: 15
+                        date:
+                            type: [string, 'null']
+                            format: date-time
+                            description: Fecha límite calculada.
+                attachments:
+                    type: array
+                    description: Archivos adjuntos enviados por el consumidor.
+                    items:
+                        $ref: '#/components/schemas/Attachment'
+                history:
+                    type: array
+                    description: Eventos del reclamo, en orden cronológico ascendente.
+                    items:
+                        $ref: '#/components/schemas/HistoryEntry'
+                createdAt:
+                    type: string
+                    format: date-time
+                updatedAt:
+                    type: [string, 'null']
+                    format: date-time
+
+        Consumer:
+            type: object
+            description: Datos del consumidor que presentó el reclamo.
+            properties:
+                personType:
+                    $ref: '#/components/schemas/PersonType'
+                firstName:
+                    type: string
+                lastName:
+                    type: string
+                legalName:
+                    type: [string, 'null']
+                legalTaxId:
+                    type: [string, 'null']
+                documentType:
+                    $ref: '#/components/schemas/DocumentType'
+                documentNumber:
+                    type: string
+                isMinor:
+                    type: boolean
+                    description: Indica si el consumidor es menor de edad.
+                guardian:
+                    description: Datos del apoderado. `null` si el consumidor no es menor de edad.
+                    oneOf:
+                        - type: 'null'
+                        - type: object
+                          properties:
+                              firstName:
+                                  type: [string, 'null']
+                              lastName:
+                                  type: [string, 'null']
+                              documentType:
+                                  type: [string, 'null']
+                              documentNumber:
+                                  type: [string, 'null']
+                email:
+                    type: string
+                    format: email
+                dialCode:
+                    type: [string, 'null']
+                    description: Código telefónico del país, por ejemplo `+51`.
+                phone:
+                    type: [string, 'null']
+                address:
+                    type: [string, 'null']
+
+        ClaimDetails:
+            type: object
+            description: Detalle del bien o servicio reclamado y del hecho ocurrido.
+            properties:
+                itemType:
+                    oneOf:
+                        - $ref: '#/components/schemas/ItemType'
+                        - type: 'null'
+                itemDescription:
+                    type: [string, 'null']
+                currency:
+                    oneOf:
+                        - $ref: '#/components/schemas/Currency'
+                        - type: 'null'
+                amount:
+                    type: [string, 'null']
+                    description: Monto reclamado, como cadena decimal (precisión 10, escala 2).
+                    example: '150.00'
+                hasProofOfPayment:
+                    type: [boolean, 'null']
+                proofOfPaymentType:
+                    oneOf:
+                        - $ref: '#/components/schemas/ProofOfPaymentType'
+                        - type: 'null'
+                proofOfPaymentNumber:
+                    type: [string, 'null']
+                incidentDate:
+                    type: [string, 'null']
+                    format: date-time
+                description:
+                    type: [string, 'null']
+                    description: Detalle del reclamo escrito por el consumidor.
+                request:
+                    type: [string, 'null']
+                    description: Pedido concreto del consumidor.
+
+        OfficialResponse:
+            type: object
+            description: Respuesta oficial de la empresa al reclamo.
+            properties:
+                officialResponse:
+                    type: [string, 'null']
+                respondedAt:
+                    type: [string, 'null']
+                    format: date-time
+                respondedBy:
+                    type: [string, 'null']
+                    description: Nombre del usuario que registró la respuesta.
+
+        DeliveryInfo:
+            type: object
+            description: Estado del envío por correo de los documentos del reclamo.
+            properties:
+                receipt:
+                    type: object
+                    description: Constancia de recepción enviada al consumidor.
+                    properties:
+                        status:
+                            $ref: '#/components/schemas/DeliveryStatus'
+                        sentAt:
+                            type: [string, 'null']
+                            format: date-time
+                response:
+                    type: object
+                    description: Respuesta oficial enviada al consumidor.
+                    properties:
+                        status:
+                            $ref: '#/components/schemas/DeliveryStatus'
+                        sentAt:
+                            type: [string, 'null']
+                            format: date-time
+
+        Attachment:
+            type: object
+            description: |
+                Archivo adjunto al reclamo. La API v1 expone los metadatos; la descarga
+                del contenido se realiza desde el dashboard con sesión de usuario.
+            required: [id, fileName, contentType]
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                fileName:
+                    type: string
+                    example: boleta.pdf
+                contentType:
+                    type: string
+                    example: application/pdf
+
+        HistoryEntry:
+            type: object
+            description: Evento registrado en la línea de tiempo del reclamo.
+            required: [eventType, createdAt]
+            properties:
+                eventType:
+                    type: string
+                    description: |
+                        Tipo de evento:
+                        - `complaint_created`: el consumidor registró el reclamo.
+                        - `status_changed`: cambió el estado del reclamo.
+                        - `response_added`: se registró la respuesta oficial.
+                    example: status_changed
+                fromStatus:
+                    type: [string, 'null']
+                    description: Estado anterior, en eventos de cambio de estado.
+                toStatus:
+                    type: [string, 'null']
+                    description: Estado nuevo, en eventos de cambio de estado.
+                publicNote:
+                    type: [string, 'null']
+                    description: Nota visible para el consumidor. Las notas internas no se exponen.
+                performedByRole:
+                    type: [string, 'null']
+                    description: Rol de quien ejecutó la acción.
+                createdAt:
+                    type: string
+                    format: date-time

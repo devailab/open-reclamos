@@ -1,0 +1,50 @@
+---
+title: Autenticación
+description: Cómo generar y usar tu API key para consumir la API de Open Reclamos.
+icon: KeyRound
+---
+
+Todos los endpoints bajo `/api/v1` se autentican con un **API key** enviado en el
+header `Authorization`.
+
+```bash
+Authorization: Bearer or_9f1c2d3e4b5a6978...
+```
+
+## Generar tu API key
+
+1. Inicia sesión en el dashboard de tu instancia.
+2. Ve a **Mi cuenta → API key**.
+3. Pulsa **Generar API key**.
+
+<Callout type="warn" title="La clave se muestra una sola vez">
+	Recuerda copiarla y guardarla en un lugar seguro. No se puede volver a ver ni recuperar. Si la pierdes, regenera una nueva.
+</Callout>
+
+Cada usuario tiene como máximo un API key activo. Las claves siempre empiezan con
+el prefijo `or_`.
+
+## Alcance de la clave
+
+Una API key hereda todo el contexto del usuario que la generó:
+
+- **Organización**: la clave opera sobre la organización del usuario. La API
+  nunca acepta un `organizationId` enviado por el cliente.
+- **Permisos**: se valida el permiso del rol en cada llamada. Por ejemplo,
+  listar y ver reclamos requiere `complaints.view`.
+- **Tiendas**: si el miembro tiene acceso restringido a ciertas tiendas, la API
+  solo devuelve reclamos de esas tiendas. Un reclamo de otra tienda responde
+  `404`, no `403`, para no revelar su existencia.
+
+Esto significa que puedes limitar lo que una integración puede leer creando un
+usuario con un rol restringido (por ejemplo, solo lectura sobre una tienda) y
+generando el API key desde esa cuenta.
+
+## Buenas prácticas
+
+- Envía la clave **solo** en el header `Authorization`. Nunca la pongas en la URL:
+  terminaría en logs, historiales y en el `Referer`.
+- Usa una variable de entorno o un gestor de secretos; no la subas al repositorio.
+- Regenera la clave si sospechas que se filtró. La rotación es inmediata.
+- Consume la API desde tu backend. Al ser una credencial de organización, no debe
+  exponerse en un cliente web o móvil.
