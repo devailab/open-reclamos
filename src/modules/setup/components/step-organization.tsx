@@ -2,6 +2,9 @@
 
 import { Phone, Search } from 'lucide-react'
 import { useRef, useState, useTransition } from 'react'
+import AutocompleteField, {
+	type AutocompleteOption,
+} from '@/components/forms/autocomplete-field'
 import ComboboxField, {
 	type ComboboxOption,
 } from '@/components/forms/combobox-field'
@@ -24,6 +27,7 @@ import { feedback } from '@/lib/feedback'
 import {
 	$getSlugSuggestionAction,
 	$lookupRucAction,
+	$searchUbigeosAction,
 	type SetupOrganizationInput,
 } from '@/modules/setup/actions'
 import type { RucData } from '@/modules/setup/document-lookup'
@@ -34,6 +38,7 @@ import {
 	validateOrgName,
 	validateRuc,
 	validateSlug,
+	validateUbigeo,
 } from '@/modules/setup/validation'
 
 export interface SetupCountryData {
@@ -52,6 +57,7 @@ type OrgFormValues = {
 	name: string | null
 	legalName: string | null
 	slug: string | null
+	ubigeoOption: AutocompleteOption | null
 	addressType: SelectOption | null
 	address: string | null
 	phoneCodeOption: ComboboxOption | null
@@ -63,6 +69,7 @@ const INITIAL_VALUES: OrgFormValues = {
 	name: null,
 	legalName: null,
 	slug: null,
+	ubigeoOption: null,
 	addressType: null,
 	address: null,
 	phoneCodeOption: null,
@@ -101,7 +108,6 @@ export function SetupStepOrganization({
 }: StepOrganizationProps) {
 	const [ruc, setRuc] = useState('')
 	const [rucData, setRucData] = useState<RucData | null>(null)
-	const [ubigeoId, setUbigeoId] = useState<string | null>(null)
 	const [rucFound, setRucFound] = useState(false)
 	const rucFieldRef = useRef<FormFieldRef>(null)
 
@@ -125,7 +131,6 @@ export function SetupStepOrganization({
 		if (rucFound) {
 			setRucFound(false)
 			setRucData(null)
-			setUbigeoId(null)
 			setValues(INITIAL_VALUES)
 		}
 	}
@@ -148,12 +153,12 @@ export function SetupStepOrganization({
 			const slug = await $getSlugSuggestionAction(result.data.legalName)
 
 			setRucData(result.data)
-			setUbigeoId(result.ubigeoId)
 			setRucFound(true)
 			setValues((previous) => ({
 				...previous,
 				name: result.data.legalName,
 				legalName: result.data.legalName,
+				ubigeoOption: result.ubigeo,
 				address: result.data.address,
 				addressType: guessAddressType(result.data.address),
 				slug,
@@ -164,7 +169,7 @@ export function SetupStepOrganization({
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 
-		if (!rucData || !ubigeoId) {
+		if (!rucData) {
 			feedback.alert.error({
 				title: 'Primero busca el RUC de tu empresa',
 			})
@@ -183,7 +188,7 @@ export function SetupStepOrganization({
 			name: values.name ?? '',
 			legalName: values.legalName ?? '',
 			slug: values.slug ?? '',
-			ubigeoId,
+			ubigeoId: values.ubigeoOption?.value ?? '',
 			addressType: values.addressType?.value ?? '',
 			address: values.address ?? '',
 			phoneCode: selectedCountry?.phoneCode ?? null,
@@ -287,10 +292,18 @@ export function SetupStepOrganization({
 
 						<Separator />
 
-						<div>
-							<p className='mb-3 text-sm font-medium'>
-								Dirección
-							</p>
+						<div className='space-y-4'>
+							<p className='text-sm font-medium'>Dirección</p>
+							<AutocompleteField
+								{...register('ubigeoOption')}
+								label='Distrito'
+								placeholder='Busca tu distrito...'
+								searchPlaceholder='Escribe el nombre del distrito...'
+								emptyMessage='No se encontraron distritos con ese nombre.'
+								onSearch={$searchUbigeosAction}
+								validate={validateUbigeo}
+								disabled={isLookingUp}
+							/>
 							<div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
 								<SelectField
 									{...register('addressType')}

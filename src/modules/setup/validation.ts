@@ -23,6 +23,8 @@ export const validateSlug = (value: string | null): string | null => {
 	return null
 }
 
+export const validateUbigeo = required
+
 export const validateAddressType = required
 
 export const validateAddress = required

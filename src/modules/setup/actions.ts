@@ -35,7 +35,7 @@ import {
 } from './validation'
 
 export type LookupRucResult =
-	| { success: true; data: RucData; ubigeoId: string }
+	| { success: true; data: RucData; ubigeo: AutocompleteOption | null }
 	| { success: false; error: string }
 
 export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
@@ -99,16 +99,20 @@ export async function $lookupRucAction(ruc: string): Promise<LookupRucResult> {
 		}
 	}
 
-	const ubigeo = await getUbigeoByCode(data.ubigeoCode)
+	const ubigeo = data.ubigeoCode
+		? await getUbigeoByCode(data.ubigeoCode)
+		: null
 
-	if (!ubigeo) {
-		return {
-			success: false,
-			error: MESSAGES.setup.rucLocationUnverified,
-		}
+	return {
+		success: true,
+		data,
+		ubigeo: ubigeo
+			? {
+					value: ubigeo.id,
+					label: `${ubigeo.district}, ${ubigeo.province}, ${ubigeo.department}`,
+				}
+			: null,
 	}
-
-	return { success: true, data, ubigeoId: ubigeo.id }
 }
 
 export async function $getSlugSuggestionAction(name: string): Promise<string> {

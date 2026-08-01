@@ -41,8 +41,6 @@ export const MESSAGES = {
 		slugTaken: 'Este identificador ya está en uso. Elige otro.',
 		pendingOrganizationNotFound:
 			'No se encontró la organización pendiente. Vuelve a crearla para continuar.',
-		rucLocationUnverified:
-			'No se pudo verificar la ubicación del RUC. Contacta a soporte.',
 		rucNotFound: 'RUC no encontrado en SUNAT',
 	},
 	stores: {
