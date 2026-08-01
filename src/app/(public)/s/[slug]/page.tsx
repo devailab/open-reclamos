@@ -19,11 +19,13 @@ export async function generateMetadata({
 	params,
 }: PageProps): Promise<Metadata> {
 	const { slug } = await params
+	const robots: Metadata['robots'] = { index: false, follow: false }
 	const store = await getStoreBySlug(slug)
-	if (!store) return {}
+	if (!store) return { robots }
 	return {
 		title: `Libro de Reclamaciones — ${store.name}`,
 		description: `Presenta tu reclamo o queja ante ${store.name}`,
+		robots,
 	}
 }
 
