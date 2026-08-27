@@ -14,6 +14,7 @@ import { AUDIT_LOG, createAuditLog } from '@/lib/audit'
 import { moveS3Object } from '@/lib/s3'
 import { verifyTurnstileToken } from '@/lib/turnstile'
 import { WEBHOOK_EVENT } from '@/lib/webhook-events'
+import { isOrganizationActive } from '@/modules/platform/status'
 import { getOrganizationComplaintSettingsForOrganization } from '@/modules/settings/queries'
 import { MESSAGES } from '@/modules/shared/messages'
 import { dispatchWebhookEvent } from '../webhooks/dispatch'
@@ -161,6 +162,18 @@ export async function $submitComplaintAction(
 	const validationError = validateSubmitComplaintInput(input)
 	if (validationError) {
 		return { success: false, error: validationError }
+	}
+
+	// Corte de plataforma: una organización suspendida no acepta reclamos,
+	// aunque el cliente llame directamente al Server Action.
+	const isActiveOrganization = await isOrganizationActive(
+		input.organizationId,
+	)
+	if (!isActiveOrganization) {
+		return {
+			success: false,
+			error: MESSAGES.complaints.formUnavailable,
+		}
 	}
 
 	const organizationSettings =

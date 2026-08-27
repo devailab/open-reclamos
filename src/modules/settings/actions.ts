@@ -14,6 +14,7 @@ import {
 	verifyEmailTransport,
 } from '@/lib/email'
 import { deleteS3Object } from '@/lib/s3'
+import { isOrganizationActive } from '@/modules/platform/status'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 import { MESSAGES } from '@/modules/shared/messages'
 import { renderTestEmailPdfBuffer } from './components/test-email-pdf'
@@ -123,6 +124,12 @@ async function getOrganizationSettingsAccess(sessionUserId: string) {
 	const membership = await getMembershipContext(sessionUserId)
 	if (!membership) {
 		return { error: MESSAGES.settings.membershipNotFound }
+	}
+
+	// Corte de plataforma: estas acciones no pasan por `requireAccess`.
+	const isActive = await isOrganizationActive(membership.organizationId)
+	if (!isActive) {
+		return { error: MESSAGES.platform.organizationSuspended }
 	}
 
 	const organization = await getOrganizationSettingsForOrganization(

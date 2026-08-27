@@ -2,9 +2,9 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { createMcpHandler } from 'mcp-handler'
 import type { NextRequest } from 'next/server'
 import {
+	apiAuthFailureResponse,
 	getAllowedStoreIds,
 	resolveApiKey,
-	unauthorizedResponse,
 } from '@/lib/api-auth'
 import type { McpRequestContext } from '@/modules/mcp/tools'
 import { mcpStorage, registerMcpTools } from '@/modules/mcp/tools'
@@ -22,8 +22,9 @@ async function handler(request: NextRequest) {
 	// La clave viaja únicamente en el header Authorization para evitar
 	// que termine en logs, historiales o URLs compartidas.
 	const auth = await resolveApiKey(request)
-	if (!auth) {
-		return unauthorizedResponse(
+	if ('failure' in auth) {
+		return apiAuthFailureResponse(
+			auth,
 			'Se requiere el header "Authorization: Bearer <API_KEY>".',
 		)
 	}

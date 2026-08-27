@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth-server'
 import { s3 } from '@/lib/s3'
 import { getAttachmentByStorageKey } from '@/modules/complaints/detail-queries'
+import { isOrganizationActive } from '@/modules/platform/status'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
 
 interface ParsedRange {
@@ -56,6 +57,12 @@ export async function GET(
 
 	const membership = await getMembershipContext(session.user.id)
 	if (!membership) {
+		return new NextResponse('Forbidden', { status: 403 })
+	}
+
+	// Corte de plataforma: una organización suspendida no descarga adjuntos.
+	const isActive = await isOrganizationActive(membership.organizationId)
+	if (!isActive) {
 		return new NextResponse('Forbidden', { status: 403 })
 	}
 

@@ -24,7 +24,9 @@ import {
 	getComplaintsForExport,
 	getOrganizationForExport,
 } from '@/modules/exports/queries'
+import { isOrganizationActive } from '@/modules/platform/status'
 import { getMembershipContext, hasPermission } from '@/modules/rbac/queries'
+import { MESSAGES } from '@/modules/shared/messages'
 
 type ExportFormat = 'pdf' | 'csv' | 'xlsx'
 
@@ -244,6 +246,15 @@ export async function POST(
 	const membership = await getMembershipContext(session.user.id)
 	if (!membership) {
 		return new NextResponse('Sin membresía activa.', { status: 403 })
+	}
+
+	// Corte de plataforma: esta ruta no pasa por `requireAccess`, así que el
+	// estado de la organización se verifica aquí explícitamente.
+	const isActive = await isOrganizationActive(membership.organizationId)
+	if (!isActive) {
+		return new NextResponse(MESSAGES.platform.organizationSuspended, {
+			status: 403,
+		})
 	}
 
 	if (!hasPermission(membership, 'exports.view')) {

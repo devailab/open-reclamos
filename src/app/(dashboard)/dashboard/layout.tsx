@@ -14,6 +14,8 @@ import { users } from '@/database/schema'
 import { getSession } from '@/lib/auth-server'
 import { SSO_ACCOUNT_URL, SSO_ENABLED } from '@/lib/config'
 import { getStoreOptionsForOrganization } from '@/modules/complaints/dashboard-queries'
+import { OrganizationSuspendedScreen } from '@/modules/platform/components/organization-suspended-screen'
+import { getOrganizationSuspensionDetails } from '@/modules/platform/status'
 import {
 	getMembershipContext,
 	getUserOrganizationOptions,
@@ -55,6 +57,26 @@ const AppLayout: FC<PropsWithChildren> = async ({ children }) => {
 	const activeOrganization = organizations.find(
 		(organization) => organization.id === membership?.organizationId,
 	)
+
+	// Corte de plataforma: los miembros de una organización suspendida no
+	// entran al dashboard. El super admin sí, para poder reactivarla.
+	if (membership && !userData?.isSuperAdmin) {
+		const suspension = await getOrganizationSuspensionDetails(
+			membership.organizationId,
+		)
+
+		if (suspension) {
+			return (
+				<OrganizationSuspendedScreen
+					organizationName={
+						activeOrganization?.name ?? 'Tu organización'
+					}
+					suspendedAt={suspension.suspendedAt}
+					suspensionReason={suspension.suspensionReason}
+				/>
+			)
+		}
+	}
 
 	const canViewComplaints = hasPermission(membership, 'complaints.view')
 	const allowedStoreIds =

@@ -10,6 +10,7 @@ import {
 	ubigeos,
 } from '@/database/schema'
 import { DEFAULT_RESPONSE_DEADLINE_DAYS } from '@/lib/constants'
+import { ORGANIZATION_STATUS_ACTIVE } from '@/modules/platform/constants'
 
 export async function getOrganizationBySlug(slug: string) {
 	const [org] = await db
@@ -24,6 +25,7 @@ export async function getOrganizationBySlug(slug: string) {
 			website: organizations.website,
 			logoKey: organizations.logoKey,
 			primaryColor: organizations.primaryColor,
+			status: organizations.status,
 			formEnabled: organizationSettings.formEnabled,
 			responseDeadlineDays: organizationSettings.responseDeadlineDays,
 		})
@@ -37,9 +39,15 @@ export async function getOrganizationBySlug(slug: string) {
 
 	if (!org) return null
 
+	const { status, ...organization } = org
+
 	return {
-		...org,
-		formEnabled: org.formEnabled ?? true,
+		...organization,
+		// Una organización suspendida a nivel plataforma no expone formulario
+		// público, aunque su propio ajuste esté habilitado.
+		formEnabled:
+			(org.formEnabled ?? true) && status === ORGANIZATION_STATUS_ACTIVE,
+		isSuspended: status !== ORGANIZATION_STATUS_ACTIVE,
 		responseDeadlineDays:
 			org.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
 	}
@@ -134,6 +142,7 @@ export async function getOrganizationById(id: string) {
 			website: organizations.website,
 			logoKey: organizations.logoKey,
 			primaryColor: organizations.primaryColor,
+			status: organizations.status,
 			formEnabled: organizationSettings.formEnabled,
 			responseDeadlineDays: organizationSettings.responseDeadlineDays,
 		})
@@ -147,9 +156,15 @@ export async function getOrganizationById(id: string) {
 
 	if (!org) return null
 
+	const { status, ...organization } = org
+
 	return {
-		...org,
-		formEnabled: org.formEnabled ?? true,
+		...organization,
+		// Una organización suspendida a nivel plataforma no expone formulario
+		// público, aunque su propio ajuste esté habilitado.
+		formEnabled:
+			(org.formEnabled ?? true) && status === ORGANIZATION_STATUS_ACTIVE,
+		isSuspended: status !== ORGANIZATION_STATUS_ACTIVE,
 		responseDeadlineDays:
 			org.responseDeadlineDays ?? DEFAULT_RESPONSE_DEADLINE_DAYS,
 	}

@@ -1,9 +1,9 @@
 import type { NextRequest } from 'next/server'
 import {
+	apiAuthFailureResponse,
 	forbiddenResponse,
 	getAllowedStoreIds,
 	resolveApiKey,
-	unauthorizedResponse,
 } from '@/lib/api-auth'
 import {
 	getComplaintAttachments,
@@ -25,7 +25,7 @@ export async function GET(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	const auth = await resolveApiKey(request)
-	if (!auth) return unauthorizedResponse()
+	if ('failure' in auth) return apiAuthFailureResponse(auth)
 
 	if (!hasPermission(auth.membership, 'complaints.view')) {
 		return forbiddenResponse(

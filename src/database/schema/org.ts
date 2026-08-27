@@ -11,6 +11,7 @@ import {
 	uniqueIndex,
 	uuid,
 } from 'drizzle-orm/pg-core'
+import { ORGANIZATION_STATUS_ACTIVE } from '@/modules/platform/constants'
 import { DEFAULT_STORE_COLOR } from '@/modules/stores/constants'
 import { users } from './auth'
 import { ubigeos } from './core'
@@ -35,6 +36,18 @@ export const organizations = orgSchema.table('organizations', {
 	website: text('website'),
 	primaryColor: text('primary_color'),
 	logoKey: text('logo_key'),
+	// Estado de la organización a nivel plataforma: 'active' | 'suspended'.
+	// Una organización suspendida pierde acceso al dashboard, a la API y a
+	// sus formularios públicos. Solo el super admin puede cambiarlo.
+	status: text('status').notNull().default(ORGANIZATION_STATUS_ACTIVE),
+	suspendedAt: timestamp('suspended_at', {
+		withTimezone: true,
+		mode: 'date',
+	}),
+	suspendedBy: uuid('suspended_by').references(() => users.id, {
+		onDelete: 'set null',
+	}),
+	suspensionReason: text('suspension_reason'),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.defaultNow()
 		.notNull(),

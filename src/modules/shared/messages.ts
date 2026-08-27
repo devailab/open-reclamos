@@ -43,6 +43,15 @@ export const MESSAGES = {
 			'No se encontró la organización pendiente. Vuelve a crearla para continuar.',
 		rucNotFound: 'RUC no encontrado en SUNAT',
 	},
+	platform: {
+		accessDenied: 'No tienes acceso al panel de plataforma.',
+		organizationNotFound: 'La organización no fue encontrada.',
+		alreadyInStatus: 'La organización ya se encuentra en ese estado.',
+		statusUpdateFailed:
+			'No se pudo actualizar el estado de la organización. Inténtalo nuevamente.',
+		organizationSuspended:
+			'Esta organización se encuentra suspendida. Contacta al administrador de la plataforma.',
+	},
 	stores: {
 		notFound: 'La tienda no fue encontrada.',
 		inactiveNotEditable: 'La tienda está inactiva y no se puede editar.',

@@ -23,10 +23,10 @@ import {
 	stores,
 } from '@/database/schema'
 import {
+	apiAuthFailureResponse,
 	forbiddenResponse,
 	getAllowedStoreIds,
 	resolveApiKey,
-	unauthorizedResponse,
 } from '@/lib/api-auth'
 import { hasPermission } from '@/modules/rbac/queries'
 
@@ -147,7 +147,7 @@ function buildWhere(
  */
 export async function GET(request: NextRequest) {
 	const auth = await resolveApiKey(request)
-	if (!auth) return unauthorizedResponse()
+	if ('failure' in auth) return apiAuthFailureResponse(auth)
 
 	if (!hasPermission(auth.membership, 'complaints.view')) {
 		return forbiddenResponse(

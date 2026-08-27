@@ -1,4 +1,5 @@
 import {
+	Building2,
 	ClipboardList,
 	Clock3,
 	Download,
@@ -185,6 +186,13 @@ export const sidebarNavigation: SidebarEntry[] = [
 			{
 				kind: 'link',
 				label: 'Plataforma',
+				href: '/dashboard/platform',
+				icon: Building2,
+				visibility: { type: 'superAdmin' },
+			},
+			{
+				kind: 'link',
+				label: 'Ajustes plataforma',
 				href: '/dashboard/admin-settings',
 				icon: ShieldHalf,
 				visibility: { type: 'superAdmin' },
