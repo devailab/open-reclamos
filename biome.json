@@ -1,19 +1,20 @@
 {
-    "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-    "vcs": {
-        "enabled": true,
-        "clientKind": "git",
-        "useIgnoreFile": true
-    },
+    "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
+    "root": true,
+    "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
     "files": {
         "ignoreUnknown": true,
-        "includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
+        "includes": [
+            "**",
+            "!**/node_modules",
+            "!**/dist",
+            "!**/build",
+            "!apps/api",
+            "!apps/docs",
+            "!.cache"
+        ]
     },
-    "formatter": {
-        "enabled": true,
-        "indentStyle": "space",
-        "indentWidth": 4
-    },
+    "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 4 },
     "javascript": {
         "formatter": {
             "quoteStyle": "single",
@@ -23,11 +24,7 @@
             "indentWidth": 4
         }
     },
-    "css": {
-        "parser": {
-            "tailwindDirectives": true
-        }
-    },
+    "css": { "parser": { "tailwindDirectives": true } },
     "linter": {
         "enabled": true,
         "rules": {
@@ -36,25 +33,21 @@
                 "noUnknownAtRules": "off",
                 "noArrayIndexKey": "off"
             },
-            "performance": {
-                "noImgElement": "off"
-            },
+            "performance": { "noImgElement": "off" },
             "a11y": {
                 "useSemanticElements": "off",
                 "useFocusableInteractive": "off",
                 "useAriaPropsForRole": "off"
             }
         },
-        "domains": {
-            "next": "recommended",
-            "react": "recommended"
-        }
+        "domains": { "react": "recommended" }
     },
-    "assist": {
-        "actions": {
-            "source": {
-                "organizeImports": "on"
-            }
+    "assist": { "actions": { "source": { "organizeImports": "on" } } },
+    "overrides": [
+        {
+            "includes": ["packages/rpc-client/src/gen/**"],
+            "linter": { "enabled": false },
+            "assist": { "enabled": false }
         }
-    }
+    ]
 }

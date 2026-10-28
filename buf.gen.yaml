@@ -1,0 +1,11 @@
+version: v2
+plugins:
+  - local: [go, -C, apps/api, tool, protoc-gen-go]
+    out: apps/api/gen
+    opt: paths=source_relative
+  - local: [go, -C, apps/api, tool, protoc-gen-connect-go]
+    out: apps/api/gen
+    opt: paths=source_relative
+  - local: protoc-gen-es
+    out: packages/rpc-client/src/gen
+    opt: target=ts

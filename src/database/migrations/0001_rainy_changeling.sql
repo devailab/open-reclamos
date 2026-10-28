@@ -1,1 +1,0 @@
-ALTER TABLE "org"."stores" ADD COLUMN "color" text DEFAULT '#3B82F6' NOT NULL;

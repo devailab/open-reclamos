@@ -1,37 +1,61 @@
-FROM oven/bun:1 AS base
-WORKDIR /usr/src/app
+# syntax=docker/dockerfile:1
 
-FROM base AS builder
+# 1. frontend: compila React con Vite
+FROM oven/bun:1.3.14 AS web
+
+WORKDIR /src
+
 COPY package.json bun.lock ./
+COPY apps/web/package.json apps/web/
+COPY packages/rpc-client/package.json packages/rpc-client/
+
 RUN bun install --frozen-lockfile
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN bun run build
 
-FROM base AS migration-deps
-COPY package.migrations.json bun.lock ./
-RUN mv package.migrations.json package.json && bun install
+COPY apps/web apps/web
+COPY packages/rpc-client packages/rpc-client
 
-FROM base AS runner
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
+RUN bun run --cwd apps/web build
 
-COPY --from=builder --chown=bun:bun /usr/src/app/public ./public
-COPY --from=builder --chown=bun:bun /usr/src/app/.next/standalone ./
-COPY --from=builder --chown=bun:bun /usr/src/app/.next/static ./.next/static
-COPY --from=migration-deps --chown=bun:bun /usr/src/app/node_modules ./node_modules
-COPY --from=builder --chown=bun:bun /usr/src/app/package.json ./package.json
-COPY --from=builder --chown=bun:bun /usr/src/app/drizzle.config.ts ./drizzle.config.ts
-COPY --from=builder --chown=bun:bun /usr/src/app/docker-entrypoint.sh ./docker-entrypoint.sh
-COPY --from=builder --chown=bun:bun /usr/src/app/tsconfig.json ./tsconfig.json
-COPY --from=builder --chown=bun:bun /usr/src/app/src/lib ./src/lib
-COPY --from=builder --chown=bun:bun /usr/src/app/src/database ./src/database
-COPY --from=builder --chown=bun:bun /usr/src/app/src/modules/stores/constants.ts ./src/modules/stores/constants.ts
+# 2. backend: embebe el frontend y compila un solo binario estático
+FROM golang:1.26-alpine AS api
 
-RUN chmod +x ./docker-entrypoint.sh
+WORKDIR /src/apps/api
 
-USER bun
-EXPOSE 3000/tcp
-CMD ["sh", "./docker-entrypoint.sh"]
+COPY apps/api/go.mod apps/api/go.sum ./
+
+RUN go mod download
+
+COPY apps/api ./
+COPY --from=web /src/apps/web/dist/ internal/shared/assets/web/
+
+ARG VERSION=dev
+
+RUN CGO_ENABLED=0 go build -trimpath \
+    -ldflags "-s -w -X main.version=${VERSION}" \
+    -o /out/open-reclamos ./cmd/open-reclamos
+
+# 3. imagen final: solo el binario
+FROM alpine:3.22
+
+RUN apk add --no-cache ca-certificates tzdata \
+    && adduser -D -u 10001 app \
+    && mkdir /data \
+    && chown app /data
+
+COPY --from=api /out/open-reclamos /usr/local/bin/open-reclamos
+
+ENV HTTP_ADDR=0.0.0.0:8080 \
+    PUBLIC_BASE_URL=http://localhost:8080 \
+    SQLITE_PATH=/data/open-reclamos.db \
+    STORAGE_LOCAL_DIR=/data/files \
+    JWT_KEY_FILE=/data/jwt-keys.json
+
+USER app
+
+VOLUME /data
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/health/live || exit 1
+
+CMD ["sh", "-c", "open-reclamos migrate && open-reclamos seed && exec open-reclamos serve"]

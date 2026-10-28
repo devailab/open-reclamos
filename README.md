@@ -11,64 +11,35 @@ Open Reclamos permite a cualquier empresa implementar un Libro de Reclamaciones 
 ### Prerrequisitos
 
 - [Bun](https://bun.sh)
-- PostgreSQL
-- Servicio de correo SMTP
-- Servicio compatible con la API S3 (por ejemplo, MinIO)
-- Cuenta en [ApiPeruDev](https://apiperu.dev) con su token de acceso
+- [Go](https://go.dev) 1.26 o superior
+
+Por defecto usa SQLite y guarda los archivos en disco, así que no necesitas nada más para empezar. PostgreSQL, SMTP, S3 y la consulta de documentos (ApiPeruDev) son opcionales y se configuran en el `.env`.
 
 ### Configuración
 
-1. Copia el archivo de variables de entorno y completa los valores:
+1. Copia el archivo de variables de entorno:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Instala las dependencias y aplica las migraciones:
+2. Instala las dependencias, genera el código y prepara la base de datos:
 
 ```bash
 bun install
+bun run generate
 bun run db:migrate
+bun run db:seed
 ```
 
-3. Levanta el servidor de desarrollo y el worker de Inngest en terminales separadas:
+3. Levanta el backend y el frontend en terminales separadas:
 
 ```bash
-bun run dev
-bun run inngest:dev
+bun run dev:api
+bun run dev:web
 ```
 
-Y listo la app estará corriendo en [http://localhost:3000](http://localhost:3000).
-
-## Self-hosted
-
-Para facilitar la implementación, Open Reclamos ofrece una configuración _self-hosted_ que incluye todo lo necesario para ejecutar la aplicación. Se recomienda crear una carpeta dedicada antes de ejecutar los indicado en los siguientes pasos.
-
-> Puede ver los archivos de configuración que se usarán, en la carpeta `examples/` de este repositorio.
-
-### 1. Descarga y configura el `.env`
-
-```bash
-curl -O https://raw.githubusercontent.com/devailab/open-reclamos/main/examples/.env.example
-mv .env.example .env
-```
-
-Edita el `.env` con tus valores antes de continuar.
-
-### 2. Descarga el `docker-compose.yml`
-
-```bash
-curl -O https://raw.githubusercontent.com/devailab/open-reclamos/main/examples/docker-compose.yml
-```
-
-### 3. Levanta los servicios
-
-```bash
-docker compose up -d
-```
-
-Luego de completar esos pasos, ¡felicidades! 🎉 Open Reclamos estará disponible en http://localhost:3000
-. Podrás comenzar registrando tu cuenta y, a partir de ahí, aprovechar todas las funcionalidades que ofrece la plataforma.
+Y listo, la app estará corriendo en [http://localhost:5173](http://localhost:5173). La primera vez, entra a `/install` para crear el administrador.
 
 ## Licencia
 

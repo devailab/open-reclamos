@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package openreclamos.system.v1;
+
+option go_package = "openreclamos.com/api/gen/openreclamos/system/v1;systemv1";
+
+// Servicio técnico para verificar el contrato entre web y backend.
+service SystemService {
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+message PingRequest {}
+
+message PingResponse {
+  string app_name = 1;
+  string version = 2;
+}

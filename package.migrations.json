@@ -1,7 +1,0 @@
-{
-    "dependencies": {
-        "drizzle-kit": "^0.31.10",
-        "drizzle-orm": "^0.45.1",
-        "pg": "^8.21.0"
-    }
-}

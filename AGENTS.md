@@ -1,336 +1,92 @@
 # AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Libro de reclamaciones Virtual. Backend Go + frontend React/Vite.
 
-## Project Overview
+### Carpetas
 
-**open-reclamos** is a SaaS "Libro de Reclamaciones Virtual" (Digital Complaint Book) — a legal requirement for businesses in Peru. It manages organizations, their stores, and consumer complaints/claims (reclamos/quejas).
+| Carpeta | Qué es |
+| --- | --- |
+| `apps/api` | Backend Go: dominio, base de datos, RPC, API pública y MCP |
+| `apps/web` | Frontend React + Vite |
+| `packages/contracts` | Archivos `.proto`, fuente de los contratos |
+| `packages/rpc-client` | Cliente TypeScript generado desde los `.proto` |
 
-## Commands
+### Comandos
 
-```bash
-# Development
-bun run dev          # Start Next.js dev server
-bun run build        # Production build
-bun run start        # Start production server
+Ejecutar siempre desde la raíz.
 
-# Code quality
-bun run lint         # Biome check (lint + format check)
-bun run format       # Biome format --write
+| Comando | Para qué sirve |
+| --- | --- |
+| `bun run dev:api` / `bun run dev:web` | Levantar el backend (`:8080`) y el frontend (`:5173`), cada uno en su terminal |
+| `bun run db:migrate` / `bun run db:seed` | Aplicar migraciones y cargar países y ubigeos |
+| `bun run generate` | Regenerar código Go y TS desde los `.proto`, y las constantes públicas |
+| `bun run build` | Compilar el frontend, embeberlo y generar el binario único en `dist/open-reclamos` (`RELEASE_VERSION` define la versión) |
+| `bun run format` | Biome (TS/CSS) y golines/gofmt (Go) |
+| `bun run check` | Lint de Biome, tipos de TypeScript y `go vet` |
+| `bun run test:api` / `bun run test:web` | Tests de Go y tests de la web (Bun) |
 
-# Testing
-bun run vitest       # Run unit tests suite
-bun run vitest run   # Run unit tests suite once (CI mode)
+## 2. Arquitectura
 
-# Database (Drizzle Kit)
-bun run db:generate  # Generate migration files from schema changes
-bun run db:migrate   # Apply pending migrations
-bun run db:studio    # Open Drizzle Studio (DB GUI)
+### Backend (`apps/api`)
+
+```text
+cmd/open-reclamos/      CLI y arranque
+internal/app/           arma el servidor, el HTTP y los workers
+internal/shared/        código común
+internal/modules/<m>/   un módulo por dominio
+migrations/             migraciones versionadas en Go
+gen/                    código generado
+tools/webconstants/     genera las constantes TS desde Go
 ```
 
-## Environment Variables
+- **`internal/shared`:** auth, audit, captcha, config, constants, database (models, repository, seeds), errors, jobs (River), mailer, operation (registro de operaciones), pagination, pdf, server, storage y utils.
+- **Módulos:** catalogs, complaints, identity, integrations, organizations y system.
+- **Estructura de un módulo:**
+  - `module.go`: registra sus RPC, HTTP y workers.
+  - `rpc/`: rutas de sus operaciones.
+  - `feature/<caso>/`: la lógica, un archivo por acción.
+  - Solo si hacen falta: `handler/` (HTTP: uploads, descargas, exportaciones), `entity/` y `utils/`.
+- **Operaciones:** cada una se registra en `operation.Registry` con su acceso (`Public`, `Global` o `Tenant` + permiso). Connect, la API Huma y MCP comparten ese registro.
+- **Dependencias:** un módulo no importa features de otro, salvo dependencias explícitas en su `module.go`.
 
-Required in `.env`:
-```
-DB_HOST=
-DB_PORT=
-DB_USER=
-DB_PASSWORD=
-DB_NAME=
-```
+### Frontend (`apps/web/src`)
 
-## Architecture
-
-### Stack
-- **Framework**: Next.js 16 (App Router) + React 19
-- **Runtime**: Bun
-- **Database**: PostgreSQL via Drizzle ORM (`drizzle-orm/node-postgres`)
-- **UI**: Tailwind CSS v4 + shadcn/ui components (Radix UI primitives)
-- **Linter/Formatter**: Biome (replaces ESLint + Prettier)
-- **Testing**: Vitest + jsdom (for unit tests on logic and pure JS/TS code)
-- **Path alias**: `@/` maps to `src/`
-
-### Module-Based Structure (target architecture)
-
-The codebase is growing toward a feature-module structure. Logic, components, and tests related to a business feature should live together.
-
-```
-src/
-├── app/                        # Next.js App Router (routing only)
-│   ├── (auth)/                 # Auth routes (login, register)
-│   ├── dashboard/
-│   │   └── (dashboard)/        # Protected dashboard routes
-│   │       ├── layout.tsx
-│   │       ├── page.tsx
-│   │       ├── reasons/        # Complaint reasons management
-│   │       │   ├── page.tsx    # High-level orchestration (table + filters + actions)
-│   │       │   └── _features/  # Feature-specific components/logic
-│   │       │       ├── reason-form.tsx       # Form dialog with internal state
-│   │       │       ├── reasons-filters.tsx   # Filters component
-│   │       │       ├── types.ts              # Local types & constants
-│   │       │       └── use-reasons-page.ts   # Custom hook for page logic
-│   │       └── stores/         # Store management
-│   │           ├── page.tsx
-│   │           └── _features/
-│   │               ├── stores-filters.tsx
-│   │               └── types.ts
-│   ├── layout.tsx              # Root layout (fonts, providers)
-│   └── page.tsx
-├── modules/                    # Feature modules (business logic)
-│   ├── auth/
-│   │   ├── actions.ts          # Server Actions (orchestrate core logic with Next.js side-effects)
-│   │   ├── session.ts          # Core service layer (injectable DI pattern)
-│   │   ├── validation.ts       # Pure validation functions (no 'use server')
-│   │   ├── actions.test.ts
-│   │   └── session.test.ts
-│   ├── reasons/
-│   │   ├── actions.ts          # Server Actions for complaint reasons
-│   │   ├── queries.ts          # Database queries (SELECT logic)
-│   │   └── validation.ts       # Validation functions
-│   ├── stores/
-│   │   ├── actions.ts
-│   │   └── queries.ts
-│   └── setup/
-├── components/                 # Shared/reusable components
-│   ├── ui/                     # Base UI primitives (shadcn-style)
-│   │   ├── button.tsx
-│   │   ├── dialog.tsx
-│   │   ├── table.tsx
-│   │   └── ...
-│   ├── data-table.tsx 
-│   ├── layout/                 # Layout components
-│   │   ├── app-sidebar.tsx
-│   │   └── dashboard-shell.tsx
-│   └── forms/                  # Reusable form components (fields)
-├── hooks/                      # Shared hooks
-│   ├── use-form.ts             # Form state + validation
-│   ├── use-data-table.ts       # Table state + pagination
-│   ├── use-debounce.ts
-│   └── use-mobile.ts
-├── database/
-│   ├── schema.ts               # Drizzle table definitions
-│   ├── database.ts             # db singleton (drizzle/node-postgres)
-│   └── migrations/             # Auto-generated by drizzle-kit
-├── stores/                     # Zustand global state stores
-│   └── feedback-dialog-store.ts
-├── types/                      # Global TypeScript types
-├── lib/
-│   ├── config.ts               # Config values (e.g. database URL)
-│   ├── utils.ts                # cn() helper (clsx + tailwind-merge)
-│   ├── validators.ts           # Composable validators: required, email, combine()
-│   ├── validators.test.ts
-│   ├── formatters.ts           # Date formatting utilities (using date-fns)
-│   ├── formatters.test.ts
-│   ├── constants.ts            # App-wide constants (select options, enums, etc.)
-│   ├── auth.ts                 # Auth utilities
-│   ├── audit.ts                # Audit logging utilities
-│   └── feedback.ts             # User feedback utilities (dialogs, toasts)
-└── proxy.ts
+```text
+app/       composición: router, rutas, páginas por URL, layouts y guards
+modules/   un dominio por carpeta: catalogs, complaints, identity, integrations, organizations
+shared/    infraestructura reutilizable
 ```
 
-### Server Actions & Testability Strategy
+- **`app/`:**
+  - `router.ts`: un solo `createBrowserRouter` (React Router Data Mode).
+  - `routes.ts`: rutas declaradas a mano.
+  - `pages/<url>/page.tsx`: reexporta la pantalla con import lazy (`[param]` para segmentos dinámicos).
+  - `layouts/` y `routing/`: layouts, guards y retorno seguro.
+- **`modules/<dominio>`:**
+  - `pages/<pantalla>-page.tsx`: carga datos y compone `features/`.
+  - `features/<interacción>/`: piezas que no dependen de una página concreta.
+  - `components/`, `hooks/` y la API (`api.ts` o `api/`) con sus tipos y validación.
+  - Dejar junto a la pantalla lo que cambia junto; subirlo al módulo cuando tenga varios consumidores.
+- **`shared/`:** `api/` (cliente Connect), `auth/` (access en memoria, refresh y sesión), `config/`, `components/` (`ui/` shadcn, `forms/`, `feedback/`, `theme/`), `hooks/` (`useForm`, `useDataTable`), `stores/` (Zustand), `lib/` y `constants/`. No importa de `modules/` ni de `app/`.
+- **Datos:** `loader` para entrar a una ruta; `fetcher` o hooks para interacciones dentro de ella. Cada dato tiene un solo dueño de carga.
+- **Estado:** la URL para filtros y páginas, estado local para inputs, Zustand solo para feedback global.
 
-To maintain high security and testability in core business areas (like auth), we separate side-effects from pure domain logic using Dependency Injection (DI):
+### Detalles técnicos
 
-1. **`*Core` Logic Functions**: Build logic using pure functions that accept their dependencies, e.g. `loginCore(email, password, { dbInstance, hashPassword, onSuccess })`. This lets us test server actions completely independently from Next.js APIs (e.g., `cookies()`, `redirect()`) by passing mocked `db` objects using `vi.fn()`.
-2. **Server Actions (`actions.ts`)**: Keep top-level Server Actions minimal. They should have `'use server'`, resolve Next.js specifics (read headers, handle redirects), and orchestrate the calls to the `*Core` functions.
-3. **Pure Validation (`validation.ts`)**: Never place pure, synchronous validation functions in a module with `'use server'` directly if they are going to be imported elsewhere. Next.js App Router restricts non-`async` exports from `"use server"` files. Put them in `validation.ts` instead.
+- **RPC:** un envelope compartido `{id, data, page, pageSize, filters}`. `data` y `filters` van en snake_case y son `Struct`; Go valida cada operación. Los importes son strings decimales.
+- **Autenticación:** el access JWT dura 10 minutos, se guarda solo en memoria y se envía como `Authorization: Bearer`. El refresh vive en una cookie HttpOnly. El cliente renueva una sola vez ante `Unauthenticated` y comparte la renovación entre solicitudes simultáneas.
+- **Migraciones:** cada una trae sus propias structs congeladas y nunca se edita una publicada. `db:migrate` aplica también las de River; `serve` verifica el esquema pero no migra.
+- **Repositorio:** los servicios no arman SQL. Las diferencias entre SQLite y PostgreSQL están aisladas en `repository/dialect.go`. `deps.Transaction` comparte una transacción entre escrituras, auditoría, historial y jobs. IDs en UUIDv7 y fechas en UTC.
+- **Frontend servido por Go:** el build de Vite se copia a `internal/shared/assets/web` y se embebe con `go:embed`; sin build, un archivo de respaldo permite `go run`. Las rutas de React Router las responde Go con el HTML.
+- **Configuración pública:** la UI lee `/api/config` en runtime. Los secretos nunca salen de Go.
+- **Tests de Go:** corren sobre una base nueva por prueba: SQLite siempre, y PostgreSQL cuando `TEST_DATABASE_URL` está definida.
 
-### Form System
+## 3. Reglas
 
-All form fields implement the `FormFieldProps<T>` interface from `use-form.ts` and expose a `FormFieldRef` (with `focus()` and `validate()`) via `useImperativeHandle`. This enables the `useForm` hook to orchestrate validation across all registered fields.
+### Estilo de código
 
-**Use the `form-orchestrator` skill** for detailed patterns on validation composition, field components, and custom field creation.
-
-**Pattern:**
-```tsx
-const [values, setValues] = useState<FormValues>(INITIAL_VALUES)
-const { register, validate, reset } = useForm({ values, setValues, initialValues: INITIAL_VALUES })
-
-// In JSX:
-<TextField {...register('name')} validate={required} label="Nombre" />
-<TextField {...register('email')} validate={combine(required, email)} label="Email" />
-
-// On submit:
-const errors = validate() // triggers validation on all registered fields, focuses the last errored field
-```
-
-### Data Table System
-
-`useDataTable` manages pagination state and calls `fetchData({ page, pageSize, filters })`. It returns a `controller` passed to the `<DataTable>` component, and a `defineColumns` helper for type-safe column definitions.
-
-**Use the `data-table-orchestrator` skill** for detailed patterns on column definitions, filter management, and pagination handling.
-
-### Database Schema (multi-tenant)
-
-Core tables and their relationships:
-- `users` → `organization_members` → `organizations` (many-to-many, role-based: admin/operator/viewer)
-- `organizations` → `stores` (one org, many stores)
-- `complaints` → belongs to both `organizations` and `stores` directly (denormalized for reporting)
-- `complaint_reasons` → hierarchical (self-referencing `parentId`), can be org-specific or global
-- `complaint_attachments` → file references (storage key based)
-- `audit_logs` → tracks all changes with old/new JSON data
-
-UUIDs use `uuidv7()` as the default function.
-
-### Multi-Tenant Isolation Rules
-
-Every server action and query that reads or writes tenant data **must** be scoped to the authenticated user's organization. Never trust an `organizationId`, `storeId`, or any other tenant-scoped ID that comes from the client — always derive it from the session.
-
-**The golden rule:** tenant IDs flow **from session → DB → client**, never the other way around.
-
-#### Deriving the organization
-
-```ts
-// ✅ Correct: organizationId derived from the authenticated user
-const organizationId = await getOrganizationForUser(session.user.id)
-if (!organizationId) return { error: 'No organization found.' }
-```
-
-#### Scoping reads
-
-Every SELECT on tenant-owned tables must include `organizationId` in the WHERE clause:
-
-```ts
-// ✅ Correct
-const complaint = await db
-  .select()
-  .from(complaints)
-  .where(
-    and(
-      eq(complaints.id, id),
-      eq(complaints.organizationId, organizationId), // required
-    ),
-  )
-  .limit(1)
-
-// ❌ Wrong — fetches by ID alone, any org's data can be accessed
-const complaint = await db.select().from(complaints).where(eq(complaints.id, id))
-```
-
-#### Scoping writes (UPDATE / soft-delete)
-
-The `organizationId` guard must be in the UPDATE's own WHERE clause — a pre-check SELECT is not enough because the check and the write are two separate operations (TOCTOU):
-
-```ts
-// ✅ Correct — the UPDATE itself is scoped
-await db
-  .update(stores)
-  .set({ name: input.name })
-  .where(
-    and(
-      eq(stores.id, input.id),
-      eq(stores.organizationId, organizationId), // required
-    ),
-  )
-
-// ❌ Wrong — pre-check is not atomic with the write
-const existing = await db.select().from(stores).where(eq(stores.id, input.id))
-if (!existing) return { error: 'Not found' }
-await db.update(stores).set({ name: input.name }).where(eq(stores.id, input.id))
-```
-
-#### Validating cross-entity ownership
-
-When an action involves two tenant-scoped entities (e.g., a store and an organization), always verify the relationship server-side before writing:
-
-```ts
-// ✅ Correct — verify storeId belongs to organizationId before inserting
-const store = await getStoreForOrganization(input.storeId, organizationId)
-if (!store) return { error: 'Invalid store.' }
-```
-
-#### Public forms (unauthenticated)
-
-Public server actions that accept `organizationId`/`storeId` from the client (e.g., the complaint submission form) must still verify the relationship between those IDs in the database before writing — they cannot assume the client sent a valid combination.
-
-#### Soft-deleted records
-
-Always filter `isNull(table.deletedAt)` when selecting records for active use. Soft-deleted records must not appear in dropdowns or be accepted in writes.
-
-### Database Transactions
-
-Use `db.transaction(async (tx) => { ... })` whenever a server action performs **more than one write** (INSERT/UPDATE/DELETE). All writes inside the callback use `tx` — if any step throws, Drizzle automatically rolls back the entire block.
-
-```ts
-// ✅ Correct: multiple writes are atomic
-const result = await db.transaction(async (tx) => {
-  const [row] = await tx.insert(complaints).values({...}).returning({ id: complaints.id })
-  await tx.insert(complaintAttachments).values({ complaintId: row.id, ... })
-  await createAuditLog({ action: 'complaint.created', ... }, tx)
-  return row
-})
-
-// ❌ Incorrect: if the second insert fails, the first one is left orphaned
-await db.insert(complaints).values({...})
-await db.insert(complaintAttachments).values({...})
-```
-
-**Rules:**
-- Always pass `tx` down to any helper function that writes to the DB within a transaction — helpers must accept an optional `tx` parameter instead of using the global `db` directly.
-- Call Next.js functions like `headers()`, `cookies()`, or `redirect()` **before** entering the transaction — they are not DB operations and must not live inside the callback.
-- A single-write action does not need a transaction, but wrapping it is fine for consistency.
-- Any helper that accepts an optional `tx` should propagate errors when `tx` is provided (to trigger rollback) and catch them silently when called standalone (best-effort).
-
-### Coding Conventions
-
-- All validators return `string | null` (null = valid). Compose them with `combine(...validators)`.
-- Use `cn()` from `@/lib/utils` for conditional Tailwind classes.
-- Field components manage their own error display state internally.
-- Write all code (variables, functions, classes, etc.) and database schema/table/column names in English. 
-- Use Spanish (the app targets Peru/Latin America) for comments, user-facing text (UI labels, buttons, messages, notifications). URL paths in the browser should also be in English (e.g., `/dashboard/complaints` instead of `/dashboard/reclamos`).
-- Spanish UI text throughout (the app targets Peru/Latin America).
-- Biome is the single tool for both linting and formatting — run `bun run format` before committing.
-- Code with business logic must be organized inside the `modules/` directory, including its respective `components/` subfolder. Do not create `_components` folders inside the `app/` directory.
-- For App Router route UI in `app/`, split responsibilities into a local `_features/` folder per entity/route (for example filters/table/dialog/hooks), and keep `page.tsx` focused on high-level composition/orchestration. If a hook, utility, or component is used by multiple entities/routes, move it to the appropriate global location (`hooks/`, `components/`, or `lib/`).
-- Use `lib/constants.ts` for all app-wide constants (e.g., select options, enums, configuration values). Keep constants close to where they're used only if they're feature-specific and not shared.
-- Use `zustand` for global state management.
-- For toast notifications, use `sileo`. Examples:
-  - `sileo.success({ title: "Changes saved" })`
-  - `sileo.error({ title: "Something went wrong", description: "Please try again later." })`
-  - `sileo.warning({ title: "Storage almost full" })`
-  - `sileo.info({ title: "New update available" })`
-- For date, always use `date-fns`.
-
-## UI Design System
-
-UI components in `src/components/ui/` follow a specific design system. 
-
-**Always reference the `system-ui-design` skill** when:
-- Creating or modifying UI components
-- Adding new component variants
-- Implementing visual styles (borders, shadows, radius)
-
-> Use Agent Skills when necessary or when relevant to better understand the code context.
-
-### React 19 APIs
-
-**Impact: MEDIUM**
-
-React 19+ only. Don't use `forwardRef`; use `use()` instead of `useContext()`.
-
-#### ref as a regular prop
-
-```tsx
-// ❌ Incorrect: forwardRef in React 19
-const ComposerInput = forwardRef<TextInput, Props>((props, ref) => {
-  return <TextInput ref={ref} {...props} />
-})
-
-// ✅ Correct: ref as a regular prop
-function ComposerInput({ ref, ...props }: Props & { ref?: React.Ref<TextInput> }) {
-  return <TextInput ref={ref} {...props} />
-}
-```
-
-#### use instead of useContext
-
-```tsx
-// ❌ Incorrect: useContext in React 19
-const value = useContext(MyContext)
-
-// ✅ Correct: use instead of useContext
-const value = use(MyContext)
-```
-
-`use()` can also be called conditionally, unlike `useContext()`.
+- **Idioma:** código, SQL y rutas en inglés; comentarios y textos de UI en español.
+- **Formato:** Biome para TS/CSS y gofmt para Go.
+- **Legibilidad:** separar con una línea en blanco cada paso lógico (declaraciones, listeners, llamadas, validaciones, retornos) y usar siempre llaves en `if`/`for`/`while`, aunque tengan una sola sentencia. Nada de `if (x) hacer()` en una línea ni bloques apiñados.
+- **Comentarios:** cortos, sencillos y nada formales, como los escribiría un estudiante. En español, todo en minúscula y con palabras fáciles. Solo los necesarios: una función larga, un paso raro o algo hecho a propósito. Ejemplo: `// va juntando palabras hasta que la línea se llena`.
+- **Archivos generados:** no se editan (`apps/api/gen`, `packages/rpc-client/src/gen`). Se regeneran con `bun run generate`.

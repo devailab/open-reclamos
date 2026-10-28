@@ -1,0 +1,199 @@
+import { OpGetAttachmentDownloadURL } from '@open-reclamos/rpc-client'
+import { Download, FileText } from 'lucide-react'
+import type { FC } from 'react'
+import { sileo } from 'sileo'
+import { downloadAuthenticatedFile, rpc } from '@/shared/api/rpc'
+import { Badge } from '@/shared/components/ui/badge'
+import { Button } from '@/shared/components/ui/button'
+import { Separator } from '@/shared/components/ui/separator'
+import { formatDateDisplay } from '@/shared/lib/formatters'
+import type { ComplaintAttachment, ComplaintDetail } from '../../types'
+import {
+	COMPLAINT_PRIORITY_LABEL,
+	InfoRow,
+	ITEM_TYPE_LABEL,
+	PRIORITY_BADGE_CLASS,
+	Section,
+} from './shared'
+
+interface ComplaintDetailsCardProps {
+	complaint: ComplaintDetail
+	attachments: ComplaintAttachment[]
+}
+
+export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
+	complaint,
+	attachments,
+}) => {
+	const handleDownload = async (attachment: ComplaintAttachment) => {
+		try {
+			const { url } = await rpc<{ url: string }>(
+				OpGetAttachmentDownloadURL,
+				{
+					id: attachment.id,
+				},
+			)
+
+			const path = new URL(url, window.location.origin).pathname
+
+			if (path !== `/api/files/${encodeURIComponent(attachment.id)}`) {
+				throw new Error('Enlace de adjunto inválido.')
+			}
+
+			await downloadAuthenticatedFile(path, attachment.fileName)
+		} catch (error) {
+			sileo.error({
+				title: 'No se pudo descargar el adjunto',
+				description:
+					error instanceof Error
+						? error.message
+						: 'Intenta nuevamente.',
+			})
+		}
+	}
+
+	return (
+		<Section
+			icon={<FileText className='size-4' />}
+			title='Detalle del reclamo'
+		>
+			<div className='space-y-3'>
+				{complaint.itemType && (
+					<InfoRow
+						label='Tipo de bien'
+						value={
+							ITEM_TYPE_LABEL[complaint.itemType] ??
+							complaint.itemType
+						}
+					/>
+				)}
+				{complaint.itemDescription && (
+					<InfoRow
+						label='Bien contratado'
+						value={complaint.itemDescription}
+					/>
+				)}
+				{complaint.amount && (
+					<InfoRow
+						label='Monto reclamado'
+						value={`${complaint.currency ?? ''} ${complaint.amount}`.trim()}
+					/>
+				)}
+				{complaint.hasProofOfPayment && (
+					<InfoRow
+						label='Comprobante'
+						value={
+							complaint.proofOfPaymentType &&
+							complaint.proofOfPaymentNumber
+								? `${complaint.proofOfPaymentType} N° ${complaint.proofOfPaymentNumber}`
+								: 'Sí'
+						}
+					/>
+				)}
+				{complaint.incidentDate && (
+					<InfoRow
+						label='Fecha del incidente'
+						value={formatDateDisplay(complaint.incidentDate)}
+					/>
+				)}
+				{complaint.reasonLabel && (
+					<InfoRow label='Motivo' value={complaint.reasonLabel} />
+				)}
+				{complaint.category && (
+					<InfoRow
+						label='Categoría'
+						value={
+							<div className='space-y-0.5'>
+								<span className='block'>
+									{complaint.category.name}
+								</span>
+								{complaint.category.description && (
+									<span className='block text-xs text-muted-foreground font-normal'>
+										{complaint.category.description}
+									</span>
+								)}
+							</div>
+						}
+					/>
+				)}
+				<InfoRow
+					label='Prioridad'
+					value={
+						<Badge
+							variant='outline'
+							className={
+								PRIORITY_BADGE_CLASS[complaint.priority] ??
+								PRIORITY_BADGE_CLASS.medium
+							}
+						>
+							{COMPLAINT_PRIORITY_LABEL[complaint.priority] ??
+								complaint.priority}
+						</Badge>
+					}
+				/>
+				{complaint.description && (
+					<>
+						<Separator />
+						<div className='space-y-1'>
+							<p className='text-xs text-muted-foreground'>
+								Descripción del reclamo
+							</p>
+							<p className='text-sm whitespace-pre-wrap rounded-lg bg-muted/40 px-3 py-2'>
+								{complaint.description}
+							</p>
+						</div>
+					</>
+				)}
+				{complaint.request && (
+					<div className='space-y-1'>
+						<p className='text-xs text-muted-foreground'>
+							Pedido al proveedor
+						</p>
+						<p className='text-sm whitespace-pre-wrap rounded-lg bg-muted/40 px-3 py-2'>
+							{complaint.request}
+						</p>
+					</div>
+				)}
+			</div>
+
+			{attachments.length > 0 && (
+				<>
+					<Separator />
+					<div className='space-y-1.5'>
+						<p className='text-xs text-muted-foreground'>
+							Archivos adjuntos
+						</p>
+						<div className='flex flex-col gap-1.5'>
+							{attachments.map((attachment) => (
+								<div
+									key={attachment.id}
+									className='flex items-center justify-between gap-2 rounded-lg border px-3 py-2'
+								>
+									<div className='flex items-center gap-2 min-w-0'>
+										<FileText className='size-4 shrink-0 text-muted-foreground' />
+										<span className='text-sm truncate'>
+											{attachment.fileName}
+										</span>
+									</div>
+									<Button
+										variant='ghost'
+										size='sm'
+										className='shrink-0'
+										onClick={() =>
+											handleDownload(attachment)
+										}
+									>
+										<Download className='size-4' />
+										<span className='sr-only'>
+											Descargar
+										</span>
+									</Button>
+								</div>
+							))}
+						</div>
+					</div>
+				</>
+			)}
+		</Section>
+	)
+}

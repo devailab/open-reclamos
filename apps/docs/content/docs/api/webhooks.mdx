@@ -1,0 +1,290 @@
+---
+title: Webhooks
+description: Recibe notificaciones firmadas en tu servidor cada vez que ocurre algo en el libro de reclamaciones.
+icon: Webhook
+---
+
+En lugar de consultar la API cada cierto tiempo, puedes registrar un endpoint
+HTTPS y Open Reclamos te enviará un `POST` con el evento en cuanto ocurra: un
+consumidor registró un reclamo, tu equipo respondió, o cambió el estado.
+
+Cada entrega va firmada con **HMAC-SHA256** usando un secreto compartido, para
+que puedas verificar que realmente proviene de tu instancia.
+
+## Cómo funciona
+
+<Steps>
+
+<Step>
+
+### Crea el endpoint en tu servidor
+
+Una ruta pública `POST` que acepte JSON y responda `2xx` rápidamente.
+
+</Step>
+
+<Step>
+
+### Regístralo en el dashboard
+
+En **Webhooks → Nuevo webhook** indicas nombre, URL, eventos y el secreto de firma.
+
+</Step>
+
+<Step>
+
+### Verifica la firma
+
+Compara el header `X-Webhook-Signature` con el HMAC que calculas localmente.
+
+</Step>
+
+<Step>
+
+### Procesa el evento
+
+Encola el trabajo y responde de inmediato. Consulta la API si necesitas el
+detalle completo del reclamo.
+
+</Step>
+
+</Steps>
+
+## Registrar un endpoint
+
+Ve a **Dashboard → Webhooks → Nuevo webhook** y completa:
+
+| Campo | Requisitos |
+| --- | --- |
+| **Nombre** | Entre 3 y 120 caracteres. Solo para identificarlo en la lista. |
+| **URL de destino** | `https://` público, hasta 2048 caracteres. |
+| **Eventos** | Al menos uno de los tres eventos disponibles. |
+| **Secreto de firma** | Entre 16 y 256 caracteres. Se guarda cifrado. |
+| **Estado** | `active` recibe entregas; `inactive` las pausa sin borrar el endpoint. |
+
+<Callout type="warn" title="Solo destinos públicos">
+	Por protección contra SSRF, se rechazan `http://`, `localhost`, IPs privadas
+	(`10.x`, `172.16-31.x`, `192.168.x`, `127.x`, `169.254.x`), rangos reservados y
+	direcciones IPv6 locales. La validación se repite resolviendo DNS en cada
+	entrega, así que un dominio público que apunte a una IP interna también se
+	bloquea. Para probar en local usa un túnel como `ngrok` o `cloudflared`.
+</Callout>
+
+## Eventos disponibles
+
+| Evento | Cuándo se dispara |
+| --- | --- |
+| `complaint.submitted` | Un consumidor registró un nuevo reclamo o queja desde el libro público. |
+| `complaint.responded` | Se registró la respuesta oficial de la empresa. |
+| `complaint.status_changed` | Cambió el estado del reclamo (por ejemplo, de `open` a `in_review`). |
+
+El esquema completo de cada evento está en la
+[referencia de webhooks](/api/reference/webhooks/webhookComplaintSubmitted).
+
+## Formato de la entrega
+
+Cada entrega es un `POST` con `Content-Type: application/json` y estos headers:
+
+| Header | Descripción |
+| --- | --- |
+| `X-Webhook-Id` | UUID único de **esta entrega**. Úsalo como clave de idempotencia. |
+| `X-Webhook-Timestamp` | Marca de tiempo Unix (segundos) usada al firmar. |
+| `X-Webhook-Signature` | `sha256=<hmac_hex>` del contenido firmado. |
+
+El cuerpo siempre tiene la misma envoltura y un `payload` que depende del evento:
+
+```json title="complaint.submitted"
+{
+	"event": "complaint.submitted",
+	"entityType": "complaint",
+	"entityId": "0192f3a0-9c5b-7b3e-8f1a-2c4d5e6f7a8b",
+	"organizationId": "0192f39a-3b4c-7d5e-8f6a-1b2c3d4e5f6a",
+	"payload": {
+		"trackingCode": "A1B2C3D4",
+		"correlative": "000123",
+		"type": "claim",
+		"status": "open"
+	},
+	"timestamp": "2026-01-15T14:32:10.123Z"
+}
+```
+
+## Verificar la firma
+
+La firma se calcula sobre la cadena `{timestamp}.{cuerpo_crudo}`:
+
+```
+firma = HMAC_SHA256(secreto, `${X-Webhook-Timestamp}.${rawBody}`)
+header = "sha256=" + firma_en_hexadecimal
+```
+
+<Callout type="warn" title="Usa el cuerpo crudo">
+	Firma exactamente los bytes que recibiste. Si parseas el JSON y lo vuelves a
+	serializar, el orden de las claves o los espacios pueden cambiar y la firma no
+	coincidirá.
+</Callout>
+
+<Tabs items={['Bun / Node', 'Next.js', 'Python']}>
+
+<Tab value="Bun / Node">
+
+```ts title="webhook-handler.ts"
+import crypto from 'node:crypto'
+
+const SECRET = process.env.OPEN_RECLAMOS_WEBHOOK_SECRET!
+const TOLERANCE_SECONDS = 300
+
+export function verifySignature(
+	rawBody: string,
+	timestampHeader: string | null,
+	signatureHeader: string | null,
+): boolean {
+	if (!timestampHeader || !signatureHeader) return false
+
+	const timestamp = Number(timestampHeader)
+	if (!Number.isFinite(timestamp)) return false
+
+	// Rechaza entregas viejas o con reloj adelantado (ataques de repetición)
+	const now = Math.floor(Date.now() / 1000)
+	if (Math.abs(now - timestamp) > TOLERANCE_SECONDS) return false
+
+	const expected = `sha256=${crypto
+		.createHmac('sha256', SECRET)
+		.update(`${timestamp}.${rawBody}`)
+		.digest('hex')}`
+
+	const a = Buffer.from(expected)
+	const b = Buffer.from(signatureHeader)
+	if (a.length !== b.length) return false
+
+	// Comparación en tiempo constante
+	return crypto.timingSafeEqual(a, b)
+}
+```
+
+</Tab>
+
+<Tab value="Next.js">
+
+```ts title="app/api/open-reclamos/route.ts"
+import { verifySignature } from '@/lib/webhook-handler'
+
+export async function POST(request: Request) {
+	const rawBody = await request.text()
+
+	const valid = verifySignature(
+		rawBody,
+		request.headers.get('x-webhook-timestamp'),
+		request.headers.get('x-webhook-signature'),
+	)
+
+	if (!valid) {
+		return new Response('Firma inválida', { status: 401 })
+	}
+
+	const event = JSON.parse(rawBody)
+	const deliveryId = request.headers.get('x-webhook-id')
+
+	// Encola el trabajo pesado y responde de inmediato
+	await enqueue({ deliveryId, event })
+
+	return Response.json({ received: true })
+}
+```
+
+</Tab>
+
+<Tab value="Python">
+
+```python title="webhook_handler.py"
+import hashlib
+import hmac
+import os
+import time
+
+SECRET = os.environ["OPEN_RECLAMOS_WEBHOOK_SECRET"].encode()
+TOLERANCE_SECONDS = 300
+
+
+def verify_signature(raw_body: bytes, timestamp: str, signature: str) -> bool:
+    try:
+        ts = int(timestamp)
+    except (TypeError, ValueError):
+        return False
+
+    if abs(int(time.time()) - ts) > TOLERANCE_SECONDS:
+        return False
+
+    expected = "sha256=" + hmac.new(
+        SECRET, f"{ts}.".encode() + raw_body, hashlib.sha256
+    ).hexdigest()
+
+    return hmac.compare_digest(expected, signature or "")
+```
+
+</Tab>
+
+</Tabs>
+
+## Reintentos y errores
+
+Open Reclamos entrega cada evento a todos los endpoints activos suscritos, de
+forma independiente: si uno falla, no afecta a los demás.
+
+| Respuesta de tu endpoint | Comportamiento |
+| --- | --- |
+| `2xx` | Entrega marcada como `sent`. |
+| `5xx`, `408`, `425`, `429` | Se reintenta hasta 4 veces con backoff exponencial y jitter. |
+| Otros `4xx` | Entrega marcada como `failed`, sin reintentos (indica un problema en tu handler). |
+| Timeout | Reintento. El límite por defecto es de 15 segundos, configurable por endpoint. |
+| URL insegura o secreto ausente | Entrega marcada como `failed` sin reintentos. |
+
+<Callout type="info" title="Responde rápido">
+	El tiempo de espera se cuenta contra tu endpoint completo. Valida la firma,
+	encola el evento y responde `2xx`; deja el procesamiento pesado (enviar
+	correos, escribir en tu CRM) para un worker en segundo plano.
+</Callout>	
+
+## Depurar entregas
+
+En **Dashboard → Webhooks → Entregas** encuentras el historial con el estado
+(`pending`, `sent`, `failed`), el número de intentos, el código HTTP de respuesta
+y los primeros 4000 caracteres del cuerpo devuelto por tu servidor.
+
+<Accordions>
+
+<Accordion title="No recibo ninguna entrega">
+
+- Verifica que el endpoint esté en estado `active`.
+- Confirma que el evento esté marcado en la suscripción del endpoint.
+- Revisa que la URL sea `https://` y resuelva a una IP pública.
+
+</Accordion>
+
+<Accordion title="Recibo 401 en mis propias validaciones">
+
+- Asegúrate de firmar el **cuerpo crudo**, no el JSON reserializado.
+- El contenido firmado incluye el timestamp: `` `${timestamp}.${rawBody}` ``.
+- Compara contra el header completo, incluyendo el prefijo `sha256=`.
+- Revisa que el secreto sea el mismo que registraste en el dashboard.
+
+</Accordion>
+
+<Accordion title="Las entregas quedan en failed sin reintentos">
+
+Tu endpoint devolvió un `4xx` distinto de `408`, `425` o `429`. Estos se
+consideran errores permanentes: revisa el cuerpo de respuesta guardado en el
+historial de entregas para ver qué devolvió tu servidor.
+
+</Accordion>
+
+</Accordions>
+
+## Buenas prácticas
+
+- **Suscríbete solo a los eventos que usas.** Menos tráfico y menos superficie de error.
+- **Trata el payload como una notificación, no como la fuente de verdad.** Si necesitas
+  todos los datos del reclamo, consúltalo con la API usando el `entityId`.
+- **Rota el secreto periódicamente** desde el dashboard.
+- **Registra `X-Webhook-Id` y `event`** en tus logs: hacen mucho más fácil correlacionar
+  con el historial de entregas.

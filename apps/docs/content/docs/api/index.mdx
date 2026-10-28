@@ -1,0 +1,76 @@
+---
+title: Introducción
+description: API de Open Reclamos
+icon: Plug
+---
+
+La API de Open Reclamos te permite integrar el Libro de Reclamaciones Virtual con
+tus propios sistemas: CRM, ERP, data warehouse, dashboards internos o automatizaciones.
+
+Todas las respuestas son JSON y todos los endpoints bajo `/api/v1` requieren
+autenticación mediante [API key](/api/authentication).
+
+## URL base
+
+La API se sirve desde la misma instancia donde corre Open Reclamos:
+
+```
+https://tu-dominio.com/api/v1
+```
+
+En desarrollo local, la URL base es `http://localhost:3000/api/v1`.
+
+## Qué puedes hacer
+
+<Cards>
+	<Card
+		title="Listar reclamos"
+		description="Consulta paginada con filtros por estado, tipo, tienda y fechas."
+		href="/api/reference/reclamos/listComplaints"
+	/>
+	<Card
+		title="Ver el detalle de un reclamo"
+		description="Consumidor, respuesta oficial, adjuntos e historial completo."
+		href="/api/reference/reclamos/getComplaint"
+	/>
+	<Card
+		title="Recibir webhooks"
+		description="Notificaciones firmadas cuando se registra o responde un reclamo."
+		href="/api/webhooks"
+	/>
+	<Card
+		title="Conectar un agente de IA"
+		description="Servidor MCP para consultar el libro desde Claude u otros clientes."
+		href="/api/mcp"
+	/>
+</Cards>
+
+## Principios de la API
+
+<Callout type="info" title="Aislamiento por organización">
+	Cada API key está ligada a un usuario y a su organización. La API nunca acepta
+	un `organizationId` del cliente: siempre lo deriva de la clave. Un API key solo
+	puede leer datos de su propia organización y de las tiendas a las que el
+	miembro tiene acceso.
+</Callout>
+
+- **Solo lectura.** La versión actual (`v1`) expone consultas. El registro de
+  reclamos se realiza desde el formulario público del libro y las respuestas
+  oficiales desde el dashboard.
+- **Permisos.** Cada endpoint verifica el permiso correspondiente del miembro
+  (por ejemplo `complaints.view`). Si el rol del usuario pierde ese permiso, la
+  API responde `403` sin necesidad de regenerar la clave.
+- **Fechas en ISO 8601.** Todas las marcas de tiempo se devuelven en UTC, con el
+  formato `2026-01-15T14:32:10.123Z`.
+- **Errores uniformes.** Todo error devuelve `{ "error": "mensaje" }`.
+  Ver [Errores](/api/errors).
+
+## Convenciones
+
+| Concepto | Valor |
+| --- | --- |
+| Prefijo de versión | `/api/v1` |
+| Autenticación | `Authorization: Bearer or_...` |
+| Formato | `application/json` |
+| Paginación | `page` y `pageSize` (máx. 100) |
+| Orden por defecto | `createdAt` descendente |

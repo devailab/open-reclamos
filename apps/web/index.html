@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<title>Open Reclamos</title>
+	<script id="theme-init">
+		(() => {
+			let theme = 'system'
+			try {
+				const stored = localStorage.getItem('theme')
+				if (stored === 'light' || stored === 'dark' || stored === 'system') {
+					theme = stored
+				}
+			} catch { }
+			const dark = theme === 'dark' || (theme === 'system' &&
+				typeof window.matchMedia === 'function' &&
+				window.matchMedia('(prefers-color-scheme: dark)').matches)
+			const root = document.documentElement
+			root.classList.toggle('dark', dark)
+			root.classList.toggle('light', !dark)
+			root.style.colorScheme = dark ? 'dark' : 'light'
+			root.style.backgroundColor = dark
+				? 'var(--background, oklch(0.145 0 0))'
+				: 'var(--background, oklch(1 0 0))'
+		})()
+	</script>
+	<style></style>
+
+</head>
+
+<body>
+	<div id="root"></div>
+	<script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
