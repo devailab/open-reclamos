@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ComboboxOption } from '@/shared/components/forms/combobox-field'
 import { useForm } from '@/shared/hooks/use-form'
 import { feedback } from '@/shared/lib/feedback'
-import { submitComplaint } from '../../api'
+import { submitComplaint } from './api'
 import type { UploadedFile } from './file-upload-area'
 import { buildComplaintInput } from './form-payload'
 import { createStep1Initial, type Step1Values } from './step-consumer'
@@ -22,6 +22,7 @@ interface UseComplaintFormParams {
 	defaultDialCodeOption: ComboboxOption | null
 	stores: { id: string; slug: string }[]
 	turnstileEnabled: boolean
+	loading: boolean
 }
 
 export function useComplaintForm({
@@ -30,6 +31,7 @@ export function useComplaintForm({
 	defaultDialCodeOption,
 	stores,
 	turnstileEnabled,
+	loading,
 }: UseComplaintFormParams) {
 	const [captchaRevision, setCaptchaRevision] = useState(0)
 
@@ -44,6 +46,15 @@ export function useComplaintForm({
 		initialStoreId,
 	)
 
+	const storeInitialized = useRef(initialStoreId !== null)
+
+	useEffect(() => {
+		if (!storeInitialized.current && initialStoreId) {
+			storeInitialized.current = true
+			setSelectedStoreId(initialStoreId)
+		}
+	}, [initialStoreId])
+
 	const submitLockRef = useRef(false)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [successData, setSuccessData] = useState<SuccessData | null>(null)
@@ -53,6 +64,17 @@ export function useComplaintForm({
 
 	// Step 1 form
 	const [step1Values, setStep1Values] = useState<Step1Values>(step1Initial)
+	const dialCodeInitialized = useRef(defaultDialCodeOption !== null)
+
+	useEffect(() => {
+		if (!dialCodeInitialized.current && defaultDialCodeOption) {
+			dialCodeInitialized.current = true
+			setStep1Values((current) => ({
+				...current,
+				dialCodeOption: current.dialCodeOption ?? defaultDialCodeOption,
+			}))
+		}
+	}, [defaultDialCodeOption])
 
 	const step1Form = useForm({
 		values: step1Values,
@@ -72,7 +94,7 @@ export function useComplaintForm({
 	const goToStep = (step: Step) => setCurrentStep(step)
 
 	const handleSubmit = async () => {
-		if (submitLockRef.current || successData) {
+		if (loading || submitLockRef.current || successData) {
 			return
 		}
 

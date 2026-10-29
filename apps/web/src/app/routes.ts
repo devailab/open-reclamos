@@ -1,22 +1,24 @@
 import type { RouteObject } from 'react-router'
-import { AuthLayout } from './layouts/auth-layout'
-import { TenantDashboardLayout } from './layouts/tenant-dashboard-layout'
-import { LoginReady, RegisterReady } from './routing/auth-gates'
+import { PublicBookFallback } from '@/modules/complaints/features/public-book/header-skeleton'
+import { publicBookLoader } from '@/modules/complaints/pages/public-book-loader'
+import { Component as OrganizationPublicBookPage } from './pages/c/[slug]/page'
+import { Component as StorePublicBookPage } from './pages/s/[slug]/page'
+import { PublicRouteErrorBoundary } from './routing/public-route-error-boundary'
 import { DataRouteErrorBoundary, NotFoundPage } from './routing/route-feedback'
-import {
-	RequireOrganization,
-	RequirePlatformAdmin,
-	RequireSession,
-} from './routing/session-guards'
 
 // Cada pantalla vive en `app/pages`, en una carpeta que refleja su URL.
 const children: RouteObject[] = [
 	{ path: '/', lazy: () => import('./pages/page') },
 	{
-		Component: AuthLayout,
+		lazy: async () => ({
+			Component: (await import('./layouts/auth-layout')).AuthLayout,
+		}),
 		children: [
 			{
-				Component: LoginReady,
+				lazy: async () => ({
+					Component: (await import('./routing/auth-gates'))
+						.LoginReady,
+				}),
 				children: [
 					{
 						path: '/login',
@@ -30,7 +32,10 @@ const children: RouteObject[] = [
 				],
 			},
 			{
-				Component: RegisterReady,
+				lazy: async () => ({
+					Component: (await import('./routing/auth-gates'))
+						.RegisterReady,
+				}),
 				children: [
 					{
 						path: '/register',
@@ -46,15 +51,20 @@ const children: RouteObject[] = [
 			},
 		],
 	},
-	{ path: '/c/:slug', lazy: () => import('./pages/c/[slug]/page') },
-	{ path: '/s/:slug', lazy: () => import('./pages/s/[slug]/page') },
 	{
-		Component: RequireSession,
+		lazy: async () => ({
+			Component: (await import('./routing/session-guards'))
+				.RequireSession,
+		}),
 		children: [
 			{ path: '/setup', lazy: () => import('./pages/setup/page') },
 			{
 				path: '/dashboard',
-				Component: TenantDashboardLayout,
+				lazy: async () => ({
+					Component: (
+						await import('./layouts/tenant-dashboard-layout')
+					).TenantDashboardLayout,
+				}),
 				children: [
 					{
 						path: 'account',
@@ -66,7 +76,11 @@ const children: RouteObject[] = [
 							import('./pages/dashboard/organizations/new/page'),
 					},
 					{
-						Component: RequireOrganization,
+						lazy: async () => ({
+							Component: (
+								await import('./routing/session-guards')
+							).RequireOrganization,
+						}),
 						children: [
 							{
 								index: true,
@@ -165,7 +179,11 @@ const children: RouteObject[] = [
 						],
 					},
 					{
-						Component: RequirePlatformAdmin,
+						lazy: async () => ({
+							Component: (
+								await import('./routing/session-guards')
+							).RequirePlatformAdmin,
+						}),
 						children: [
 							{
 								path: 'platform',
@@ -199,4 +217,25 @@ function withErrorBoundaries(routes: RouteObject[]): RouteObject[] {
 	})) as RouteObject[]
 }
 
-export const routes = withErrorBoundaries(children)
+export const routes: RouteObject[] = [
+	{
+		HydrateFallback: PublicBookFallback,
+		ErrorBoundary: PublicRouteErrorBoundary,
+		children: [
+			{
+				path: '/c/:slug',
+				loader: publicBookLoader,
+				Component: OrganizationPublicBookPage,
+			},
+			{
+				path: '/s/:slug',
+				loader: publicBookLoader,
+				Component: StorePublicBookPage,
+			},
+		],
+	},
+	{
+		lazy: () => import('./layouts/session-layout'),
+		children: withErrorBoundaries(children),
+	},
+]

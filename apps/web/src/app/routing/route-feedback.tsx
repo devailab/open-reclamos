@@ -6,6 +6,10 @@ import { Link, useRevalidator, useRouteError } from 'react-router'
 import { sessionStore } from '@/shared/auth/session-store'
 import { PageLoading } from '@/shared/components/page-loading'
 
+export function FullPageLoading() {
+	return <PageLoading className='min-h-svh' />
+}
+
 export function LoadingPage() {
 	return <PageLoading className='min-h-[50svh]' />
 }

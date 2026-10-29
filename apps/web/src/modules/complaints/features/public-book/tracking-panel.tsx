@@ -14,8 +14,8 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { ResponsiveModal } from '@/shared/components/ui/responsive-modal'
-import { type TrackingResult, trackComplaint } from '../../api'
 import type { PublicHistoryEntry } from '../../types'
+import { type TrackingResult, trackComplaint } from './api'
 
 const STATUS_CONFIG: Record<
 	string,

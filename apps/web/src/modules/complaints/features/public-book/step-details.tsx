@@ -256,7 +256,7 @@ export const StepDetails: FC<StepDetailsProps> = ({
 					onCaptchaConsumed={onCaptchaConsumed}
 					files={files}
 					onChange={onFilesChange}
-					disabled={disabled}
+					disabled={disabled || !storeSlug}
 				/>
 			</div>
 

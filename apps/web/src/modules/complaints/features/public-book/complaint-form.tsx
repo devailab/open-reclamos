@@ -38,6 +38,7 @@ interface StoreOption {
 }
 
 interface ComplaintFormProps {
+	loading: boolean
 	organizationSlug: string
 	organizationName: string
 	// Org mode: list of stores to select from
@@ -95,6 +96,7 @@ function StoreInfo({
 }
 
 export const ComplaintForm: FC<ComplaintFormProps> = ({
+	loading,
 	organizationSlug,
 	organizationName,
 	stores,
@@ -112,6 +114,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 
 	const form = useComplaintForm({
 		organizationSlug,
+		loading,
 		storeId: defaultStoreId,
 		defaultDialCodeOption,
 		stores: preselectedStore ? [preselectedStore] : (stores ?? []),
@@ -143,7 +146,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 	return (
 		<div className='space-y-6'>
 			{/* Store selector (org mode only) */}
-			{stores && stores.length > 0 && !preselectedStore && (
+			{stores && !preselectedStore && (
 				<Card>
 					<CardContent className='space-y-4'>
 						<ComboboxField
@@ -153,8 +156,13 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 								form.setSelectedStoreId(option?.value ?? null)
 							}
 							options={storeOptions}
-							placeholder='Selecciona una tienda'
+							placeholder={
+								loading
+									? 'Cargando tiendas...'
+									: 'Selecciona una tienda'
+							}
 							disabled={
+								loading ||
 								form.isSubmitting ||
 								form.uploadedFiles.length > 0
 							}
@@ -176,26 +184,11 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 				</Card>
 			)}
 
-			{/* Pre-selected store info — only when org has multiple stores */}
-			{preselectedStore && totalStores && totalStores > 1 && (
-				<Card>
-					<CardContent className='space-y-3'>
-						<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
-							Detalles de la sucursal
-						</p>
-						<StoreInfo
-							store={preselectedStore}
-							addressLabel={storeAddressLabel}
-						/>
-					</CardContent>
-				</Card>
-			)}
-
 			{/* Form — always rendered to keep field refs registered */}
 			<Card>
 				<CardHeader className='pb-4'>
 					<div className='space-y-3'>
-						<p className='text-xs text-muted-foreground uppercase tracking-wide'>
+						<p className='min-h-4 text-xs text-muted-foreground uppercase tracking-wide'>
 							{organizationName}
 						</p>
 						<ComplaintStepper
@@ -286,7 +279,11 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 							<Button
 								type='button'
 								onClick={form.handleSubmit}
-								disabled={form.isSubmitting || !activeStoreId}
+								disabled={
+									loading ||
+									form.isSubmitting ||
+									!activeStoreId
+								}
 							>
 								{form.isSubmitting ? (
 									<>
@@ -304,6 +301,21 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 					</div>
 				</div>
 			</Card>
+
+			{/* Pre-selected store info — only when org has multiple stores */}
+			{preselectedStore && totalStores && totalStores > 1 && (
+				<Card>
+					<CardContent className='space-y-3'>
+						<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+							Detalles de la sucursal
+						</p>
+						<StoreInfo
+							store={preselectedStore}
+							addressLabel={storeAddressLabel}
+						/>
+					</CardContent>
+				</Card>
+			)}
 
 			{/* Success dialog */}
 			{form.successData && (

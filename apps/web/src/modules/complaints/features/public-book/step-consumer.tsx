@@ -15,7 +15,6 @@ import { Separator } from '@/shared/components/ui/separator'
 import { DOCUMENT_TYPE_OPTIONS } from '@/shared/constants/options'
 import type { useForm } from '@/shared/hooks/use-form'
 import { required } from '@/shared/lib/validators'
-import { searchUbigeos } from '../../api'
 import {
 	maxText,
 	validateConsumerName,
@@ -24,6 +23,7 @@ import {
 	validateLegalName,
 	validateRuc,
 } from '../../validation'
+import { searchUbigeos } from './api'
 
 export interface CountryOption {
 	id: string

@@ -1,4 +1,3 @@
-import type { JsonObject } from '@bufbuild/protobuf'
 import {
 	type Client,
 	Code,
@@ -32,20 +31,16 @@ import {
 	waitForContext,
 } from '../auth/context'
 
+import {
+	errorMessageInterceptor,
+	jsonObject,
+	type RPCInput,
+	type RPCMethod,
+} from './rpc-shared'
+
+export { jsonObject, type RPCInput, type RPCMethod } from './rpc-shared'
+
 const access = createAccessTokenStore()
-
-// muestra solo el mensaje y conserva el código para manejar el error.
-const errorMessageInterceptor: Interceptor = (next) => async (request) => {
-	try {
-		return await next(request)
-	} catch (error) {
-		if (error instanceof ConnectError) {
-			error.message = error.rawMessage
-		}
-
-		throw error
-	}
-}
 
 function acceptAccess(response: Partial<OperationResponse>) {
 	if (response.accessToken) {
@@ -262,42 +257,6 @@ const transport = createConnectTransport({
 
 export const systemClient = createClient(SystemService, transport)
 export const backendClient = createClient(BackendService, transport)
-
-export type RPCMethod = Capitalize<
-	Extract<keyof Client<typeof BackendService>, string>
->
-
-export interface RPCInput {
-	id?: string
-	data?: Record<string, unknown>
-	filters?: Record<string, unknown>
-	page?: number
-	pageSize?: number
-}
-
-// El contrato usa Struct; se omiten campos opcionales sin valor, sin cambiar
-// los nombres snake_case ni convertir importes o identificadores a números.
-export function jsonObject(
-	value?: Record<string, unknown>,
-): JsonObject | undefined {
-	if (!value) {
-		return undefined
-	}
-
-	return JSON.parse(
-		JSON.stringify(value, (_key, item: unknown) => {
-			if (typeof item === 'bigint') {
-				return item.toString()
-			}
-
-			if (typeof item === 'number' && !Number.isFinite(item)) {
-				throw new Error('La solicitud contiene un número no válido.')
-			}
-
-			return item
-		}),
-	) as JsonObject
-}
 
 export async function requestRPC(
 	method: RPCMethod,

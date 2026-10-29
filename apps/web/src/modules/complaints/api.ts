@@ -1,18 +1,13 @@
 import {
 	OpGetComplaint,
 	OpGetDashboard,
-	OpGetPublicBook,
 	OpListCategories,
 	OpListComplaints,
-	OpListCountries,
 	OpListFeatured,
 	OpListStores,
-	OpListUbigeos,
 	OpRespond,
 	OpSaveDraft,
 	OpStartReview,
-	OpSubmitComplaint,
-	OpTrackComplaint,
 	OpUpdateClassification,
 } from '@open-reclamos/rpc-client'
 import { eachDayOfInterval, format, parseISO, subDays } from 'date-fns'
@@ -21,19 +16,15 @@ import { rpc } from '@/shared/api/rpc'
 import {
 	complaintFilters,
 	presentation,
-	submissionData,
 	tableRow,
 	type WirePage,
 	type WireRecord,
 } from './adapters'
 import type { ComplaintDetailPageProps } from './features/complaint-detail/types'
-import type { FlatReason } from './features/public-book/reason-tree-field'
-import type { CountryOption } from './features/public-book/step-consumer'
 import type { ComplaintsTableFilters, DashboardTrendDays } from './filters'
 import type {
 	ComplaintCategorySummary,
 	ComplaintsDashboardKpis,
-	PublicHistoryEntry,
 	StoreOption,
 } from './types'
 
@@ -236,125 +227,4 @@ export function respondToComplaint(
 			},
 		}),
 	)
-}
-
-export interface PublicStore {
-	id: string
-	name: string
-	slug: string
-	type: string
-	address: string | null
-	addressType: string | null
-	url: string | null
-	formEnabled: boolean
-}
-
-export interface PublicOrganization {
-	id: string
-	slug: string
-	name: string
-	legalName: string
-	taxId: string
-	address: string
-	addressType: string
-	website: string | null
-	logoKey: string | null
-	formEnabled: boolean
-	responseDeadlineDays: number
-}
-
-export async function getPublicBook(
-	slug: string,
-	kind: 'store' | 'organization',
-	signal?: AbortSignal,
-) {
-	const [book, countries] = await Promise.all([
-		rpc<{
-			organization: WireRecord
-			stores: WireRecord[] | null
-			reasons: WireRecord[] | null
-			turnstile_enabled: boolean
-			turnstile_site_key: string
-		}>(OpGetPublicBook, { id: slug, data: { kind } }, signal),
-		catalog<CountryOption>(OpListCountries, signal),
-	])
-
-	return {
-		organization: presentation<PublicOrganization>({
-			address_type: '',
-			website: null,
-			...book.organization,
-		}),
-		stores: (book.stores ?? []).map((row) =>
-			presentation<PublicStore>({ address_type: null, ...row }),
-		),
-		reasons: (book.reasons ?? []).map((row) =>
-			presentation<FlatReason>(row),
-		),
-		countries,
-		turnstileEnabled: book.turnstile_enabled,
-		turnstileSiteKey: book.turnstile_site_key,
-	}
-}
-
-export function submitComplaint(input: Record<string, unknown>) {
-	return action(async () => {
-		const data = submissionData(input)
-
-		const result = await rpc<{
-			tracking_code: string
-			correlative: string
-			response_deadline: string
-		}>(OpSubmitComplaint, { data })
-
-		return {
-			trackingCode: result.tracking_code,
-			correlative: result.correlative,
-			responseDeadline: new Date(result.response_deadline),
-		}
-	})
-}
-
-export interface TrackingResult {
-	id: string
-	trackingCode: string
-	correlative: string
-	status: string
-	type: string
-	createdAt: Date
-	responseDeadline: Date | null
-	history: PublicHistoryEntry[]
-}
-
-export function trackComplaint(code: string, organizationSlug: string) {
-	return action(async () => {
-		const result = await rpc<{
-			complaint: WireRecord
-			history: WireRecord[] | null
-		}>(OpTrackComplaint, {
-			data: {
-				organization_slug: organizationSlug,
-				tracking_code: code.trim().toUpperCase(),
-			},
-		})
-
-		return {
-			...presentation<Omit<TrackingResult, 'history'>>(result.complaint),
-			history: (result.history ?? []).map((row) =>
-				presentation<PublicHistoryEntry>(row),
-			),
-		}
-	})
-}
-
-export async function searchUbigeos(search: string) {
-	const result = await rpc<WirePage>(OpListUbigeos, {
-		filters: { search },
-		pageSize: 100,
-	})
-
-	return (result.rows ?? []).map((row) => ({
-		value: String(row.id),
-		label: [row.district, row.province, row.department].join(', '),
-	}))
 }
