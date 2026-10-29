@@ -7,18 +7,29 @@ export function hasTenantAccess(session: SessionDTO): boolean {
 	)
 }
 
+type LoginSession = SessionDTO & {
+	organization?: Pick<OrganizationDTO, 'id' | 'slug'>
+}
+
 export function shouldRedirectLogin(
-	session: SessionDTO | null,
+	session: LoginSession | null,
 	organizationSlug: string | undefined,
 	forceLocal: boolean,
 	tenantError: Error | null,
 ): boolean {
+	if (!session || !hasTenantAccess(session) || forceLocal || tenantError) {
+		return false
+	}
+
+	if (!organizationSlug) {
+		return true
+	}
+
+	const organization = session.organization
 	return Boolean(
-		session &&
-			hasTenantAccess(session) &&
-			!organizationSlug &&
-			!forceLocal &&
-			!tenantError,
+		organization &&
+			organization.id === session.organization_id &&
+			organization.slug === organizationSlug,
 	)
 }
 
