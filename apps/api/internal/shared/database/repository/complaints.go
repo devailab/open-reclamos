@@ -379,11 +379,15 @@ type ListHistoryParams struct{ OrganizationID, ID string }
 func (r *Repository) ListHistory(ctx context.Context, p ListHistoryParams) ([]HistoryEntry, error) {
 	out := []HistoryEntry{}
 
-	err := r.conn(ctx).Table("complaint_history AS h").Select("h.*, trim(u.name || ' ' || u.last_name) AS performed_by_name").
+	err := r.conn(ctx).
+		Table("complaint_history AS h").
+		Select("h.*, trim(u.name || ' ' || u.last_name) AS performed_by_name").
 		Joins("JOIN complaints c ON c.id = h.complaint_id").
 		Joins("LEFT JOIN users u ON u.id = h.performed_by").
 		Where("c.organization_id = ? AND c.id = ?", p.OrganizationID, p.ID).
-		Order("h.created_at, h.id").Find(&out).Error
+		Order("h.created_at, h.id").
+		Find(&out).
+		Error
 
 	return out, err
 }

@@ -38,7 +38,8 @@ func (f *Feature) CreateAccount(ctx context.Context, in operation.Input) (operat
 	lastName := utils.Text(in.Data, "last_name")
 	email := strings.ToLower(utils.Text(in.Data, "email"))
 	password := utils.RawText(in.Data, "password")
-	if !utils.Required(name, 120) || !utils.Required(lastName, 120) || !utils.ValidEmail(email) || !utils.ValidPassword(password) {
+	if !utils.Required(name, 120) || !utils.Required(lastName, 120) || !utils.ValidEmail(email) ||
+		!utils.ValidPassword(password) {
 		return operation.Output{}, apperrors.Invalid(constants.MsgAccountDataRequired)
 	}
 

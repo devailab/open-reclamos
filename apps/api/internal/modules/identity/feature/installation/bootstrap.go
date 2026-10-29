@@ -36,7 +36,8 @@ func (f *Feature) initialAdministrator(
 	name := strings.TrimSpace(admin.Name)
 	lastName := strings.TrimSpace(admin.LastName)
 	email := strings.ToLower(strings.TrimSpace(admin.Email))
-	if !utils.ValidEmail(email) || !utils.Required(name, 120) || !utils.Required(lastName, 120) || !utils.ValidPassword(admin.Password) {
+	if !utils.ValidEmail(email) || !utils.Required(name, 120) || !utils.Required(lastName, 120) ||
+		!utils.ValidPassword(admin.Password) {
 		return models.User{}, "", apperrors.Invalid(constants.MsgAccountDataRequired)
 	}
 

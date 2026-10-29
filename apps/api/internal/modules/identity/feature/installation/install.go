@@ -29,6 +29,12 @@ func (f *Feature) Install(ctx context.Context, _ auth.Principal, in operation.In
 	return operation.Login(
 		f.deps.Auth,
 		raw,
-		map[string]any{"id": user.ID, "name": user.Name, "last_name": user.LastName, "email": user.Email, "is_platform_admin": true},
+		map[string]any{
+			"id":                user.ID,
+			"name":              user.Name,
+			"last_name":         user.LastName,
+			"email":             user.Email,
+			"is_platform_admin": true,
+		},
 	)
 }

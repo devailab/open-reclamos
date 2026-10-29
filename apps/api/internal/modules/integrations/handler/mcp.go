@@ -23,11 +23,11 @@ type ToolInput struct {
 	Search       string `json:"search,omitempty"`
 	Status       string `json:"status,omitempty"`
 	StoreID      string `json:"storeId,omitempty"`
-	Type         string `json:"type,omitempty" jsonschema:"Tipo: claim (reclamo) o complaint (queja)"`
-	Priority     string `json:"priority,omitempty" jsonschema:"Prioridad: low, medium, high o urgent"`
-	CategoryID   string `json:"categoryId,omitempty" jsonschema:"Identificador UUID de la categoría"`
-	DateStart    string `json:"dateStart,omitempty" jsonschema:"Fecha inicial de registro inclusiva en formato YYYY-MM-DD o RFC3339"`
-	DateEnd      string `json:"dateEnd,omitempty" jsonschema:"Fecha final de registro inclusiva para YYYY-MM-DD o exclusiva para RFC3339"`
+	Type         string `json:"type,omitempty"         jsonschema:"Tipo: claim (reclamo) o complaint (queja)"`
+	Priority     string `json:"priority,omitempty"     jsonschema:"Prioridad: low, medium, high o urgent"`
+	CategoryID   string `json:"categoryId,omitempty"   jsonschema:"Identificador UUID de la categoría"`
+	DateStart    string `json:"dateStart,omitempty"    jsonschema:"Fecha inicial de registro inclusiva en formato YYYY-MM-DD o RFC3339"`
+	DateEnd      string `json:"dateEnd,omitempty"      jsonschema:"Fecha final de registro inclusiva para YYYY-MM-DD o exclusiva para RFC3339"`
 	TrackingCode string `json:"trackingCode,omitempty"`
 }
 

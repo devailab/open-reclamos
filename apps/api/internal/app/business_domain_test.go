@@ -50,7 +50,9 @@ func TestBusinessDomainReservations(t *testing.T) {
 			t.Fatal("guardar el dominio propio debe funcionar", err)
 		}
 
-		if err = update(second.OrganizationID, secondHeader, "DEVAILAB.COM"); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+		if err = update(second.OrganizationID, secondHeader, "DEVAILAB.COM"); connect.CodeOf(
+			err,
+		) != connect.CodeFailedPrecondition {
 			t.Fatal("otra empresa pudo reservar el mismo dominio", err)
 		}
 
@@ -122,7 +124,12 @@ func TestBusinessDomainSSODiscovery(t *testing.T) {
 		}
 
 		lookup := func(domain string) (operation.Output, error) {
-			return s.Call(ctx, constants.OpGetLoginOptions, operation.Input{Data: map[string]any{"business_domain": domain}}, nil)
+			return s.Call(
+				ctx,
+				constants.OpGetLoginOptions,
+				operation.Input{Data: map[string]any{"business_domain": domain}},
+				nil,
+			)
 		}
 
 		if _, err := lookup("devailab.com"); connect.CodeOf(err) != connect.CodeInvalidArgument {

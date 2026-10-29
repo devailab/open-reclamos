@@ -19,7 +19,10 @@ func (f *Feature) Update(ctx context.Context, p auth.Principal, in operation.Inp
 		return operation.Output{}, apperrors.Invalid(constants.MsgNameRequired)
 	}
 
-	u, err := f.deps.Repo.UpdateProfile(ctx, repository.UpdateProfileParams{ID: p.UserID, Name: name, LastName: lastName})
+	u, err := f.deps.Repo.UpdateProfile(
+		ctx,
+		repository.UpdateProfileParams{ID: p.UserID, Name: name, LastName: lastName},
+	)
 
 	return operation.Record(u), err
 }

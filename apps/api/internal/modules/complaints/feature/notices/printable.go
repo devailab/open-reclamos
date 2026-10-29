@@ -221,7 +221,11 @@ func renderPrintableNotice(direction, target string) ([]byte, error) {
 		}
 	}
 
-	m.AddRow(8, col.New(12).Add(pdftext.New(string(displayURL), props.Text{Family: urlFont, Size: 12, Align: align.Center, Top: 2, Color: muted})))
+	m.AddRow(
+		8,
+		col.New(12).
+			Add(pdftext.New(string(displayURL), props.Text{Family: urlFont, Size: 12, Align: align.Center, Top: 2, Color: muted})),
+	)
 
 	document, err := m.Generate()
 	if err != nil {

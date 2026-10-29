@@ -26,7 +26,11 @@ func TestEditableSlugsAndSeparatedUserNames(t *testing.T) {
 			return utils.PublicData(out.Data)
 		}
 
-		store := call("CreateStore", "", map[string]any{"name": "Tienda Principal", "type": "virtual", "color": "#2563EB"})
+		store := call(
+			"CreateStore",
+			"",
+			map[string]any{"name": "Tienda Principal", "type": "virtual", "color": "#2563EB"},
+		)
 		id := store["id"].(string)
 		if store["slug"] != "tienda-principal" {
 			t.Fatal("el slug debe partir del nombre", store["slug"])
@@ -39,7 +43,16 @@ func TestEditableSlugsAndSeparatedUserNames(t *testing.T) {
 			t.Fatal("la tienda debe poder conservar su propio slug")
 		}
 
-		call("UpdateStore", id, map[string]any{"slug": "tienda-miraflores", "name": "Tienda Principal", "type": "virtual", "color": "#2563EB"})
+		call(
+			"UpdateStore",
+			id,
+			map[string]any{
+				"slug":  "tienda-miraflores",
+				"name":  "Tienda Principal",
+				"type":  "virtual",
+				"color": "#2563EB",
+			},
+		)
 		if _, err := s.Repo.GetPublicStore(ctx, "tienda-principal"); err == nil {
 			t.Fatal("la URL anterior de la tienda todavía resuelve")
 		}
@@ -79,7 +92,12 @@ func TestEditableSlugsAndSeparatedUserNames(t *testing.T) {
 		created := call("CreateOrganization", "", map[string]any{
 			"slug": "empresa-setup", "tax_id": "20345678901", "name": "Nueva empresa", "legal_name": "Nueva empresa SAC",
 			"ubigeo_id": organization.UbigeoID, "address_type": organization.AddressType, "address": organization.Address,
-			"initial_store": map[string]any{"name": "Primera tienda", "slug": "primera-tienda-elegida", "type": "virtual", "color": "#2563EB"},
+			"initial_store": map[string]any{
+				"name":  "Primera tienda",
+				"slug":  "primera-tienda-elegida",
+				"type":  "virtual",
+				"color": "#2563EB",
+			},
 		})
 		initialStore, err := s.Repo.GetPublicStore(ctx, "primera-tienda-elegida")
 		if err != nil || initialStore.OrganizationID != created["id"] {
@@ -89,7 +107,12 @@ func TestEditableSlugsAndSeparatedUserNames(t *testing.T) {
 		_, err = s.Call(ctx, "CreateOrganization", operation.Input{Data: map[string]any{
 			"slug": "setup-duplicado", "tax_id": "20345678902", "name": "Otra empresa", "legal_name": "Otra empresa SAC",
 			"ubigeo_id": organization.UbigeoID, "address_type": organization.AddressType, "address": organization.Address,
-			"initial_store": map[string]any{"name": "Primera tienda", "slug": "primera-tienda-elegida", "type": "virtual", "color": "#2563EB"},
+			"initial_store": map[string]any{
+				"name":  "Primera tienda",
+				"slug":  "primera-tienda-elegida",
+				"type":  "virtual",
+				"color": "#2563EB",
+			},
 		}}, header)
 		if connect.CodeOf(err) != connect.CodeFailedPrecondition {
 			t.Fatal("el setup aceptó un slug de tienda ocupado", err)
