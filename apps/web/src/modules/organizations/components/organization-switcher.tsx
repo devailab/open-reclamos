@@ -149,7 +149,7 @@ export function SidebarOrganizationSwitcher({
 				render={
 					<button
 						type='button'
-						className='flex w-full items-center gap-3 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-3 py-2 text-left transition-colors hover:bg-sidebar-accent'
+						className='flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-sidebar-accent'
 					>
 						{activeOrganization ? (
 							<OrganizationLogo
@@ -161,7 +161,7 @@ export function SidebarOrganizationSwitcher({
 									activeOrganization.logoKey ??
 									undefined
 								}
-								className='size-10'
+								className='size-6'
 							/>
 						) : (
 							<div className='flex size-10 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground' />

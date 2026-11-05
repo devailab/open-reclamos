@@ -31,7 +31,7 @@ func (f *Feature) Export(ctx context.Context, p auth.Principal, in operation.Inp
 		format = constants.FormatPDF
 	}
 
-	if format != constants.FormatPDF && format != constants.FormatXLSX {
+	if format != constants.FormatPDF && format != constants.FormatXLSX && format != constants.FormatCSV {
 		return operation.Output{}, apperrors.Invalid(constants.MsgInvalidFormat)
 	}
 

@@ -1,9 +1,11 @@
 package documents
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 
 	"github.com/xuri/excelize/v2"
 	"openreclamos.com/api/internal/modules/complaints/entity"
@@ -13,7 +15,6 @@ import (
 	"openreclamos.com/api/internal/shared/database/repository"
 	apperrors "openreclamos.com/api/internal/shared/errors"
 	"openreclamos.com/api/internal/shared/operation"
-	"openreclamos.com/api/internal/shared/pdf"
 	"openreclamos.com/api/internal/shared/utils"
 )
 
@@ -23,11 +24,17 @@ const (
 	bookSheet    = "Sheet1"
 )
 
-// RenderBook genera el libro filtrado en PDF (por defecto) o Excel.
+// genera el libro filtrado en pdf, excel o csv.
 func (f *Feature) RenderBook(ctx context.Context, p auth.Principal, in operation.Input) (operation.Output, error) {
 	format := utils.Text(in.Data, "format")
-	if format != "" && format != constants.FormatPDF && format != constants.FormatXLSX {
+	if format != "" && format != constants.FormatPDF && format != constants.FormatXLSX &&
+		format != constants.FormatCSV {
 		return operation.Output{}, apperrors.Invalid(constants.MsgInvalidFormat)
+	}
+
+	fileName, err := f.BookFileName(ctx, p, in)
+	if err != nil {
+		return operation.Output{}, err
 	}
 
 	rows, err := f.bookRows(ctx, p, in)
@@ -35,38 +42,17 @@ func (f *Feature) RenderBook(ctx context.Context, p auth.Principal, in operation
 		return operation.Output{}, err
 	}
 
-	if format == constants.FormatXLSX {
-		return bookXLSX(rows)
+	switch format {
+	case constants.FormatXLSX:
+		return bookXLSX(rows, fileName)
+	case constants.FormatCSV:
+		return bookCSV(rows, fileName)
+	default:
+		return f.bookPDF(ctx, p, in, rows, fileName)
 	}
-
-	org, err := f.deps.Repo.GetOrganization(ctx, p.OrganizationID)
-	if err != nil {
-		return operation.Output{}, err
-	}
-
-	m := pdf.New()
-
-	pdf.Line(m, "Libro de Reclamaciones — ", org.LegalName)
-
-	for _, c := range rows {
-		pdf.Line(m, "Hoja de reclamación ", c.Correlative)
-
-		data := utils.PublicData(c)
-
-		for _, column := range entity.BookColumns {
-			pdf.Line(m, column.Label+": ", entity.DisplayValue(column.Key, data[column.Key]))
-		}
-	}
-
-	doc, err := m.Generate()
-	if err != nil {
-		return operation.Output{}, err
-	}
-
-	return operation.File(doc.GetBytes(), "libro.pdf", constants.ContentTypePDF), nil
 }
 
-// bookRows lee todas las páginas del filtro y las ordena por fecha de registro.
+// lee los reclamos filtrados y los ordena por correlativo de menor a mayor.
 func (f *Feature) bookRows(
 	ctx context.Context,
 	p auth.Principal,
@@ -90,32 +76,50 @@ func (f *Feature) bookRows(
 		}
 	}
 
-	slices.SortFunc(all, func(a, b repository.ComplaintListItem) int { return a.CreatedAt.Compare(b.CreatedAt) })
+	slices.SortFunc(all, func(a, b repository.ComplaintListItem) int {
+		first, firstErr := strconv.ParseUint(a.Correlative, 10, 64)
+		second, secondErr := strconv.ParseUint(b.Correlative, 10, 64)
+
+		if firstErr == nil && secondErr == nil {
+			if order := cmp.Compare(first, second); order != 0 {
+				return order
+			}
+		} else {
+			if firstErr == nil {
+				return -1
+			}
+
+			if secondErr == nil {
+				return 1
+			}
+
+			if order := cmp.Compare(a.Correlative, b.Correlative); order != 0 {
+				return order
+			}
+		}
+
+		if order := cmp.Compare(a.StoreID, b.StoreID); order != 0 {
+			return order
+		}
+
+		return cmp.Compare(a.ID, b.ID)
+	})
 
 	return all, nil
 }
 
-func bookXLSX(rows []repository.ComplaintListItem) (operation.Output, error) {
+func bookXLSX(rows []repository.ComplaintListItem, fileName string) (operation.Output, error) {
 	f := excelize.NewFile()
 	defer f.Close()
 
-	headers := []any{}
-
-	for _, column := range entity.BookColumns {
-		headers = append(headers, column.Label)
-	}
+	headers := bookHeaders()
 
 	if err := f.SetSheetRow(bookSheet, "A1", &headers); err != nil {
 		return operation.Output{}, err
 	}
 
 	for i, c := range rows {
-		cells := []any{}
-		data := utils.PublicData(c)
-
-		for _, column := range entity.BookColumns {
-			cells = append(cells, entity.DisplayValue(column.Key, data[column.Key]))
-		}
+		cells := bookCells(c)
 
 		if err := f.SetSheetRow(bookSheet, fmt.Sprintf("A%d", i+2), &cells); err != nil {
 			return operation.Output{}, err
@@ -127,5 +131,26 @@ func bookXLSX(rows []repository.ComplaintListItem) (operation.Output, error) {
 		return operation.Output{}, err
 	}
 
-	return operation.File(b.Bytes(), "libro.xlsx", constants.ContentTypeXLSX), nil
+	return operation.File(b.Bytes(), fileName, constants.ContentTypeXLSX), nil
+}
+
+func bookHeaders() []string {
+	headers := make([]string, 0, len(entity.BookColumns))
+
+	for _, column := range entity.BookColumns {
+		headers = append(headers, column.Label)
+	}
+
+	return headers
+}
+
+func bookCells(complaint repository.ComplaintListItem) []string {
+	cells := make([]string, 0, len(entity.BookColumns))
+	data := utils.PublicData(complaint)
+
+	for _, column := range entity.BookColumns {
+		cells = append(cells, entity.DisplayValue(column.Key, data[column.Key]))
+	}
+
+	return cells
 }

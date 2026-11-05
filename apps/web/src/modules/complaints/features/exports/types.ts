@@ -1,4 +1,4 @@
-export type ExportFormat = 'pdf' | 'xlsx'
+export type ExportFormat = 'pdf' | 'xlsx' | 'csv'
 
 export interface ExportFormValues {
 	storeId: string | null
@@ -22,7 +22,12 @@ export const EXPORT_FORMAT_OPTIONS: Array<{
 	{
 		value: 'pdf',
 		label: 'PDF',
-		description: 'Libro de reclamos generado en el servidor',
+		description: 'Portada y constancias de respuesta o recepción',
+	},
+	{
+		value: 'csv',
+		label: 'CSV',
+		description: 'Tabla en formato separado por punto y coma',
 	},
 	{
 		value: 'xlsx',

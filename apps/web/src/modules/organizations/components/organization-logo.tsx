@@ -30,7 +30,7 @@ export function OrganizationLogo({
 	return (
 		<div
 			className={cn(
-				'flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted text-muted-foreground',
+				'flex size-9 shrink-0 items-center justify-center overflow-hidden  text-muted-foreground',
 				className,
 			)}
 		>

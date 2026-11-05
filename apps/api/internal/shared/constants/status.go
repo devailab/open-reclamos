@@ -99,6 +99,7 @@ const (
 	ExportFailed    = "failed"
 	FormatPDF       = "pdf"
 	FormatXLSX      = "xlsx"
+	FormatCSV       = "csv"
 )
 
 // Protocolos y propósitos de un intento SSO.
@@ -126,6 +127,7 @@ const (
 // Tipos MIME usados en respuestas y archivos.
 const (
 	ContentTypePDF          = "application/pdf"
+	ContentTypeCSV          = "text/csv; charset=utf-8"
 	ContentTypeXLSX         = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 	ContentTypeSAMLMetadata = "application/samlmetadata+xml"
 	ContentTypeJSON         = "application/json"

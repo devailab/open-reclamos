@@ -38,6 +38,23 @@ export function exportInput(values: ExportFormValues) {
 	}
 }
 
+function downloadFileName(response: Response): string {
+	const disposition = response.headers.get('Content-Disposition') ?? ''
+	const encoded = /filename\*=utf-8''([^;]+)/i.exec(disposition)
+
+	if (encoded) {
+		return decodeURIComponent(encoded[1])
+	}
+
+	const name = /filename="([^"]+)"/i.exec(disposition)?.[1]
+
+	if (!name) {
+		throw new Error('El servidor no devolvió el nombre del archivo.')
+	}
+
+	return name
+}
+
 export async function getExportStores(signal?: AbortSignal) {
 	const stores: StoreOption[] = []
 
@@ -120,23 +137,27 @@ export async function exportBook(
 	onQueued?: (id: string) => void,
 	existingJobId?: string,
 ) {
+	const input = exportInput(values)
+
 	let id = existingJobId
 
 	if (!id) {
-		const response = await requestRPC(
-			OpExportBook,
-			exportInput(values),
-			signal,
-		)
+		const response = await requestRPC(OpExportBook, input, signal)
 
 		signal.throwIfAborted()
 
 		if (response.document?.length) {
+			if (!response.fileName) {
+				throw new Error(
+					'El servidor no devolvió el nombre del archivo.',
+				)
+			}
+
 			const blob = new Blob([new Uint8Array(response.document)], {
 				type: response.contentType,
 			})
 
-			saveBlob(blob, response.fileName || `libro.${values.format}`)
+			saveBlob(blob, response.fileName)
 
 			return
 		}
@@ -169,5 +190,5 @@ export async function exportBook(
 		)
 	}
 
-	saveBlob(await response.blob(), `libro.${values.format}`)
+	saveBlob(await response.blob(), downloadFileName(response))
 }

@@ -2,6 +2,7 @@ package exports
 
 import (
 	"context"
+	"encoding/json"
 
 	"openreclamos.com/api/internal/shared/auth"
 	"openreclamos.com/api/internal/shared/constants"
@@ -50,4 +51,19 @@ func (f *Feature) Authorized(ctx context.Context, p auth.Principal, id string) (
 	}
 
 	return export, nil
+}
+
+// usa los filtros guardados y la tienda de la empresa autorizada.
+func (f *Feature) FileName(ctx context.Context, p auth.Principal, export models.Export) (string, error) {
+	var filters map[string]any
+
+	if err := json.Unmarshal(export.Filters, &filters); err != nil {
+		return "", err
+	}
+
+	return f.documents.BookFileName(
+		ctx,
+		p,
+		operation.Input{Data: map[string]any{"format": export.Format}, Filters: filters},
+	)
 }

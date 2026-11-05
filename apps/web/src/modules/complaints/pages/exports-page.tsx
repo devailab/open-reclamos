@@ -40,7 +40,7 @@ export function ExportsPage() {
 					Exportar
 				</h1>
 				<p className='text-sm text-muted-foreground mt-1'>
-					Descarga el registro de reclamos en PDF o Excel para
+					Descarga el registro de reclamos en PDF, Excel o CSV para
 					auditorías y fiscalizaciones.
 				</p>
 			</div>

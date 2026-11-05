@@ -12,7 +12,7 @@ import (
 // BookColumn es una columna del libro de reclamaciones exportado.
 type BookColumn struct{ Key, Label string }
 
-// BookColumns son las columnas del libro en PDF y Excel, en orden.
+// columnas compartidas por excel y csv, en el mismo orden.
 var BookColumns = []BookColumn{
 	{"correlative", "Correlativo"},
 	{"tracking_code", "Código"},

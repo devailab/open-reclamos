@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"mime"
 	"net/http"
 
 	"openreclamos.com/api/internal/shared/constants"
@@ -38,14 +38,24 @@ func (h *Handler) DownloadExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fileName, err := h.exports.FileName(r.Context(), p, export)
+	if err != nil {
+		http.NotFound(w, r)
+
+		return
+	}
+
 	contentType := constants.ContentTypePDF
 
-	if export.Format == constants.FormatXLSX {
+	switch export.Format {
+	case constants.FormatXLSX:
 		contentType = constants.ContentTypeXLSX
+	case constants.FormatCSV:
+		contentType = constants.ContentTypeCSV
 	}
 
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Cache-Control", "private, no-store")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"libro.%s\"", export.Format))
+	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": fileName}))
 	w.Write(data)
 }

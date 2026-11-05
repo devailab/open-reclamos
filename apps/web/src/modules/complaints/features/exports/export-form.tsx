@@ -22,11 +22,13 @@ interface ExportFormProps {
 const FORMAT_ICONS: Record<ExportFormat, typeof FileText> = {
 	pdf: FileText,
 	xlsx: FileSpreadsheet,
+	csv: FileSpreadsheet,
 }
 
 const FORMAT_MESSAGES: Record<ExportFormat, string> = {
 	pdf: 'Generando el libro PDF...',
 	xlsx: 'Exportando archivo Excel...',
+	csv: 'Exportando archivo CSV...',
 }
 
 export function ExportForm({ stores }: ExportFormProps) {

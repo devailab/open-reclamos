@@ -140,7 +140,7 @@ type initialOrganization struct {
 	Website          *string
 	PrimaryColor     *string
 	LogoKey          *string
-	Status           string `gorm:"not null;default:active;check:organizations_status_check,status IN ('active','suspended')"`
+	Status           string `gorm:"not null;default:active"`
 	SuspendedAt      *time.Time
 	SuspendedBy      *uuidColumn
 	Suspender        *initialUser `gorm:"foreignKey:SuspendedBy"`
@@ -162,7 +162,7 @@ type initialSession struct {
 	User                 initialUser `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	ActiveOrganizationID *uuidColumn
 	ActiveOrganization   *initialOrganization `gorm:"foreignKey:ActiveOrganizationID;constraint:OnDelete:SET NULL"`
-	AuthMethod           string               `gorm:"not null;check:sessions_auth_method_check,auth_method IN ('local','oidc','saml')"`
+	AuthMethod           string               `gorm:"not null"`
 	AuthenticatedAt      time.Time            `gorm:"not null;default:CURRENT_TIMESTAMP"`
 	ExpiresAt            time.Time            `gorm:"not null"`
 	IpAddress            *string
@@ -175,10 +175,10 @@ func (initialSession) TableName() string { return "sessions" }
 
 type initialRole struct {
 	ID          uuidColumn `gorm:"primaryKey"`
-	Key         string     `gorm:"not null;uniqueIndex:roles_key_key;check:roles_key_check,key IN ('admin','operator','viewer')"`
+	Key         string     `gorm:"not null;uniqueIndex:roles_key_key"`
 	Name        string     `gorm:"not null"`
 	Description *string
-	IsSystem    bool `gorm:"not null;default:true;check:roles_is_system_check,is_system"`
+	IsSystem    bool `gorm:"not null;default:true"`
 }
 
 func (initialRole) TableName() string { return "roles" }
@@ -190,7 +190,7 @@ type initialOrganizationMember struct {
 	Organization    initialOrganization `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
 	RoleID          uuidColumn          `gorm:"not null"`
 	Role            initialRole         `gorm:"foreignKey:RoleID"`
-	StoreAccessMode string              `gorm:"not null;default:all;check:organization_members_store_access_mode_check,store_access_mode IN ('all','selected')"`
+	StoreAccessMode string              `gorm:"not null;default:all"`
 	CreatedAt       time.Time           `gorm:"not null;default:CURRENT_TIMESTAMP"`
 	CreatedBy       *uuidColumn
 	Creator         *initialUser `gorm:"foreignKey:CreatedBy;constraint:OnDelete:SET NULL"`
@@ -219,7 +219,7 @@ type initialStore struct {
 	Ubigeo         *initialUbigeo `gorm:"foreignKey:UbigeoID"`
 	Slug           string         `gorm:"not null;uniqueIndex:stores_slug_key"`
 	Name           string         `gorm:"not null"`
-	Type           string         `gorm:"not null;check:stores_type_check,type IN ('physical','virtual')"`
+	Type           string         `gorm:"not null"`
 	Color          string         `gorm:"not null;default:#2563EB"`
 	AddressType    *string
 	Address        *string
@@ -259,7 +259,7 @@ type initialOrganizationInvitation struct {
 	Role            initialRole         `gorm:"foreignKey:RoleID"`
 	Email           string              `gorm:"not null"`
 	TokenHash       string              `gorm:"not null;uniqueIndex:organization_invitations_token_hash_key"`
-	StoreAccessMode string              `gorm:"not null;default:all;check:organization_invitations_store_access_mode_check,store_access_mode IN ('all','selected')"`
+	StoreAccessMode string              `gorm:"not null;default:all"`
 	ExpiresAt       time.Time           `gorm:"not null"`
 	AcceptedAt      *time.Time
 	RevokedAt       *time.Time
@@ -289,7 +289,7 @@ type initialOrganizationSettings struct {
 	ID                   uuidColumn          `gorm:"primaryKey"`
 	OrganizationID       uuidColumn          `gorm:"not null;uniqueIndex:organization_settings_organization_id_key"`
 	Organization         initialOrganization `gorm:"foreignKey:OrganizationID"`
-	ResponseDeadlineDays int32               `gorm:"not null;default:15;check:organization_settings_response_deadline_days_check,response_deadline_days BETWEEN 1 AND 365"`
+	ResponseDeadlineDays int32               `gorm:"not null;default:15"`
 	FormEnabled          bool                `gorm:"not null;default:true"`
 	McpEnabledTools      jsonColumn
 	McpShowSensitiveData bool      `gorm:"not null;default:false"`
@@ -327,7 +327,7 @@ type initialAPIKey struct {
 func (initialAPIKey) TableName() string { return "api_keys" }
 
 type initialComplaintReason struct {
-	ID             uuidColumn `gorm:"primaryKey;check:complaint_reasons_parent_check,parent_id IS NULL OR parent_id <> id"`
+	ID             uuidColumn `gorm:"primaryKey"`
 	OrganizationID *uuidColumn
 	Organization   *initialOrganization `gorm:"foreignKey:OrganizationID"`
 	ParentID       *uuidColumn
@@ -374,8 +374,8 @@ type initialComplaint struct {
 	Category               *initialComplaintCategory `gorm:"foreignKey:OrganizationID,CategoryID;references:OrganizationID,ID"`
 	UbigeoID               *uuidColumn               ``
 	Ubigeo                 *initialUbigeo            `gorm:"foreignKey:UbigeoID"`
-	Status                 string                    `gorm:"not null;default:open;index:complaints_org_status_idx,priority:2;check:complaints_status_check,status IN ('open','in_review','resolved')"`
-	Priority               string                    `gorm:"not null;default:medium;check:complaints_priority_check,priority IN ('low','medium','high','urgent')"`
+	Status                 string                    `gorm:"not null;default:open;index:complaints_org_status_idx,priority:2"`
+	Priority               string                    `gorm:"not null;default:medium"`
 	TrackingCode           string                    `gorm:"not null;uniqueIndex:complaints_store_id_tracking_code_key,priority:2;uniqueIndex:complaints_organization_id_tracking_code_key,priority:2"`
 	Correlative            string                    `gorm:"not null;uniqueIndex:complaints_store_id_correlative_key,priority:2"`
 	FirstName              string                    `gorm:"not null"`
@@ -394,7 +394,7 @@ type initialComplaint struct {
 	DialCode               *string
 	Phone                  *string
 	Address                *string
-	Type                   string `gorm:"not null;check:complaints_type_check,type IN ('claim','complaint')"`
+	Type                   string `gorm:"not null"`
 	ItemType               *string
 	ItemDescription        *string
 	Currency               *string
@@ -493,7 +493,7 @@ type initialWebhookEndpoint struct {
 	Status          string              `gorm:"not null;default:active"`
 	SecretEncrypted *string
 	CustomHeaders   jsonColumn
-	TimeoutMs       int32 `gorm:"not null;default:15000;check:webhook_endpoints_timeout_ms_check,timeout_ms BETWEEN 1000 AND 30000"`
+	TimeoutMs       int32 `gorm:"not null;default:15000"`
 	DeletedAt       *time.Time
 	DeletedBy       *uuidColumn
 	Deleter         *initialUser `gorm:"foreignKey:DeletedBy"`
@@ -555,8 +555,8 @@ type initialExport struct {
 	User           initialUser         `gorm:"foreignKey:UserID"`
 	StoreIds       jsonColumn          `gorm:"not null"`
 	Filters        jsonColumn          `gorm:"not null"`
-	Format         string              `gorm:"not null;check:exports_format_check,format IN ('pdf','xlsx')"`
-	Status         string              `gorm:"not null;default:queued;check:exports_status_check,status IN ('queued','completed','failed')"`
+	Format         string              `gorm:"not null"`
+	Status         string              `gorm:"not null;default:queued"`
 	StorageKey     *string
 	ErrorMessage   *string
 	CreatedAt      time.Time `gorm:"not null;default:CURRENT_TIMESTAMP;index:exports_org_user_idx,priority:3,sort:desc"`
@@ -586,9 +586,9 @@ type initialSSOConnection struct {
 	ID             uuidColumn          `gorm:"primaryKey;uniqueIndex:organization_sso_connections_organization_id_id_key,priority:2"`
 	OrganizationID uuidColumn          `gorm:"not null;uniqueIndex:organization_sso_connections_organization_id_id_key,priority:1"`
 	Organization   initialOrganization `gorm:"foreignKey:OrganizationID"`
-	Protocol       string              `gorm:"not null;check:organization_sso_connections_protocol_check,protocol IN ('oidc','saml')"`
+	Protocol       string              `gorm:"not null"`
 	Name           string              `gorm:"not null"`
-	Status         string              `gorm:"not null;default:draft;check:organization_sso_connections_status_check,status IN ('draft','active','disabled')"`
+	Status         string              `gorm:"not null;default:draft"`
 	ConfigVersion  int32               `gorm:"not null;default:1"`
 	TestedVersion  *int32
 	TestedAt       *time.Time
@@ -603,7 +603,7 @@ func (initialSSOConnection) TableName() string { return "organization_sso_connec
 type initialAuthSettings struct {
 	OrganizationID     uuidColumn            `gorm:"primaryKey"`
 	Organization       initialOrganization   `gorm:"foreignKey:OrganizationID"`
-	LoginMode          string                `gorm:"not null;default:local;check:organization_auth_settings_login_mode_check,login_mode IN ('local','mixed','sso_required')"`
+	LoginMode          string                `gorm:"not null;default:local"`
 	ActiveConnectionID *uuidColumn           ``
 	ActiveConnection   *initialSSOConnection `gorm:"foreignKey:OrganizationID,ActiveConnectionID;references:OrganizationID,ID"`
 	PolicyVersion      int32                 `gorm:"not null;default:1"`
@@ -656,7 +656,7 @@ type initialSSOLoginAttempt struct {
 	ConnectionID          uuidColumn           `gorm:"not null"`
 	Connection            initialSSOConnection `gorm:"foreignKey:OrganizationID,ConnectionID;references:OrganizationID,ID"`
 	ConfigVersion         int32                `gorm:"not null"`
-	Purpose               string               `gorm:"not null;check:sso_login_attempts_purpose_check,purpose IN ('login','link','test')"`
+	Purpose               string               `gorm:"not null"`
 	UserID                *uuidColumn
 	User                  *initialUser `gorm:"foreignKey:UserID"`
 	StateHash             string       `gorm:"not null;uniqueIndex:sso_login_attempts_state_hash_key"`
@@ -676,7 +676,7 @@ type initialSessionOrganizationAuth struct {
 	Session         initialSession        `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
 	OrganizationID  uuidColumn            `gorm:"primaryKey"`
 	Organization    initialOrganization   `gorm:"foreignKey:OrganizationID"`
-	Method          string                `gorm:"not null;check:session_organization_auth_method_check,method IN ('local','oidc','saml')"`
+	Method          string                `gorm:"not null"`
 	ConnectionID    *uuidColumn           ``
 	Connection      *initialSSOConnection `gorm:"foreignKey:OrganizationID,ConnectionID;references:OrganizationID,ID"`
 	PolicyVersion   int32                 `gorm:"not null"`
