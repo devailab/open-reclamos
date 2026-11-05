@@ -33,7 +33,10 @@ func TestExportFormatStoredAsText(t *testing.T) {
 				t.Fatalf("la base rechazó el texto %q: %v", exportFormat, err)
 			}
 
-			export, err := s.Repo.GetExport(ctx, repository.GetExportParams{ID: id, OrganizationID: principal.OrganizationID})
+			export, err := s.Repo.GetExport(
+				ctx,
+				repository.GetExportParams{ID: id, OrganizationID: principal.OrganizationID},
+			)
 			if err != nil || export.Format != exportFormat {
 				t.Fatalf("no se conservó el formato %q: %v", exportFormat, err)
 			}

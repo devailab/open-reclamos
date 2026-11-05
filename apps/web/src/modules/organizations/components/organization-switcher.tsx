@@ -43,8 +43,8 @@ export function SidebarOrganizationSwitcher({
 	const isCollapsed = state === 'collapsed'
 
 	const dropdownContent = (
-		<DropdownMenuContent align='start' side='bottom' className='w-80 p-0'>
-			<DropdownMenuGroup className='p-2'>
+		<DropdownMenuContent align='start' side='bottom' className='w-64 p-0'>
+			<DropdownMenuGroup className='p-1'>
 				<DropdownMenuLabel>Organizaciones</DropdownMenuLabel>
 				<DropdownMenuRadioGroup
 					value={activeOrganization?.id ?? ''}
@@ -63,7 +63,7 @@ export function SidebarOrganizationSwitcher({
 									onOrganizationChange(organization.id)
 								}
 							}}
-							className='px-2 py-2'
+							className='gap-2 px-2 py-2'
 						>
 							<OrganizationLogo
 								slug={organization.slug}
@@ -74,7 +74,7 @@ export function SidebarOrganizationSwitcher({
 									organization.logoKey ??
 									undefined
 								}
-								className='size-9'
+								className='size-6'
 							/>
 							<span className='truncate'>
 								{organization.name}
@@ -84,13 +84,13 @@ export function SidebarOrganizationSwitcher({
 				</DropdownMenuRadioGroup>
 			</DropdownMenuGroup>
 			<DropdownMenuSeparator />
-			<div className='p-2'>
+			<div className='p-1'>
 				<DropdownMenuItem
 					render={<Link to='/dashboard/organizations/new' />}
-					className='px-2 py-2 text-sm font-medium'
+					className='gap-2 px-2 py-1 text-sm font-medium'
 				>
-					<div className='flex size-9 items-center justify-center rounded-lg border'>
-						<Plus className='size-4' />
+					<div className='flex size-6 items-center justify-center rounded-md border'>
+						<Plus className='size-3.5' />
 					</div>
 					Agregar organización
 				</DropdownMenuItem>
