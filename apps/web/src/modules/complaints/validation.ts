@@ -1,15 +1,22 @@
 import { combine, email, required } from '@/shared/lib/validators'
 
 // Step 1 validators
-export const validateDocumentNumber = combine(required, (v) => {
-	const s = String(v ?? '').trim()
+export const validateDocumentNumber = (documentType?: string | null) =>
+	combine(required, (v) => {
+		const s = String(v ?? '').trim()
 
-	if (s.length < 6 || s.length > 20) {
-		return 'El número de documento debe tener entre 6 y 20 caracteres'
-	}
+		if (documentType === 'DNI') {
+			return /^\d{8}$/.test(s)
+				? null
+				: 'El DNI debe tener 8 dígitos numéricos'
+		}
 
-	return null
-})
+		if (s.length < 6 || s.length > 20) {
+			return 'El número de documento debe tener entre 6 y 20 caracteres'
+		}
+
+		return null
+	})
 
 export const validateEmail = combine(required, email)
 

@@ -91,7 +91,14 @@ export function useComplaintForm({
 		initialValues: STEP2_INITIAL,
 	})
 
-	const goToStep = (step: Step) => setCurrentStep(step)
+	const goToStep = (step: Step) => {
+		if (step === 'details' && currentStep === 'consumer') {
+			if (step1Form.validate({ focus: 'first' }).length > 0) {
+				return
+			}
+		}
+		setCurrentStep(step)
+	}
 
 	const handleSubmit = async () => {
 		if (loading || submitLockRef.current || successData) {

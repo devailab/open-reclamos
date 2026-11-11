@@ -177,7 +177,9 @@ export const StepConsumer: FC<StepConsumerProps> = ({
 							{...register('documentNumber')}
 							label='Número de documento *'
 							placeholder='12345678'
-							validate={validateDocumentNumber}
+							validate={validateDocumentNumber(
+								values.documentType?.value,
+							)}
 							disabled={disabled}
 						/>
 					</div>
@@ -225,7 +227,9 @@ export const StepConsumer: FC<StepConsumerProps> = ({
 									{...register('guardianDocumentNumber')}
 									label='Número de documento *'
 									placeholder='12345678'
-									validate={validateDocumentNumber}
+									validate={validateDocumentNumber(
+										values.guardianDocumentType?.value,
+									)}
 									disabled={disabled}
 								/>
 							</div>
@@ -302,7 +306,9 @@ export const StepConsumer: FC<StepConsumerProps> = ({
 								{...register('contactDocumentNumber')}
 								label='Número de documento *'
 								placeholder='12345678'
-								validate={validateDocumentNumber}
+								validate={validateDocumentNumber(
+									values.contactDocumentType?.value,
+								)}
 								disabled={disabled}
 							/>
 						</div>
