@@ -8,15 +8,7 @@ import {
 	useInteractions,
 	useRole,
 } from '@floating-ui/react'
-import {
-	Check,
-	ChevronDown,
-	Loader2,
-	Search,
-	SearchAlert,
-	TextSearch,
-	X,
-} from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 import {
 	type FC,
 	type ReactNode,
@@ -27,6 +19,10 @@ import {
 	useRef,
 	useState,
 } from 'react'
+import { IcArrowDown02 } from '@/shared/components/icons/ic-arrow-down-02'
+import { IcSearchNormal } from '@/shared/components/icons/ic-search-normal'
+import { IcSearchStatus } from '@/shared/components/icons/ic-search-status'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 
 import { InputGroup } from '@/shared/components/ui/input-group'
 import { Label } from '@/shared/components/ui/label'
@@ -402,7 +398,7 @@ const AutocompleteField: FC<AutocompleteFieldProps> = ({
 								<X className='h-3.5 w-3.5' />
 							</button>
 						)}
-						<ChevronDown className='h-4 w-4 text-muted-foreground' />
+						<IcArrowDown02 className='h-4 w-4 text-muted-foreground' />
 					</div>
 				</div>
 			</InputGroup>
@@ -423,7 +419,7 @@ const AutocompleteField: FC<AutocompleteFieldProps> = ({
 							{isLoading ? (
 								<Loader2 className='h-4 w-4 shrink-0 animate-spin text-muted-foreground' />
 							) : (
-								<Search className='h-4 w-4 shrink-0 text-muted-foreground' />
+								<IcSearchNormal className='h-4 w-4 shrink-0 text-muted-foreground' />
 							)}
 							<input
 								ref={inputRef}
@@ -450,14 +446,14 @@ const AutocompleteField: FC<AutocompleteFieldProps> = ({
 
 						{options.length === 0 && query !== '' && !isLoading && (
 							<div className='flex flex-col items-center justify-center gap-2 py-8 text-center text-sm text-muted-foreground'>
-								<SearchAlert className='h-5 w-5' />
+								<IcSearchStatus className='h-5 w-5' />
 								{emptyMessage}
 							</div>
 						)}
 
 						{options.length === 0 && query === '' && (
 							<div className='flex items-center justify-center py-8 text-sm text-muted-foreground'>
-								<TextSearch />
+								<IcSearchNormal />
 							</div>
 						)}
 
@@ -477,7 +473,7 @@ const AutocompleteField: FC<AutocompleteFieldProps> = ({
 							>
 								<span className='truncate'>{option.label}</span>
 								{value?.value === option.value && (
-									<Check className='h-4 w-4 shrink-0' />
+									<IcTickCircle className='h-4 w-4 shrink-0' />
 								)}
 							</button>
 						))}

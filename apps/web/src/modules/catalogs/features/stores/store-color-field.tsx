@@ -1,5 +1,6 @@
-import { Check, Palette } from 'lucide-react'
 import { useId, useImperativeHandle, useRef, useState } from 'react'
+import { IcColorSwatch } from '@/shared/components/icons/ic-color-swatch'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Dialog,
@@ -132,7 +133,7 @@ export function StoreColorField({
 									onClick={() => setDraftColor(option.value)}
 								>
 									{isSelected ? (
-										<Check className='size-5 text-white drop-shadow-sm' />
+										<IcTickCircle className='size-5 text-white drop-shadow-sm' />
 									) : null}
 								</button>
 							)
@@ -148,7 +149,7 @@ export function StoreColorField({
 								className='flex size-7 items-center justify-center rounded-full border-2 border-white shadow-sm'
 								style={{ backgroundColor: draftColor }}
 							>
-								<Palette className='size-3.5 text-white drop-shadow-sm' />
+								<IcColorSwatch className='size-3.5 text-white drop-shadow-sm' />
 							</span>
 							<input
 								type='color'

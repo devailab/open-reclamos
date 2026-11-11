@@ -1,7 +1,7 @@
-import { ShieldCheck } from 'lucide-react'
 import { Link, Navigate, useNavigate } from 'react-router'
 import { sileo } from 'sileo'
 import { useSession } from '@/shared/auth/session'
+import { IcShieldTick } from '@/shared/components/icons/ic-shield-tick'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Card,
@@ -33,7 +33,7 @@ export function InstallPage() {
 	return (
 		<Card className='py-6'>
 			<CardHeader className='px-6'>
-				<ShieldCheck className='size-5 text-primary' />
+				<IcShieldTick className='size-5 text-primary' />
 				<CardTitle>Configuración inicial de la plataforma</CardTitle>
 				<CardDescription>
 					Crea el primer administrador para comenzar a configurar tu

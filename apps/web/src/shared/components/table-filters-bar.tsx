@@ -1,7 +1,10 @@
 'use client'
 
-import { ChevronDown, Search, SlidersHorizontal, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { type ReactNode, useId, useState } from 'react'
+import { IcArrowDown02 } from '@/shared/components/icons/ic-arrow-down-02'
+import { IcSearchNormal } from '@/shared/components/icons/ic-search-normal'
+import { IcSetting4 } from '@/shared/components/icons/ic-setting-4'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import {
@@ -88,7 +91,7 @@ export default function TableFiltersBar({
 							}
 							onClick={() => setAdvancedOpen((open) => !open)}
 						>
-							<SlidersHorizontal className='h-4 w-4' />
+							<IcSetting4 className='h-4 w-4' />
 							{advancedFiltersLabel}
 							{activeAdvancedCount > 0 && (
 								<Badge className='ml-0.5 h-5 min-w-5 px-1.5'>
@@ -100,7 +103,7 @@ export default function TableFiltersBar({
 									</span>
 								</Badge>
 							)}
-							<ChevronDown
+							<IcArrowDown02
 								className={cn(
 									'hidden h-4 w-4 transition-transform md:block',
 									advancedOpen && 'rotate-180',
@@ -130,7 +133,7 @@ export default function TableFiltersBar({
 					</Tooltip>
 
 					<Button type='button' size='default' onClick={onSearch}>
-						<Search className='h-4 w-4' />
+						<IcSearchNormal className='h-4 w-4' />
 						{searchLabel}
 					</Button>
 				</div>

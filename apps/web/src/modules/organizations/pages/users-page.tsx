@@ -1,10 +1,12 @@
 import { PermissionAdmin } from '@open-reclamos/rpc-client'
-import { Plus, RefreshCcw, ShieldUser } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import { useSession } from '@/shared/auth/session'
 import { CopyButton } from '@/shared/components/copy-button'
 import DataTable from '@/shared/components/data-table'
+import { IcAdd } from '@/shared/components/icons/ic-add'
+import { IcRefreshArrow01 } from '@/shared/components/icons/ic-refresh-arrow-01'
+import { IcSecurityUser } from '@/shared/components/icons/ic-security-user'
 import TableFiltersBar from '@/shared/components/table-filters-bar'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -297,7 +299,7 @@ function UsersPageContent() {
 								}
 							}}
 						>
-							<ShieldUser />
+							<IcSecurityUser />
 							<span className='sr-only'>Editar acceso</span>
 						</Button>
 					</div>
@@ -406,7 +408,7 @@ function UsersPageContent() {
 								})
 						}}
 					>
-						<RefreshCcw />
+						<IcRefreshArrow01 />
 						<span className='sr-only'>Revocar invitación</span>
 					</Button>
 				</div>
@@ -445,7 +447,7 @@ function UsersPageContent() {
 					disabled={!canManage}
 					onClick={() => setCreateInvitationOpen(true)}
 				>
-					<Plus />
+					<IcAdd />
 					Nueva invitación
 				</Button>
 			</div>
@@ -537,7 +539,7 @@ function UsersPageContent() {
 						<Empty className='border py-12'>
 							<EmptyHeader>
 								<EmptyMedia variant='icon'>
-									<ShieldUser />
+									<IcSecurityUser />
 								</EmptyMedia>
 								<EmptyContent>
 									<EmptyTitle>
@@ -619,7 +621,7 @@ function UsersPageContent() {
 						<Empty className='border py-12'>
 							<EmptyHeader>
 								<EmptyMedia variant='icon'>
-									<Plus />
+									<IcAdd />
 								</EmptyMedia>
 								<EmptyContent>
 									<EmptyTitle>

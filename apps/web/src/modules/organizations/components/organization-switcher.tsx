@@ -1,8 +1,9 @@
 'use client'
 
-import { ChevronsUpDown, Plus } from 'lucide-react'
+import { ChevronsUpDown } from 'lucide-react'
 import { Link } from 'react-router'
 import { OrganizationLogo } from '@/modules/organizations/components/organization-logo'
+import { IcAdd } from '@/shared/components/icons/ic-add'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -90,7 +91,7 @@ export function SidebarOrganizationSwitcher({
 					className='gap-2 px-2 py-1 text-sm font-medium'
 				>
 					<div className='flex size-6 items-center justify-center rounded-md border'>
-						<Plus className='size-3.5' />
+						<IcAdd className='size-3.5' />
 					</div>
 					Agregar organización
 				</DropdownMenuItem>

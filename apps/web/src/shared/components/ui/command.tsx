@@ -1,8 +1,9 @@
 'use client'
 
 import { Command as CommandPrimitive } from 'cmdk'
-import { CheckIcon, SearchIcon } from 'lucide-react'
 import type * as React from 'react'
+import { IcSearchNormal } from '@/shared/components/icons/ic-search-normal'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import {
 	Dialog,
 	DialogContent,
@@ -78,7 +79,7 @@ function CommandInput({
 					{...props}
 				/>
 				<InputGroupAddon>
-					<SearchIcon className='size-4 shrink-0 opacity-50' />
+					<IcSearchNormal className='size-4 shrink-0 opacity-50' />
 				</InputGroupAddon>
 			</InputGroup>
 		</div>
@@ -158,7 +159,7 @@ function CommandItem({
 			{...props}
 		>
 			{children}
-			<CheckIcon className='ml-auto opacity-0 group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:opacity-100' />
+			<IcTickCircle className='ml-auto opacity-0 group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:opacity-100' />
 		</CommandPrimitive.Item>
 	)
 }

@@ -1,5 +1,8 @@
-import { ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
 import { type FC, useState } from 'react'
+import { IcAdd } from '@/shared/components/icons/ic-add'
+import { IcArrowRight02 } from '@/shared/components/icons/ic-arrow-right-02'
+import { IcEdit2 } from '@/shared/components/icons/ic-edit-2'
+import { IcTrash } from '@/shared/components/icons/ic-trash'
 import { Button } from '@/shared/components/ui/button'
 import { cn } from '@/shared/lib/utils'
 import type { ReasonNode } from './types'
@@ -87,7 +90,7 @@ const ReasonNodeItem: FC<ReasonNodeItemProps> = ({
 					)}
 					aria-label={expanded ? 'Colapsar' : 'Expandir'}
 				>
-					<ChevronRight className='size-3.5' />
+					<IcArrowRight02 className='size-3.5' />
 				</button>
 
 				{/* Indicador de profundidad */}
@@ -115,7 +118,7 @@ const ReasonNodeItem: FC<ReasonNodeItemProps> = ({
 							title='Agregar submotivo'
 							onClick={() => onAddChild(node.id, node.reason)}
 						>
-							<Plus />
+							<IcAdd />
 							<span className='sr-only'>Agregar submotivo</span>
 						</Button>
 					)}
@@ -126,7 +129,7 @@ const ReasonNodeItem: FC<ReasonNodeItemProps> = ({
 						title='Editar'
 						onClick={() => onEdit(node)}
 					>
-						<Pencil />
+						<IcEdit2 />
 						<span className='sr-only'>Editar</span>
 					</Button>
 					<Button
@@ -137,7 +140,7 @@ const ReasonNodeItem: FC<ReasonNodeItemProps> = ({
 						className='text-destructive hover:bg-destructive/10 hover:text-destructive'
 						onClick={() => onDelete(node)}
 					>
-						<Trash2 />
+						<IcTrash />
 						<span className='sr-only'>Eliminar</span>
 					</Button>
 				</div>

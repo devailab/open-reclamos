@@ -1,15 +1,13 @@
-import {
-	CheckCircle2,
-	CircleAlert,
-	Clock3,
-	FileText,
-	Mail,
-	MessageSquare,
-	PenLine,
-	Shield,
-	StickyNote,
-} from 'lucide-react'
 import { type FC, useState } from 'react'
+import { IcClock } from '@/shared/components/icons/ic-clock'
+import { IcDocumentText } from '@/shared/components/icons/ic-document-text'
+import { IcEdit2 } from '@/shared/components/icons/ic-edit-2'
+import { IcInfoCircle } from '@/shared/components/icons/ic-info-circle'
+import { IcMessageSquare } from '@/shared/components/icons/ic-message-square'
+import { IcShield } from '@/shared/components/icons/ic-shield'
+import { IcSms } from '@/shared/components/icons/ic-sms'
+import { IcStickynote } from '@/shared/components/icons/ic-stickynote'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { Separator } from '@/shared/components/ui/separator'
@@ -25,52 +23,52 @@ const EVENT_CONFIG: Record<
 > = {
 	complaint_created: {
 		label: 'Reclamo registrado',
-		icon: FileText,
+		icon: IcDocumentText,
 		color: 'text-blue-600 bg-blue-50 ring-blue-200',
 	},
 	status_changed: {
 		label: 'Estado actualizado',
-		icon: PenLine,
+		icon: IcEdit2,
 		color: 'text-amber-600 bg-amber-50 ring-amber-200',
 	},
 	response_added: {
 		label: 'Respuesta registrada',
-		icon: MessageSquare,
+		icon: IcMessageSquare,
 		color: 'text-green-600 bg-green-50 ring-green-200',
 	},
 	receipt_delivery_queued: {
 		label: 'Constancia en cola',
-		icon: Clock3,
+		icon: IcClock,
 		color: 'text-sky-600 bg-sky-50 ring-sky-200',
 	},
 	receipt_delivery_sent: {
 		label: 'Constancia enviada',
-		icon: Mail,
+		icon: IcSms,
 		color: 'text-green-600 bg-green-50 ring-green-200',
 	},
 	receipt_delivery_failed: {
 		label: 'Constancia pendiente de envío',
-		icon: CircleAlert,
+		icon: IcInfoCircle,
 		color: 'text-red-600 bg-red-50 ring-red-200',
 	},
 	response_delivery_queued: {
 		label: 'Correo de respuesta en cola',
-		icon: Clock3,
+		icon: IcClock,
 		color: 'text-sky-600 bg-sky-50 ring-sky-200',
 	},
 	response_delivery_sent: {
 		label: 'Respuesta enviada por correo',
-		icon: Mail,
+		icon: IcSms,
 		color: 'text-green-600 bg-green-50 ring-green-200',
 	},
 	response_delivery_failed: {
 		label: 'Respuesta pendiente de envío',
-		icon: CircleAlert,
+		icon: IcInfoCircle,
 		color: 'text-red-600 bg-red-50 ring-red-200',
 	},
 	note_added: {
 		label: 'Nota agregada',
-		icon: StickyNote,
+		icon: IcStickynote,
 		color: 'text-purple-600 bg-purple-50 ring-purple-200',
 	},
 }
@@ -97,12 +95,12 @@ export const ComplaintAuditCard: FC<ComplaintHistoryCardProps> = ({
 	}
 
 	return (
-		<Section icon={<Shield className='size-4' />} title='Historial'>
+		<Section icon={<IcShield className='size-4' />} title='Historial'>
 			<div className='space-y-0'>
 				{history.map((entry, i) => {
 					const config = EVENT_CONFIG[entry.eventType] ?? {
 						label: entry.eventType,
-						icon: CheckCircle2,
+						icon: IcTickCircle,
 						color: 'text-muted-foreground bg-muted ring-border',
 					}
 

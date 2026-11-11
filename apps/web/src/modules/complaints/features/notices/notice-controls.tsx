@@ -1,12 +1,10 @@
-import {
-	Download,
-	Monitor,
-	Printer,
-	Smartphone,
-	TriangleAlertIcon,
-} from 'lucide-react'
 import { Link } from 'react-router'
 import type { SelectOption } from '@/shared/components/forms/select-field'
+import { IcImportArrow01 } from '@/shared/components/icons/ic-import-arrow-01'
+import { IcMobile } from '@/shared/components/icons/ic-mobile'
+import { IcMonitor } from '@/shared/components/icons/ic-monitor'
+import { IcPrinter } from '@/shared/components/icons/ic-printer'
+import { IcWarning2 } from '@/shared/components/icons/ic-warning-2'
 import { Alert, AlertDescription } from '@/shared/components/ui/alert'
 import { Button } from '@/shared/components/ui/button'
 import type { FormFieldProps } from '@/shared/hooks/use-form'
@@ -76,7 +74,7 @@ export function NoticeControls({
 								: 'border-border hover:bg-muted',
 						)}
 					>
-						<Smartphone className='size-4' />
+						<IcMobile className='size-4' />
 						Vertical
 					</button>
 					<button
@@ -89,7 +87,7 @@ export function NoticeControls({
 								: 'border-border hover:bg-muted',
 						)}
 					>
-						<Monitor className='size-4' />
+						<IcMonitor className='size-4' />
 						Horizontal
 					</button>
 				</div>
@@ -104,7 +102,7 @@ export function NoticeControls({
 				onClearSelectedStore={onClearSelectedStore}
 				customUrlNotice={
 					<Alert className='border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200'>
-						<TriangleAlertIcon className='text-amber-500' />
+						<IcWarning2 className='text-amber-500' />
 						<AlertDescription className='text-amber-800 text-xs dark:text-amber-300'>
 							Si usas Open Reclamos, asegúrate de que esta URL
 							redirija a{' '}
@@ -122,7 +120,7 @@ export function NoticeControls({
 					onClick={onDownload}
 					disabled={isLoading}
 				>
-					<Download className='size-4' />
+					<IcImportArrow01 className='size-4' />
 					Descargar
 				</Button>
 				<Button
@@ -131,7 +129,7 @@ export function NoticeControls({
 					onClick={onPrint}
 					disabled={isLoading}
 				>
-					<Printer className='size-4' />
+					<IcPrinter className='size-4' />
 					Imprimir
 				</Button>
 			</div>

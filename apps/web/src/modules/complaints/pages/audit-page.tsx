@@ -1,5 +1,4 @@
 import { endOfDay, startOfDay } from 'date-fns'
-import { Eye } from 'lucide-react'
 import type { FC } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { sileo } from 'sileo'
@@ -9,6 +8,7 @@ import AutocompleteField, {
 } from '@/shared/components/forms/autocomplete-field'
 import DateField from '@/shared/components/forms/date-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcEye } from '@/shared/components/icons/ic-eye'
 import TableFiltersBar from '@/shared/components/table-filters-bar'
 import { Button } from '@/shared/components/ui/button'
 import { Spinner } from '@/shared/components/ui/spinner'
@@ -205,7 +205,7 @@ const AuditPageView: FC<AuditPageProps> = ({ initialState }) => {
 						setSelectedLog(row)
 					}}
 				>
-					<Eye />
+					<IcEye />
 					<span className='sr-only'>Ver detalle del log</span>
 				</Button>
 			),

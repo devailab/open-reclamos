@@ -1,11 +1,15 @@
-import { FileDown, FileSpreadsheet, FileText, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { sileo } from 'sileo'
 import DateField from '@/shared/components/forms/date-field'
 import SelectField from '@/shared/components/forms/select-field'
+import { IcDocumentDownload } from '@/shared/components/icons/ic-document-download'
+import { IcDocumentText } from '@/shared/components/icons/ic-document-text'
+import { IcSheet } from '@/shared/components/icons/ic-sheet'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { useForm } from '@/shared/hooks/use-form'
+import type { IconComponent } from '@/shared/lib/render-icon'
 import { required } from '@/shared/lib/validators'
 import { exportBook, type StoreOption } from './api'
 import {
@@ -19,10 +23,10 @@ interface ExportFormProps {
 	stores: StoreOption[]
 }
 
-const FORMAT_ICONS: Record<ExportFormat, typeof FileText> = {
-	pdf: FileText,
-	xlsx: FileSpreadsheet,
-	csv: FileSpreadsheet,
+const FORMAT_ICONS: Record<ExportFormat, IconComponent> = {
+	pdf: IcDocumentText,
+	xlsx: IcSheet,
+	csv: IcSheet,
 }
 
 const FORMAT_MESSAGES: Record<ExportFormat, string> = {
@@ -223,7 +227,7 @@ export function ExportForm({ stores }: ExportFormProps) {
 					</>
 				) : (
 					<>
-						<FileDown className='size-4' />
+						<IcDocumentDownload className='size-4' />
 						{jobId
 							? 'Consultar y descargar exportación'
 							: 'Exportar'}

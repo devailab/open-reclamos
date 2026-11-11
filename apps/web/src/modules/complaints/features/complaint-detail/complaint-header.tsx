@@ -1,5 +1,9 @@
-import { AlertCircle, Calendar, CheckCircle2, Clock, Store } from 'lucide-react'
 import type { FC } from 'react'
+import { IcCalendar } from '@/shared/components/icons/ic-calendar'
+import { IcClock } from '@/shared/components/icons/ic-clock'
+import { IcInfoCircle } from '@/shared/components/icons/ic-info-circle'
+import { IcShop } from '@/shared/components/icons/ic-shop'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Badge } from '@/shared/components/ui/badge'
 import { formatDateDisplay } from '@/shared/lib/formatters'
 import { cn } from '@/shared/lib/utils'
@@ -70,11 +74,11 @@ export const ComplaintHeader: FC<ComplaintHeaderProps> = ({
 			{/* Meta */}
 			<div className='flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground'>
 				<span className='flex items-center gap-1'>
-					<Store className='size-3' />
+					<IcShop className='size-3' />
 					{complaint.storeName}
 				</span>
 				<span className='flex items-center gap-1'>
-					<Calendar className='size-3' />
+					<IcCalendar className='size-3' />
 					Registrado el {formatDateDisplay(complaint.createdAt)}
 				</span>
 			</div>
@@ -95,9 +99,9 @@ export const ComplaintHeader: FC<ComplaintHeaderProps> = ({
 				>
 					{deadline.level === 'overdue' ||
 					deadline.level === 'critical' ? (
-						<AlertCircle className='size-4 shrink-0' />
+						<IcInfoCircle className='size-4 shrink-0' />
 					) : (
-						<Clock className='size-4 shrink-0' />
+						<IcClock className='size-4 shrink-0' />
 					)}
 					<span>Plazo máximo de respuesta: {deadline.label}</span>
 					{complaint.responseDeadline && (
@@ -111,7 +115,7 @@ export const ComplaintHeader: FC<ComplaintHeaderProps> = ({
 			{/* Responded banner */}
 			{hasResponse && resolvedAt && (
 				<div className='flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800/30'>
-					<CheckCircle2 className='size-4 shrink-0' />
+					<IcTickCircle className='size-4 shrink-0' />
 					<span>Respondido el {formatDateDisplay(resolvedAt)}</span>
 				</div>
 			)}

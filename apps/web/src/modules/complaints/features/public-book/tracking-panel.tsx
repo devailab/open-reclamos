@@ -1,16 +1,14 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import {
-	AlertCircleIcon,
-	CheckCircle2Icon,
-	ClockIcon,
-	FileTextIcon,
-	MessageSquareIcon,
-	PenLineIcon,
-	SearchIcon,
-	XCircleIcon,
-} from 'lucide-react'
 import { useState, useTransition } from 'react'
+import { IcClock } from '@/shared/components/icons/ic-clock'
+import { IcCloseCircle } from '@/shared/components/icons/ic-close-circle'
+import { IcDocumentText } from '@/shared/components/icons/ic-document-text'
+import { IcEdit2 } from '@/shared/components/icons/ic-edit-2'
+import { IcInfoCircle } from '@/shared/components/icons/ic-info-circle'
+import { IcMessageSquare } from '@/shared/components/icons/ic-message-square'
+import { IcSearchNormal } from '@/shared/components/icons/ic-search-normal'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { ResponsiveModal } from '@/shared/components/ui/responsive-modal'
@@ -24,22 +22,22 @@ const STATUS_CONFIG: Record<
 	open: {
 		label: 'Abierto',
 		colorClass: 'text-blue-700 bg-blue-50 ring-blue-200',
-		icon: ClockIcon,
+		icon: IcClock,
 	},
 	in_progress: {
 		label: 'En revisión',
 		colorClass: 'text-amber-700 bg-amber-50 ring-amber-200',
-		icon: AlertCircleIcon,
+		icon: IcInfoCircle,
 	},
 	in_review: {
 		label: 'En revisión',
 		colorClass: 'text-purple-700 bg-purple-50 ring-purple-200',
-		icon: AlertCircleIcon,
+		icon: IcInfoCircle,
 	},
 	resolved: {
 		label: 'Resuelto',
 		colorClass: 'text-green-700 bg-green-50 ring-green-200',
-		icon: CheckCircle2Icon,
+		icon: IcTickCircle,
 	},
 }
 
@@ -54,47 +52,47 @@ const HISTORY_EVENT_CONFIG: Record<
 > = {
 	complaint_created: {
 		label: 'Reclamo registrado',
-		icon: FileTextIcon,
+		icon: IcDocumentText,
 		color: 'text-blue-600 bg-blue-50 ring-blue-200',
 	},
 	status_changed: {
 		label: 'Estado actualizado',
-		icon: PenLineIcon,
+		icon: IcEdit2,
 		color: 'text-amber-600 bg-amber-50 ring-amber-200',
 	},
 	response_added: {
 		label: 'Respuesta registrada',
-		icon: MessageSquareIcon,
+		icon: IcMessageSquare,
 		color: 'text-green-600 bg-green-50 ring-green-200',
 	},
 	receipt_delivery_queued: {
 		label: 'Constancia en proceso',
-		icon: ClockIcon,
+		icon: IcClock,
 		color: 'text-sky-600 bg-sky-50 ring-sky-200',
 	},
 	receipt_delivery_sent: {
 		label: 'Constancia enviada',
-		icon: CheckCircle2Icon,
+		icon: IcTickCircle,
 		color: 'text-green-600 bg-green-50 ring-green-200',
 	},
 	receipt_delivery_failed: {
 		label: 'Constancia pendiente',
-		icon: AlertCircleIcon,
+		icon: IcInfoCircle,
 		color: 'text-red-600 bg-red-50 ring-red-200',
 	},
 	response_delivery_queued: {
 		label: 'Envío de respuesta en proceso',
-		icon: ClockIcon,
+		icon: IcClock,
 		color: 'text-sky-600 bg-sky-50 ring-sky-200',
 	},
 	response_delivery_sent: {
 		label: 'Respuesta enviada',
-		icon: CheckCircle2Icon,
+		icon: IcTickCircle,
 		color: 'text-green-600 bg-green-50 ring-green-200',
 	},
 	response_delivery_failed: {
 		label: 'Envío de respuesta pendiente',
-		icon: AlertCircleIcon,
+		icon: IcInfoCircle,
 		color: 'text-red-600 bg-red-50 ring-red-200',
 	},
 }
@@ -185,7 +183,7 @@ export function TrackingPanel({ organizationSlug }: TrackingPanelProps) {
 							disabled={isPending || !code.trim()}
 							className='h-9 px-3'
 						>
-							<SearchIcon className='size-4' />
+							<IcSearchNormal className='size-4' />
 							<span className='hidden sm:inline'>Buscar</span>
 						</Button>
 					</div>
@@ -193,7 +191,7 @@ export function TrackingPanel({ organizationSlug }: TrackingPanelProps) {
 					{/* Error */}
 					{error && (
 						<div className='flex items-start gap-2.5 rounded-lg bg-destructive/8 px-3 py-2.5 text-sm text-destructive'>
-							<XCircleIcon className='mt-0.5 size-4 shrink-0' />
+							<IcCloseCircle className='mt-0.5 size-4 shrink-0' />
 							<p>{error}</p>
 						</div>
 					)}
@@ -282,7 +280,7 @@ function TrackingCard({ complaint }: { complaint: TrackingResult }) {
 							: 'bg-muted text-muted-foreground'
 					}`}
 				>
-					<ClockIcon className='size-3.5 shrink-0' />
+					<IcClock className='size-3.5 shrink-0' />
 					{isOverdue ? (
 						<span>
 							El plazo de respuesta venció el{' '}
@@ -324,7 +322,7 @@ function HistoryTimeline({ history }: { history: PublicHistoryEntry[] }) {
 				{history.map((entry, i) => {
 					const config = HISTORY_EVENT_CONFIG[entry.eventType] ?? {
 						label: entry.eventType,
-						icon: CheckCircle2Icon,
+						icon: IcTickCircle,
 						color: 'text-muted-foreground bg-muted ring-border',
 					}
 

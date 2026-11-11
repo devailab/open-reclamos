@@ -3,13 +3,7 @@ import {
 	OpSaveSSOConnection,
 	OpUpdateSSOPolicy,
 } from '@open-reclamos/rpc-client'
-import {
-	Check,
-	ChevronRight,
-	ExternalLink,
-	Plus,
-	RefreshCw,
-} from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { Link as RouterLink } from 'react-router'
 import { sileo } from 'sileo'
@@ -21,6 +15,10 @@ import SelectField, {
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
 import TextAreaField from '@/shared/components/forms/textarea-field'
+import { IcAdd } from '@/shared/components/icons/ic-add'
+import { IcArrowRight02 } from '@/shared/components/icons/ic-arrow-right-02'
+import { IcRefreshArrow02 } from '@/shared/components/icons/ic-refresh-arrow-02'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { useForm } from '@/shared/hooks/use-form'
@@ -369,7 +367,9 @@ export function SSOSettings() {
 						disabled={pending || loading}
 						onClick={() => void load()}
 					>
-						<RefreshCw className={cn(loading && 'animate-spin')} />
+						<IcRefreshArrow02
+							className={cn(loading && 'animate-spin')}
+						/>
 						<span className='sr-only'>Actualizar conexiones</span>
 					</Button>
 				</div>
@@ -395,7 +395,7 @@ export function SSOSettings() {
 									{connectionStatus(connection, policy)}
 								</span>
 							</span>
-							<ChevronRight className='size-4 shrink-0 text-muted-foreground' />
+							<IcArrowRight02 className='size-4 shrink-0 text-muted-foreground' />
 						</button>
 					))}
 					{!loading && !connections.length && (
@@ -411,7 +411,7 @@ export function SSOSettings() {
 					disabled={pending || loading}
 					onClick={newConnection}
 				>
-					<Plus /> Nueva conexión
+					<IcAdd /> Nueva conexión
 				</Button>
 				<div className='border-t pt-4 text-xs text-muted-foreground'>
 					<p className='font-medium text-foreground'>Acceso actual</p>
@@ -535,7 +535,7 @@ export function SSOSettings() {
 											focused &&
 											!isEditing) ||
 										(item.id === 2 && isTested) ? (
-											<Check className='size-3.5' />
+											<IcTickCircle className='size-3.5' />
 										) : (
 											item.id
 										)}
@@ -604,7 +604,7 @@ export function SSOSettings() {
 										<div className='flex flex-wrap gap-2'>
 											<Button onClick={() => setStep(2)}>
 												Ver URLs y probar{' '}
-												<ChevronRight />
+												<IcArrowRight02 />
 											</Button>
 											{!isActive && (
 												<Button
@@ -739,7 +739,7 @@ export function SSOSettings() {
 												{pending
 													? 'Guardando...'
 													: 'Guardar'}{' '}
-												<ChevronRight />
+												<IcArrowRight02 />
 											</Button>
 											{editing && (
 												<Button
@@ -896,7 +896,7 @@ export function SSOSettings() {
 											disabled={pending || loading}
 											onClick={() => void load()}
 										>
-											<RefreshCw
+											<IcRefreshArrow02
 												className={cn(
 													loading && 'animate-spin',
 												)}
@@ -929,7 +929,7 @@ export function SSOSettings() {
 											setStep(3)
 										}}
 									>
-										Configurar acceso <ChevronRight />
+										Configurar acceso <IcArrowRight02 />
 									</Button>
 								</div>
 							</section>

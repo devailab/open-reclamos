@@ -1,10 +1,10 @@
-import { TriangleAlert } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcWarning2 } from '@/shared/components/icons/ic-warning-2'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { Checkbox } from '@/shared/components/ui/checkbox'
@@ -199,7 +199,7 @@ export function WebhookFormDialog({
 						/>
 						{isRotatingSecret ? (
 							<p className='flex items-center gap-1.5 text-xs text-amber-600'>
-								<TriangleAlert className='size-3.5 shrink-0' />
+								<IcWarning2 className='size-3.5 shrink-0' />
 								Al guardar, el secreto anterior dejará de ser
 								válido y el receptor deberá actualizar su
 								configuración.

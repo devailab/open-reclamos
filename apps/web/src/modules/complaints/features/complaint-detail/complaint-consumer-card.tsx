@@ -1,5 +1,8 @@
-import { Mail, MapPin, Phone, User } from 'lucide-react'
 import type { FC } from 'react'
+import { IcCall } from '@/shared/components/icons/ic-call'
+import { IcLocation } from '@/shared/components/icons/ic-location'
+import { IcSms } from '@/shared/components/icons/ic-sms'
+import { IcUser } from '@/shared/components/icons/ic-user'
 import { Separator } from '@/shared/components/ui/separator'
 import type { ComplaintDetail } from '../../types'
 import { DOCUMENT_TYPE_LABEL, InfoRow, Section } from './shared'
@@ -13,7 +16,7 @@ export const ComplaintConsumerCard: FC<ComplaintConsumerCardProps> = ({
 }) => {
 	return (
 		<Section
-			icon={<User className='size-4' />}
+			icon={<IcUser className='size-4' />}
 			title='Datos del consumidor'
 		>
 			<div className='space-y-3'>
@@ -72,7 +75,7 @@ export const ComplaintConsumerCard: FC<ComplaintConsumerCardProps> = ({
 				<InfoRow
 					label={
 						<span className='flex items-center gap-1'>
-							<Mail className='size-3' />
+							<IcSms className='size-3' />
 							Correo
 						</span>
 					}
@@ -82,7 +85,7 @@ export const ComplaintConsumerCard: FC<ComplaintConsumerCardProps> = ({
 					<InfoRow
 						label={
 							<span className='flex items-center gap-1'>
-								<Phone className='size-3' />
+								<IcCall className='size-3' />
 								Teléfono
 							</span>
 						}
@@ -93,7 +96,7 @@ export const ComplaintConsumerCard: FC<ComplaintConsumerCardProps> = ({
 					<InfoRow
 						label={
 							<span className='flex items-center gap-1'>
-								<MapPin className='size-3' />
+								<IcLocation className='size-3' />
 								Dirección
 							</span>
 						}

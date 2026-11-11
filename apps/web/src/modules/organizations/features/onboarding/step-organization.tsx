@@ -1,4 +1,3 @@
-import { Phone, Search } from 'lucide-react'
 import { useRef, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import AutocompleteField, {
@@ -12,6 +11,8 @@ import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcCall } from '@/shared/components/icons/ic-call'
+import { IcSearchNormal } from '@/shared/components/icons/ic-search-normal'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Card,
@@ -259,7 +260,7 @@ export function SetupStepOrganization({
 									{isLookingUp ? (
 										<Spinner />
 									) : (
-										<Search className='h-4 w-4' />
+										<IcSearchNormal className='h-4 w-4' />
 									)}
 									<span className='ml-1.5'>
 										{isLookingUp ? 'Buscando...' : 'Buscar'}
@@ -368,7 +369,7 @@ export function SetupStepOrganization({
 												type='tel'
 												prepend={
 													values.phoneCodeOption ? (
-														<Phone className='h-4 w-4 text-muted-foreground' />
+														<IcCall className='h-4 w-4 text-muted-foreground' />
 													) : undefined
 												}
 												disabled={isBusy}

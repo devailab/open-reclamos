@@ -1,5 +1,6 @@
-import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
+import { IcCopy } from '@/shared/components/icons/ic-copy'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Dialog,
@@ -104,9 +105,9 @@ export function ShareModal({ open, onOpenChange, snippet }: ShareModalProps) {
 								className='absolute right-2 top-2'
 							>
 								{copied ? (
-									<Check className='size-3.5' />
+									<IcTickCircle className='size-3.5' />
 								) : (
-									<Copy className='size-3.5' />
+									<IcCopy className='size-3.5' />
 								)}
 								{copied ? 'Copiado' : 'Copiar'}
 							</Button>

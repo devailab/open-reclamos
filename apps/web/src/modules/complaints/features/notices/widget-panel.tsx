@@ -1,14 +1,12 @@
-import {
-	Check,
-	Code,
-	Copy,
-	Eye,
-	MoonStar,
-	Share2,
-	SunMedium,
-} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { SelectOption } from '@/shared/components/forms/select-field'
+import { IcCode } from '@/shared/components/icons/ic-code'
+import { IcCopy } from '@/shared/components/icons/ic-copy'
+import { IcEye } from '@/shared/components/icons/ic-eye'
+import { IcMoon } from '@/shared/components/icons/ic-moon'
+import { IcShare } from '@/shared/components/icons/ic-share'
+import { IcSun } from '@/shared/components/icons/ic-sun'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Card,
@@ -31,6 +29,7 @@ import {
 } from '@/shared/components/ui/tabs'
 import { Textarea } from '@/shared/components/ui/textarea'
 import type { FormFieldProps } from '@/shared/hooks/use-form'
+import type { IconComponent } from '@/shared/lib/render-icon'
 import { cn } from '@/shared/lib/utils'
 import { NoticeLinkSettings } from './notice-link-settings'
 import { ShareModal } from './notice-share-modal'
@@ -54,18 +53,18 @@ const THEME_META: Record<
 	{
 		label: string
 		description: string
-		icon: typeof SunMedium
+		icon: IconComponent
 	}
 > = {
 	light: {
 		label: 'Claro',
 		description: 'Boton con fondo claro y texto oscuro.',
-		icon: SunMedium,
+		icon: IcSun,
 	},
 	dark: {
 		label: 'Oscuro',
 		description: 'Boton con fondo oscuro y texto claro.',
-		icon: MoonStar,
+		icon: IcMoon,
 	},
 }
 
@@ -259,7 +258,7 @@ export function WidgetPanel({
 						className='w-full mt-2'
 						onClick={() => setIsShareOpen(true)}
 					>
-						<Share2 className='size-4' />
+						<IcShare className='size-4' />
 						Integrar en mi sitio web
 					</Button>
 				</div>
@@ -291,11 +290,11 @@ export function WidgetPanel({
 									value='preview'
 									className='px-4 py-2'
 								>
-									<Eye className='size-4' />
+									<IcEye className='size-4' />
 									Preview
 								</TabsTrigger>
 								<TabsTrigger value='code' className='px-4 py-2'>
-									<Code className='size-4' />
+									<IcCode className='size-4' />
 									Codigo
 								</TabsTrigger>
 							</TabsList>
@@ -327,9 +326,9 @@ export function WidgetPanel({
 					<CardFooter className='shrink-0 justify-end gap-3'>
 						<Button type='button' onClick={handleCopyCode}>
 							{isCopied ? (
-								<Check className='size-4' />
+								<IcTickCircle className='size-4' />
 							) : (
-								<Copy className='size-4' />
+								<IcCopy className='size-4' />
 							)}
 							{isCopied ? 'Codigo copiado' : 'Copiar codigo'}
 						</Button>

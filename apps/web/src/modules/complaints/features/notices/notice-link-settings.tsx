@@ -1,9 +1,10 @@
-import { Store, Undo2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcShop } from '@/shared/components/icons/ic-shop'
+import { IcUndoArrow } from '@/shared/components/icons/ic-undo-arrow'
 import { Button } from '@/shared/components/ui/button'
 import type { FormFieldProps } from '@/shared/hooks/use-form'
 
@@ -35,7 +36,7 @@ export function NoticeLinkSettings({
 					placeholder='Usar organización actual'
 					options={storeOptions}
 					disabled={storeOptions.length === 0}
-					prefix={<Store className='size-4' />}
+					prefix={<IcShop className='size-4' />}
 				/>
 				<div className='flex items-center justify-between gap-3'>
 					<p className='text-xs text-muted-foreground'>
@@ -52,7 +53,7 @@ export function NoticeLinkSettings({
 							size='xs'
 							onClick={onClearSelectedStore}
 						>
-							<Undo2 className='size-3' />
+							<IcUndoArrow className='size-3' />
 							Usar organización
 						</Button>
 					)}

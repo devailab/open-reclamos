@@ -1,8 +1,10 @@
 import { format, parseISO } from 'date-fns'
-import { Copy, KeyRound, TriangleAlert } from 'lucide-react'
 import { useCallback, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import TextField from '@/shared/components/forms/text-field'
+import { IcCopy } from '@/shared/components/icons/ic-copy'
+import { IcKey } from '@/shared/components/icons/ic-key'
+import { IcWarning2 } from '@/shared/components/icons/ic-warning-2'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Card,
@@ -50,7 +52,7 @@ export function ApiKeySection({ organizationId }: { organizationId: string }) {
 		<Card>
 			<CardHeader>
 				<CardTitle className='flex items-center gap-2 text-base'>
-					<KeyRound className='size-4' />
+					<IcKey className='size-4' />
 					Claves API
 				</CardTitle>
 				<CardDescription>
@@ -147,11 +149,11 @@ export function ApiKeySection({ organizationId }: { organizationId: string }) {
 											}
 										}}
 									>
-										<Copy className='size-3.5' />
+										<IcCopy className='size-3.5' />
 									</Button>
 								</div>
 								<p className='flex items-center gap-1.5 text-xs text-amber-600'>
-									<TriangleAlert className='size-3.5 shrink-0' />
+									<IcWarning2 className='size-3.5 shrink-0' />
 									Copia esta clave ahora. No volverá a
 									mostrarse cuando salgas de esta página.
 								</p>

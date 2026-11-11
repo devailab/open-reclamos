@@ -1,4 +1,4 @@
-import { ExternalLink, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { Link } from 'react-router'
 import { sileo } from 'sileo'
@@ -7,6 +7,9 @@ import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcAdd } from '@/shared/components/icons/ic-add'
+import { IcEdit2 } from '@/shared/components/icons/ic-edit-2'
+import { IcTrash } from '@/shared/components/icons/ic-trash'
 import TableFiltersBar from '@/shared/components/table-filters-bar'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -289,7 +292,7 @@ function WebhooksPageView({
 							setEditingWebhook(row)
 						}}
 					>
-						<Pencil />
+						<IcEdit2 />
 						<span className='sr-only'>Editar</span>
 					</Button>
 					<Button
@@ -303,7 +306,7 @@ function WebhooksPageView({
 							handleDelete(row)
 						}}
 					>
-						<Trash2 />
+						<IcTrash />
 						<span className='sr-only'>Eliminar</span>
 					</Button>
 				</div>
@@ -330,7 +333,7 @@ function WebhooksPageView({
 						Ver envíos
 					</Button>
 					<Button onClick={() => setFormOpen(true)}>
-						<Plus />
+						<IcAdd />
 						Nuevo webhook
 					</Button>
 				</div>

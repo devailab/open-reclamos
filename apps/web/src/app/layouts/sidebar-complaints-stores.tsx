@@ -1,9 +1,12 @@
 'use client'
 
-import { ChevronLeft, ChevronRight, LayoutGrid, Store } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import type { SidebarComplaintsStores as SidebarComplaintsStoresEntry } from '@/app/layouts/sidebar-navigation'
+import { IcArrowLeft02 } from '@/shared/components/icons/ic-arrow-left-02'
+import { IcArrowRight02 } from '@/shared/components/icons/ic-arrow-right-02'
+import { IcGrid1 } from '@/shared/components/icons/ic-grid-1'
+import { IcShop } from '@/shared/components/icons/ic-shop'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Collapsible,
@@ -16,8 +19,16 @@ import {
 	SidebarMenuSub,
 	SidebarMenuSubButton,
 	SidebarMenuSubItem,
+	useSidebar,
 } from '@/shared/components/ui/sidebar'
+import { cn } from '@/shared/lib/utils'
 import type { StoreOption } from '../../modules/organizations/types'
+import { SidebarFlyout, SidebarFlyoutLink } from './sidebar-flyout'
+import { SidebarNavIcon } from './sidebar-nav-icon'
+import {
+	sidebarNavGroupClassName,
+	sidebarNavSubItemClassName,
+} from './sidebar-nav-styles'
 
 function buildComplaintsStorePath(storeId: string) {
 	return `/dashboard/complaints/stores/${encodeURIComponent(storeId)}`
@@ -41,6 +52,8 @@ export function SidebarComplaintsStores({
 	stores: StoreOption[]
 	pathname: string
 }) {
+	const { state, isMobile } = useSidebar()
+
 	const activeStoreId = getComplaintsStoreIdFromPath(pathname)
 
 	const isGroupActive =
@@ -78,15 +91,55 @@ export function SidebarComplaintsStores({
 		safePage * STORES_PER_PAGE + STORES_PER_PAGE,
 	)
 
+	if (state === 'collapsed' && !isMobile) {
+		return (
+			<SidebarMenuItem>
+				<SidebarFlyout
+					label={entry.label}
+					icon={entry.icon}
+					isActive={isGroupActive}
+				>
+					<SidebarFlyoutLink
+						href={entry.href}
+						label='Vista general'
+						icon={IcGrid1}
+						isActive={pathname === entry.href}
+					/>
+					{stores.map((store) => (
+						<SidebarFlyoutLink
+							key={store.id}
+							href={buildComplaintsStorePath(store.id)}
+							label={store.name}
+							icon={IcShop}
+							isActive={store.id === activeStoreId}
+						/>
+					))}
+				</SidebarFlyout>
+			</SidebarMenuItem>
+		)
+	}
+
 	return (
 		<SidebarMenuItem>
 			<Collapsible open={isOpen} onOpenChange={setIsOpen}>
 				<CollapsibleTrigger
 					render={
-						<SidebarMenuButton tooltip={entry.label}>
-							<entry.icon />
+						<SidebarMenuButton
+							tooltip={entry.label}
+							data-current={isGroupActive}
+							className={sidebarNavGroupClassName}
+						>
+							<SidebarNavIcon
+								icon={entry.icon}
+								isActive={isGroupActive}
+							/>
 							<span>{entry.label}</span>
-							<ChevronRight className='ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
+							<IcArrowRight02
+								className={cn(
+									'ml-auto size-3.5 opacity-50 transition-transform duration-150',
+									isOpen && 'rotate-90',
+								)}
+							/>
 						</SidebarMenuButton>
 					}
 				/>
@@ -96,8 +149,18 @@ export function SidebarComplaintsStores({
 							<SidebarMenuSubButton
 								render={<Link to={entry.href} />}
 								isActive={pathname === entry.href}
+								aria-current={
+									pathname === entry.href ? 'page' : undefined
+								}
+								className={sidebarNavSubItemClassName}
 							>
-								<LayoutGrid />
+								<IcGrid1
+									type={
+										pathname === entry.href
+											? 'solid'
+											: 'outline'
+									}
+								/>
 								<span>Vista general</span>
 							</SidebarMenuSubButton>
 						</SidebarMenuSubItem>
@@ -112,8 +175,20 @@ export function SidebarComplaintsStores({
 										/>
 									}
 									isActive={store.id === activeStoreId}
+									aria-current={
+										store.id === activeStoreId
+											? 'page'
+											: undefined
+									}
+									className={sidebarNavSubItemClassName}
 								>
-									<Store />
+									<IcShop
+										type={
+											store.id === activeStoreId
+												? 'solid'
+												: 'outline'
+										}
+									/>
 									<span>{store.name}</span>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
@@ -138,7 +213,7 @@ export function SidebarComplaintsStores({
 												)
 											}
 										>
-											<ChevronLeft />
+											<IcArrowLeft02 />
 										</Button>
 										<Button
 											type='button'
@@ -157,7 +232,7 @@ export function SidebarComplaintsStores({
 												)
 											}
 										>
-											<ChevronRight />
+											<IcArrowRight02 />
 										</Button>
 									</div>
 								</div>

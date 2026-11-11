@@ -1,13 +1,4 @@
-import {
-	FileIcon,
-	FileTextIcon,
-	ImageIcon,
-	Loader2,
-	Paperclip,
-	Trash2,
-	UploadCloud,
-	XCircle,
-} from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import {
 	type Dispatch,
 	type FC,
@@ -17,6 +8,13 @@ import {
 	useState,
 } from 'react'
 import { sileo } from 'sileo'
+import { IcCloseCircle } from '@/shared/components/icons/ic-close-circle'
+import { IcDocumentText } from '@/shared/components/icons/ic-document-text'
+import { IcDocumentUpload } from '@/shared/components/icons/ic-document-upload'
+import { IcImage } from '@/shared/components/icons/ic-image'
+import { IcPaperclip } from '@/shared/components/icons/ic-paperclip'
+import { IcSheet } from '@/shared/components/icons/ic-sheet'
+import { IcTrash } from '@/shared/components/icons/ic-trash'
 import { Button } from '@/shared/components/ui/button'
 import { cn } from '@/shared/lib/utils'
 import { deleteComplaintUpload, uploadComplaintFile } from './upload-api'
@@ -53,14 +51,14 @@ const ALLOWED_TYPES = [
 
 const FileTypeIcon = ({ contentType }: { contentType: string }) => {
 	if (contentType === 'application/pdf') {
-		return <FileTextIcon className='h-4 w-4 text-red-500' />
+		return <IcDocumentText className='h-4 w-4 text-red-500' />
 	}
 
 	if (contentType.startsWith('image/')) {
-		return <ImageIcon className='h-4 w-4 text-blue-500' />
+		return <IcImage className='h-4 w-4 text-blue-500' />
 	}
 
-	return <FileIcon className='h-4 w-4 text-muted-foreground' />
+	return <IcSheet className='h-4 w-4 text-muted-foreground' />
 }
 
 export const FileUploadArea: FC<FileUploadAreaProps> = ({
@@ -289,7 +287,7 @@ export const FileUploadArea: FC<FileUploadAreaProps> = ({
 						e.target.value = ''
 					}}
 				/>
-				<UploadCloud className='mb-2 h-8 w-8 text-muted-foreground' />
+				<IcDocumentUpload className='mb-2 h-8 w-8 text-muted-foreground' />
 				<p className='text-sm font-medium'>
 					{isDragging
 						? 'Suelta los archivos aquí'
@@ -326,12 +324,12 @@ export const FileUploadArea: FC<FileUploadAreaProps> = ({
 							)}
 							{f.status === 'error' && (
 								<span className='flex shrink-0 items-center gap-1 text-xs text-destructive'>
-									<XCircle className='h-3.5 w-3.5' />
+									<IcCloseCircle className='h-3.5 w-3.5' />
 									{f.error}
 								</span>
 							)}
 							{f.status === 'done' && (
-								<Paperclip className='h-3.5 w-3.5 shrink-0 text-green-600' />
+								<IcPaperclip className='h-3.5 w-3.5 shrink-0 text-green-600' />
 							)}
 
 							<Button
@@ -342,7 +340,7 @@ export const FileUploadArea: FC<FileUploadAreaProps> = ({
 								onClick={() => handleRemove(f.id)}
 								className='shrink-0 text-muted-foreground hover:text-destructive'
 							>
-								<Trash2 className='h-3.5 w-3.5' />
+								<IcTrash className='h-3.5 w-3.5' />
 								<span className='sr-only'>Eliminar</span>
 							</Button>
 						</li>

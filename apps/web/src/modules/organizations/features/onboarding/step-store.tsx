@@ -1,4 +1,3 @@
-import { ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 import AutocompleteField, {
 	type AutocompleteOption,
@@ -8,6 +7,7 @@ import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcArrowLeft01 } from '@/shared/components/icons/ic-arrow-left-01'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Card,
@@ -233,7 +233,7 @@ export function SetupStepStore({
 						disabled={isPending}
 						onClick={onBack}
 					>
-						<ArrowLeft className='mr-1.5 h-4 w-4' />
+						<IcArrowLeft01 className='mr-1.5 h-4 w-4' />
 						Volver a la organización
 					</Button>
 				)}

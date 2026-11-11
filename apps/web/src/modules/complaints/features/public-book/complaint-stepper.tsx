@@ -1,5 +1,7 @@
-import { Check, ClipboardList, User } from 'lucide-react'
 import type { FC } from 'react'
+import { IcClipboardText } from '@/shared/components/icons/ic-clipboard-text'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
+import { IcUser } from '@/shared/components/icons/ic-user'
 import { cn } from '@/shared/lib/utils'
 
 type Step = 'consumer' | 'details'
@@ -13,12 +15,12 @@ const STEPS: { id: Step; label: string; icon: React.ReactNode }[] = [
 	{
 		id: 'consumer',
 		label: 'Tus datos',
-		icon: <User className='h-4 w-4' />,
+		icon: <IcUser className='h-4 w-4' />,
 	},
 	{
 		id: 'details',
 		label: 'Detalles del reclamo',
-		icon: <ClipboardList className='h-4 w-4' />,
+		icon: <IcClipboardText className='h-4 w-4' />,
 	},
 ]
 
@@ -61,7 +63,7 @@ export const ComplaintStepper: FC<ComplaintStepperProps> = ({
 									)}
 								>
 									{isCompleted ? (
-										<Check className='h-3.5 w-3.5' />
+										<IcTickCircle className='h-3.5 w-3.5' />
 									) : (
 										index + 1
 									)}

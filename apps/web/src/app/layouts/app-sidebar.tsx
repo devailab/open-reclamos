@@ -1,14 +1,10 @@
 import { OpLogout } from '@open-reclamos/rpc-client'
-
+import { IcArrowRight02 } from '@/shared/components/icons/ic-arrow-right-02'
+import { IcLogout01 } from '@/shared/components/icons/ic-logout-01'
 ;('use client')
 
 import { ConnectError } from '@connectrpc/connect'
-import {
-	ChevronRight,
-	ChevronsUpDown,
-	ExternalLink,
-	LogOut,
-} from 'lucide-react'
+import { ChevronsUpDown, ExternalLink } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { sileo } from 'sileo'
@@ -51,7 +47,9 @@ import {
 	SidebarMenuSubButton,
 	SidebarMenuSubItem,
 	SidebarRail,
+	useSidebar,
 } from '@/shared/components/ui/sidebar'
+import { cn } from '@/shared/lib/utils'
 import { switchOrganization } from '../../modules/organizations/api/navigation'
 import { SidebarOrganizationSwitcher } from '../../modules/organizations/components/organization-switcher'
 import type {
@@ -59,6 +57,13 @@ import type {
 	UserOrganizationOption,
 } from '../../modules/organizations/types'
 import { SidebarComplaintsStores } from './sidebar-complaints-stores'
+import { SidebarFlyout, SidebarFlyoutLink } from './sidebar-flyout'
+import { SidebarNavIcon } from './sidebar-nav-icon'
+import {
+	sidebarNavGroupClassName,
+	sidebarNavItemClassName,
+	sidebarNavSubItemClassName,
+} from './sidebar-nav-styles'
 
 function getInitials(name: string): string {
 	return name
@@ -76,14 +81,22 @@ function SidebarNavLink({
 	item: SidebarLink
 	pathname: string
 }) {
+	const isActive = isSidebarLinkActive(pathname, item)
+
 	return (
 		<SidebarMenuItem>
 			<SidebarMenuButton
 				render={<Link to={item.href} />}
-				isActive={isSidebarLinkActive(pathname, item)}
+				isActive={isActive}
+				aria-current={isActive ? 'page' : undefined}
+				className={sidebarNavItemClassName}
 				tooltip={item.label}
 			>
-				<item.icon />
+				<SidebarNavIcon
+					icon={item.icon}
+					isActive={isActive}
+					supportsSolid={item.iconSupportsSolid}
+				/>
 				<span>{item.label}</span>
 			</SidebarMenuButton>
 		</SidebarMenuItem>
@@ -99,6 +112,8 @@ function SidebarNavGroup({
 	pathname: string
 	context: SidebarVisibilityContext
 }) {
+	const { state, isMobile } = useSidebar()
+
 	const visibleItems = group.items.filter((item) =>
 		isSidebarEntryVisible(item.visibility, context),
 	)
@@ -119,15 +134,47 @@ function SidebarNavGroup({
 		return null
 	}
 
+	if (state === 'collapsed' && !isMobile) {
+		return (
+			<SidebarMenuItem>
+				<SidebarFlyout
+					label={group.label}
+					icon={group.icon}
+					isActive={isActive}
+				>
+					{visibleItems.map((item) => (
+						<SidebarFlyoutLink
+							key={item.href}
+							{...item}
+							isActive={isSidebarLinkActive(pathname, item)}
+						/>
+					))}
+				</SidebarFlyout>
+			</SidebarMenuItem>
+		)
+	}
+
 	return (
 		<SidebarMenuItem>
 			<Collapsible open={isOpen} onOpenChange={setIsOpen}>
 				<CollapsibleTrigger
 					render={
-						<SidebarMenuButton tooltip={group.label}>
-							<group.icon />
+						<SidebarMenuButton
+							tooltip={group.label}
+							data-current={isActive}
+							className={sidebarNavGroupClassName}
+						>
+							<SidebarNavIcon
+								icon={group.icon}
+								isActive={isActive}
+							/>
 							<span>{group.label}</span>
-							<ChevronRight className='ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
+							<IcArrowRight02
+								className={cn(
+									'ml-auto size-3.5 opacity-50 transition-transform duration-150',
+									isOpen && 'rotate-90',
+								)}
+							/>
 						</SidebarMenuButton>
 					}
 				/>
@@ -137,12 +184,25 @@ function SidebarNavGroup({
 							<SidebarMenuSubItem key={item.href}>
 								<SidebarMenuSubButton
 									render={<Link to={item.href} />}
+									className={sidebarNavSubItemClassName}
+									aria-current={
+										isSidebarLinkActive(pathname, item)
+											? 'page'
+											: undefined
+									}
 									isActive={isSidebarLinkActive(
 										pathname,
 										item,
 									)}
 								>
-									<item.icon />
+									<SidebarNavIcon
+										icon={item.icon}
+										isActive={isSidebarLinkActive(
+											pathname,
+											item,
+										)}
+										supportsSolid={item.iconSupportsSolid}
+									/>
 									<span>{item.label}</span>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
@@ -322,6 +382,7 @@ export function AppSidebar({
 								render={<DropdownMenuTrigger />}
 								size='lg'
 								tooltip={user.name}
+								className='group-data-[collapsible=icon]:justify-center'
 							>
 								<Avatar size='sm'>
 									<AvatarFallback>
@@ -397,7 +458,7 @@ export function AppSidebar({
 									disabled={isPending}
 									onClick={handleLogout}
 								>
-									<LogOut />
+									<IcLogout01 />
 									Cerrar sesión
 								</DropdownMenuItem>
 							</DropdownMenuContent>

@@ -1,5 +1,4 @@
 import { format as formatDate, parse } from 'date-fns'
-import { Clock } from 'lucide-react'
 import {
 	type FC,
 	type ReactNode,
@@ -8,6 +7,7 @@ import {
 	useMemo,
 	useState,
 } from 'react'
+import { IcClock } from '@/shared/components/icons/ic-clock'
 
 import { Label } from '@/shared/components/ui/label'
 import {
@@ -207,7 +207,7 @@ const TimeField: FC<TimeFieldProps> = ({
 									placeholder ||
 									'Selecciona una hora'}
 							</span>
-							<Clock className='size-4 opacity-50' />
+							<IcClock className='size-4 opacity-50' />
 						</button>
 					}
 				/>

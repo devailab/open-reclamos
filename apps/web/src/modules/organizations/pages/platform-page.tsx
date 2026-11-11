@@ -1,4 +1,4 @@
-import { Ban, ExternalLink, RotateCcw } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import type { FC } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { sileo } from 'sileo'
@@ -7,6 +7,8 @@ import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcForbidden } from '@/shared/components/icons/ic-forbidden'
+import { IcRotateLeft } from '@/shared/components/icons/ic-rotate-left'
 import TableFiltersBar from '@/shared/components/table-filters-bar'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -333,7 +335,7 @@ const PlatformPageView: FC<PlatformPageProps> = ({ initialState }) => {
 									handleReactivate(row)
 								}}
 							>
-								<RotateCcw />
+								<IcRotateLeft />
 								Reactivar
 							</Button>
 						) : (
@@ -346,7 +348,7 @@ const PlatformPageView: FC<PlatformPageProps> = ({ initialState }) => {
 									setSuspendingOrganization(row)
 								}}
 							>
-								<Ban />
+								<IcForbidden />
 								Suspender
 							</Button>
 						)}

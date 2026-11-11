@@ -1,10 +1,13 @@
-import { CheckCircle, CheckCircle2, Clock, Save, Send } from 'lucide-react'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { sileo } from 'sileo'
 import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextAreaField from '@/shared/components/forms/textarea-field'
+import { IcClock } from '@/shared/components/icons/ic-clock'
+import { IcSave2 } from '@/shared/components/icons/ic-save-2'
+import { IcSend } from '@/shared/components/icons/ic-send'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import { useDebounce } from '@/shared/hooks/use-debounce'
 import { useForm } from '@/shared/hooks/use-form'
@@ -360,7 +363,7 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 					disabled={isSubmitting || isSavingClassification}
 					className='gap-2'
 				>
-					<Save className='size-4' />
+					<IcSave2 className='size-4' />
 					{isSavingClassification
 						? 'Guardando...'
 						: 'Guardar clasificación'}
@@ -387,7 +390,7 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 							disabled={isSubmitting || isSavingClassification}
 							className='gap-2 shrink-0 bg-green-600 text-white hover:bg-green-700'
 						>
-							<Send className='size-4' />
+							<IcSend className='size-4' />
 							{isSubmitting
 								? 'Enviando...'
 								: 'Registrar respuesta'}
@@ -395,7 +398,7 @@ export const ResponseForm: FC<ResponseFormProps> = ({
 					</div>
 
 					<p className='text-xs text-muted-foreground'>
-						<CheckCircle className='inline size-3 mr-1' />
+						<IcTickCircle className='inline size-3 mr-1' />
 						Al enviar, el reclamo pasará al estado{' '}
 						<strong>Resuelto</strong> y ya no podrá editarse la
 						respuesta.
@@ -414,7 +417,7 @@ function DraftIndicator({ status }: { status: DraftStatus }) {
 	if (status === 'saving') {
 		return (
 			<span className='flex items-center gap-1.5 text-xs text-muted-foreground animate-pulse'>
-				<Clock className='size-3' />
+				<IcClock className='size-3' />
 				Guardando borrador…
 			</span>
 		)
@@ -423,7 +426,7 @@ function DraftIndicator({ status }: { status: DraftStatus }) {
 	if (status === 'saved') {
 		return (
 			<span className='flex items-center gap-1.5 text-xs text-green-600'>
-				<CheckCircle2 className='size-3' />
+				<IcTickCircle className='size-3' />
 				Borrador guardado
 			</span>
 		)

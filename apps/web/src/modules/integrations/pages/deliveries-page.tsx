@@ -1,4 +1,3 @@
-import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { sileo } from 'sileo'
@@ -6,6 +5,9 @@ import DataTable from '@/shared/components/data-table'
 import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
+import { IcArrowDown02 } from '@/shared/components/icons/ic-arrow-down-02'
+import { IcArrowLeft01 } from '@/shared/components/icons/ic-arrow-left-01'
+import { IcArrowRight02 } from '@/shared/components/icons/ic-arrow-right-02'
 import TableFiltersBar from '@/shared/components/table-filters-bar'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -186,9 +188,9 @@ function DeliveryDetail({ row }: { row: WebhookDeliveryRow }) {
 				onClick={() => setOpen((p) => !p)}
 			>
 				{open ? (
-					<ChevronDown className='size-3' />
+					<IcArrowDown02 className='size-3' />
 				) : (
-					<ChevronRight className='size-3' />
+					<IcArrowRight02 className='size-3' />
 				)}
 				Detalles
 			</button>
@@ -418,7 +420,7 @@ function DeliveriesPageView({
 						nativeButton={false}
 						render={<Link to='/dashboard/webhooks' />}
 					>
-						<ArrowLeft className='size-4' />
+						<IcArrowLeft01 className='size-4' />
 						Volver a webhooks
 					</Button>
 					<h1 className='text-2xl font-semibold'>

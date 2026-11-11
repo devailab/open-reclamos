@@ -1,7 +1,8 @@
-import { KeyRound, Lock } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import TextField from '@/shared/components/forms/text-field'
+import { IcKey } from '@/shared/components/icons/ic-key'
+import { IcLock } from '@/shared/components/icons/ic-lock'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Card,
@@ -84,7 +85,7 @@ export function ChangePasswordForm() {
 		<Card>
 			<CardHeader>
 				<CardTitle className='flex items-center gap-2 text-base'>
-					<KeyRound className='size-4' />
+					<IcKey className='size-4' />
 					Cambiar contraseña
 				</CardTitle>
 				<CardDescription>
@@ -100,7 +101,7 @@ export function ChangePasswordForm() {
 					placeholder='Tu contraseña actual'
 					type='password'
 					validate={validateCurrentPassword}
-					prefix={<Lock className='size-3.5' />}
+					prefix={<IcLock className='size-3.5' />}
 					disabled={isPending}
 				/>
 
@@ -111,7 +112,7 @@ export function ChangePasswordForm() {
 						placeholder='Mínimo 12 caracteres'
 						type='password'
 						validate={validateNewPassword}
-						prefix={<Lock className='size-3.5' />}
+						prefix={<IcLock className='size-3.5' />}
 						disabled={isPending}
 					/>
 					<TextField
@@ -120,7 +121,7 @@ export function ChangePasswordForm() {
 						placeholder='Repite la nueva contraseña'
 						type='password'
 						validate={validateConfirmPassword(values.newPassword)}
-						prefix={<Lock className='size-3.5' />}
+						prefix={<IcLock className='size-3.5' />}
 						disabled={isPending}
 					/>
 				</div>

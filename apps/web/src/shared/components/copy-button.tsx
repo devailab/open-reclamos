@@ -1,7 +1,8 @@
 'use client'
 
-import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
+import { IcCopy } from '@/shared/components/icons/ic-copy'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import { cn } from '@/shared/lib/utils'
 
@@ -37,7 +38,7 @@ export function CopyButton({
 				handleCopy()
 			}}
 		>
-			{copied ? <Check className='text-green-500' /> : <Copy />}
+			{copied ? <IcTickCircle className='text-green-500' /> : <IcCopy />}
 			<span className='sr-only'>
 				{copied ? 'Copiado' : 'Copiar enlace'}
 			</span>

@@ -1,25 +1,23 @@
-import {
-	Building2,
-	ClipboardList,
-	Clock3,
-	Download,
-	Globe,
-	KeyRound,
-	LayoutDashboard,
-	ListTree,
-	type LucideIcon,
-	Printer,
-	ScanText,
-	Settings,
-	ShieldCheck,
-	ShieldHalf,
-	SlidersHorizontal,
-	Store,
-	Tags,
-	UserRound,
-	Users,
-	Webhook,
-} from 'lucide-react'
+import { Webhook } from 'lucide-react'
+import { IcBuildings } from '@/shared/components/icons/ic-buildings'
+import { IcCategory } from '@/shared/components/icons/ic-category'
+import { IcClipboardText } from '@/shared/components/icons/ic-clipboard-text'
+import { IcClock } from '@/shared/components/icons/ic-clock'
+import { IcGlobal } from '@/shared/components/icons/ic-global'
+import { IcHierarchy } from '@/shared/components/icons/ic-hierarchy'
+import { IcImportArrow01 } from '@/shared/components/icons/ic-import-arrow-01'
+import { IcKey } from '@/shared/components/icons/ic-key'
+import { IcPeople } from '@/shared/components/icons/ic-people'
+import { IcPrinter } from '@/shared/components/icons/ic-printer'
+import { IcScan } from '@/shared/components/icons/ic-scan'
+import { IcSetting2 } from '@/shared/components/icons/ic-setting-2'
+import { IcSetting4 } from '@/shared/components/icons/ic-setting-4'
+import { IcShieldSecurity } from '@/shared/components/icons/ic-shield-security'
+import { IcShieldTick } from '@/shared/components/icons/ic-shield-tick'
+import { IcShop } from '@/shared/components/icons/ic-shop'
+import { IcTag } from '@/shared/components/icons/ic-tag'
+import { IcUser } from '@/shared/components/icons/ic-user'
+import type { IconComponent } from '@/shared/lib/render-icon'
 
 export type SidebarVisibility =
 	| { type: 'always' }
@@ -30,7 +28,8 @@ export interface SidebarLink {
 	kind: 'link'
 	label: string
 	href: string
-	icon: LucideIcon
+	icon: IconComponent
+	iconSupportsSolid?: boolean
 	visibility: SidebarVisibility
 	exact?: boolean
 }
@@ -38,7 +37,7 @@ export interface SidebarLink {
 export interface SidebarGroup {
 	kind: 'group'
 	label: string
-	icon: LucideIcon
+	icon: IconComponent
 	visibility: SidebarVisibility
 	items: SidebarLink[]
 }
@@ -47,7 +46,7 @@ export interface SidebarComplaintsStores {
 	kind: 'complaintsStores'
 	label: string
 	href: string
-	icon: LucideIcon
+	icon: IconComponent
 	visibility: SidebarVisibility
 }
 
@@ -62,7 +61,7 @@ export interface SidebarVisibilityContext {
 export interface SidebarAccountItem {
 	label: string
 	href: string
-	icon: LucideIcon
+	icon: IconComponent
 	external?: boolean
 }
 
@@ -71,7 +70,7 @@ export const sidebarNavigation: SidebarEntry[] = [
 		kind: 'link',
 		label: 'Dashboard',
 		href: '/dashboard',
-		icon: LayoutDashboard,
+		icon: IcCategory,
 		exact: true,
 		visibility: { type: 'capability', key: 'dashboard.view' },
 	},
@@ -79,62 +78,62 @@ export const sidebarNavigation: SidebarEntry[] = [
 		kind: 'complaintsStores',
 		label: 'Reclamos',
 		href: '/dashboard/complaints',
-		icon: ClipboardList,
+		icon: IcClipboardText,
 		visibility: { type: 'capability', key: 'complaints.view' },
 	},
 	{
 		kind: 'link',
 		label: 'Tiendas',
 		href: '/dashboard/stores',
-		icon: Store,
+		icon: IcShop,
 		visibility: { type: 'capability', key: 'stores.view' },
 	},
 	{
 		kind: 'link',
 		label: 'Motivos',
 		href: '/dashboard/reasons',
-		icon: ListTree,
+		icon: IcHierarchy,
 		visibility: { type: 'capability', key: 'reasons.view' },
 	},
 	{
 		kind: 'link',
 		label: 'Categorías',
 		href: '/dashboard/categories',
-		icon: Tags,
+		icon: IcTag,
 		visibility: { type: 'capability', key: 'categories.view' },
 	},
 	{
 		kind: 'link',
 		label: 'Exportar',
 		href: '/dashboard/exports',
-		icon: Download,
+		icon: IcImportArrow01,
 		visibility: { type: 'capability', key: 'exports.view' },
 	},
 	{
 		kind: 'link',
 		label: 'Auditoría',
 		href: '/dashboard/audit',
-		icon: Clock3,
+		icon: IcClock,
 		visibility: { type: 'capability', key: 'audit.view' },
 	},
 	{
 		kind: 'group',
 		label: 'Aviso',
-		icon: Printer,
+		icon: IcPrinter,
 		visibility: { type: 'always' },
 		items: [
 			{
 				kind: 'link',
 				label: 'Sitio web',
 				href: '/dashboard/notices/website',
-				icon: Globe,
+				icon: IcGlobal,
 				visibility: { type: 'capability', key: 'notices.view' },
 			},
 			{
 				kind: 'link',
 				label: 'Imprimible',
 				href: '/dashboard/notices/printable',
-				icon: ScanText,
+				icon: IcScan,
 				visibility: { type: 'capability', key: 'printable.view' },
 			},
 		],
@@ -142,21 +141,21 @@ export const sidebarNavigation: SidebarEntry[] = [
 	{
 		kind: 'group',
 		label: 'Administrar',
-		icon: ShieldCheck,
+		icon: IcShieldTick,
 		visibility: { type: 'always' },
 		items: [
 			{
 				kind: 'link',
 				label: 'Configuración',
 				href: '/dashboard/settings',
-				icon: Settings,
+				icon: IcSetting2,
 				visibility: { type: 'capability', key: 'settings.view' },
 			},
 			{
 				kind: 'link',
 				label: 'SSO',
 				href: '/dashboard/sso',
-				icon: KeyRound,
+				icon: IcKey,
 				visibility: { type: 'capability', key: 'admin' },
 			},
 			{
@@ -164,13 +163,14 @@ export const sidebarNavigation: SidebarEntry[] = [
 				label: 'Webhooks',
 				href: '/dashboard/webhooks',
 				icon: Webhook,
+				iconSupportsSolid: false,
 				visibility: { type: 'capability', key: 'webhooks.view' },
 			},
 			{
 				kind: 'link',
 				label: 'Usuarios',
 				href: '/dashboard/users',
-				icon: Users,
+				icon: IcPeople,
 				visibility: { type: 'capability', key: 'users.view' },
 			},
 		],
@@ -178,14 +178,14 @@ export const sidebarNavigation: SidebarEntry[] = [
 	{
 		kind: 'group',
 		label: 'Plataforma',
-		icon: ShieldHalf,
+		icon: IcShieldSecurity,
 		visibility: { type: 'platform' },
 		items: [
 			{
 				kind: 'link',
 				label: 'Organizaciones',
 				href: '/dashboard/platform',
-				icon: Building2,
+				icon: IcBuildings,
 				exact: true,
 				visibility: { type: 'platform' },
 			},
@@ -193,7 +193,7 @@ export const sidebarNavigation: SidebarEntry[] = [
 				kind: 'link',
 				label: 'Ajustes',
 				href: '/dashboard/admin-settings',
-				icon: SlidersHorizontal,
+				icon: IcSetting4,
 				visibility: { type: 'platform' },
 			},
 		],
@@ -208,20 +208,20 @@ export function getSidebarAccountItems(
 				{
 					label: 'Administrar cuenta',
 					href: ssoAccountUrl,
-					icon: UserRound,
+					icon: IcUser,
 					external: true,
 				},
 				{
 					label: 'Claves API',
 					href: '/dashboard/account',
-					icon: KeyRound,
+					icon: IcKey,
 				},
 			]
 		: [
 				{
 					label: 'Administrar cuenta',
 					href: '/dashboard/account',
-					icon: UserRound,
+					icon: IcUser,
 				},
 			]
 }

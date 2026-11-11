@@ -1,17 +1,15 @@
-import {
-	ArrowBigRight,
-	ChevronLeft,
-	Globe,
-	Loader2,
-	MapPin,
-	Send,
-	Store,
-} from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import type { FC } from 'react'
 import { Turnstile } from 'react-turnstile'
 import ComboboxField, {
 	type ComboboxOption,
 } from '@/shared/components/forms/combobox-field'
+import { IcArrowLeft02 } from '@/shared/components/icons/ic-arrow-left-02'
+import { IcArrowRight01 } from '@/shared/components/icons/ic-arrow-right-01'
+import { IcGlobal } from '@/shared/components/icons/ic-global'
+import { IcLocation } from '@/shared/components/icons/ic-location'
+import { IcSend } from '@/shared/components/icons/ic-send'
+import { IcShop } from '@/shared/components/icons/ic-shop'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/shared/components/ui/card'
 import { Separator } from '@/shared/components/ui/separator'
@@ -65,9 +63,9 @@ function StoreInfo({
 		<div className='flex items-start gap-3 text-sm'>
 			<div className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground'>
 				{isPhysical ? (
-					<Store className='size-4' />
+					<IcShop className='size-4' />
 				) : (
-					<Globe className='size-4' />
+					<IcGlobal className='size-4' />
 				)}
 			</div>
 			<div className='space-y-0.5'>
@@ -76,7 +74,7 @@ function StoreInfo({
 				</div>
 				{isPhysical && addressLabel && (
 					<p className='flex items-center gap-1 text-muted-foreground'>
-						<MapPin className='size-3 shrink-0' />
+						<IcLocation className='size-3 shrink-0' />
 						{addressLabel}
 					</p>
 				)}
@@ -260,7 +258,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 								onClick={() => form.goToStep('consumer')}
 								disabled={form.isSubmitting}
 							>
-								<ChevronLeft className='h-4 w-4' />
+								<IcArrowLeft02 className='h-4 w-4' />
 								Atrás
 							</Button>
 						) : (
@@ -273,7 +271,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 								onClick={() => form.goToStep('details')}
 							>
 								Continuar
-								<ArrowBigRight />
+								<IcArrowRight01 />
 							</Button>
 						) : (
 							<Button
@@ -292,7 +290,7 @@ export const ComplaintForm: FC<ComplaintFormProps> = ({
 									</>
 								) : (
 									<>
-										<Send />
+										<IcSend />
 										Enviar reclamo
 									</>
 								)}

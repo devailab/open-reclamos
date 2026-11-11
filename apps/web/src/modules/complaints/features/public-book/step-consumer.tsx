@@ -1,4 +1,3 @@
-import { Phone } from 'lucide-react'
 import type { FC } from 'react'
 import AutocompleteField, {
 	type AutocompleteOption,
@@ -11,6 +10,7 @@ import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcCall } from '@/shared/components/icons/ic-call'
 import { Separator } from '@/shared/components/ui/separator'
 import { DOCUMENT_TYPE_OPTIONS } from '@/shared/constants/options'
 import type { useForm } from '@/shared/hooks/use-form'
@@ -360,7 +360,7 @@ export const StepConsumer: FC<StepConsumerProps> = ({
 							disabled={disabled}
 							prepend={
 								values.dialCodeOption && (
-									<Phone className='h-4 w-4 text-muted-foreground' />
+									<IcCall className='h-4 w-4 text-muted-foreground' />
 								)
 							}
 						/>

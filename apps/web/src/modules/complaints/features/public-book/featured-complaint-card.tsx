@@ -1,13 +1,11 @@
 import { differenceInCalendarDays } from 'date-fns'
-import {
-	AlertCircleIcon,
-	AlertTriangleIcon,
-	CheckCircleIcon,
-	ClockIcon,
-	StoreIcon,
-} from 'lucide-react'
 import type { CSSProperties, FC } from 'react'
 import { Link } from 'react-router'
+import { IcClock } from '@/shared/components/icons/ic-clock'
+import { IcInfoCircle } from '@/shared/components/icons/ic-info-circle'
+import { IcShop } from '@/shared/components/icons/ic-shop'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
+import { IcWarning2 } from '@/shared/components/icons/ic-warning-2'
 import { Badge } from '@/shared/components/ui/badge'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { formatDateDisplay } from '@/shared/lib/formatters'
@@ -105,16 +103,16 @@ function getDeadlineInfo(
 
 const DEADLINE_ICON: Record<DeadlineLevel, FC<{ className?: string }>> = {
 	overdue: ({ className }) => (
-		<AlertCircleIcon className={cn('text-destructive', className)} />
+		<IcInfoCircle className={cn('text-destructive', className)} />
 	),
 	critical: ({ className }) => (
-		<AlertTriangleIcon className={cn('text-orange-500', className)} />
+		<IcWarning2 className={cn('text-orange-500', className)} />
 	),
 	warning: ({ className }) => (
-		<ClockIcon className={cn('text-yellow-600', className)} />
+		<IcClock className={cn('text-yellow-600', className)} />
 	),
 	safe: ({ className }) => (
-		<CheckCircleIcon className={cn('text-emerald-600', className)} />
+		<IcTickCircle className={cn('text-emerald-600', className)} />
 	),
 }
 
@@ -191,7 +189,7 @@ export const FeaturedComplaintCard: FC<FeaturedComplaintCardProps> = ({
 							className='h-5 min-w-0 max-w-[70%] px-2 text-[10px] font-semibold'
 							style={storeBadgeStyle}
 						>
-							<StoreIcon className='size-3 shrink-0' />
+							<IcShop className='size-3 shrink-0' />
 							<span className='truncate'>
 								{complaint.storeName}
 							</span>

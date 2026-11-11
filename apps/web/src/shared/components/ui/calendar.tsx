@@ -1,10 +1,5 @@
 'use client'
 
-import {
-	ChevronDownIcon,
-	ChevronLeftIcon,
-	ChevronRightIcon,
-} from 'lucide-react'
 import * as React from 'react'
 import {
 	type DayButton,
@@ -12,6 +7,9 @@ import {
 	getDefaultClassNames,
 	type Locale,
 } from 'react-day-picker'
+import { IcArrowDown02 } from '@/shared/components/icons/ic-arrow-down-02'
+import { IcArrowLeft02 } from '@/shared/components/icons/ic-arrow-left-02'
+import { IcArrowRight02 } from '@/shared/components/icons/ic-arrow-right-02'
 import { Button, buttonVariants } from '@/shared/components/ui/button'
 import { cn } from '@/shared/lib/utils'
 
@@ -156,7 +154,7 @@ function Calendar({
 				Chevron: ({ className, orientation, ...props }) => {
 					if (orientation === 'left') {
 						return (
-							<ChevronLeftIcon
+							<IcArrowLeft02
 								className={cn('size-4', className)}
 								{...props}
 							/>
@@ -165,7 +163,7 @@ function Calendar({
 
 					if (orientation === 'right') {
 						return (
-							<ChevronRightIcon
+							<IcArrowRight02
 								className={cn('size-4', className)}
 								{...props}
 							/>
@@ -173,7 +171,7 @@ function Calendar({
 					}
 
 					return (
-						<ChevronDownIcon
+						<IcArrowDown02
 							className={cn('size-4', className)}
 							{...props}
 						/>

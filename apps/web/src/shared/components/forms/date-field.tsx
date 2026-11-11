@@ -1,4 +1,3 @@
-import { CalendarIcon } from 'lucide-react'
 import {
 	type FC,
 	type ReactNode,
@@ -6,6 +5,7 @@ import {
 	useImperativeHandle,
 	useState,
 } from 'react'
+import { IcCalendar } from '@/shared/components/icons/ic-calendar'
 
 import { Button } from '@/shared/components/ui/button'
 import { Calendar } from '@/shared/components/ui/calendar'
@@ -112,7 +112,7 @@ const DateField: FC<DateFieldProps> = ({
 							{value
 								? formatDate(value)
 								: placeholder || 'Selecciona una fecha'}
-							<CalendarIcon className='size-4' />
+							<IcCalendar className='size-4' />
 						</Button>
 					}
 				/>

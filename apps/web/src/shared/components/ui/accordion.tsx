@@ -1,5 +1,7 @@
 import { Accordion as AccordionPrimitive } from '@base-ui/react/accordion'
-import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
+import { IcArrowDown02 } from '@/shared/components/icons/ic-arrow-down-02'
+import { IcArrowUp02 } from '@/shared/components/icons/ic-arrow-up-02'
+
 import { cn } from '@/shared/lib/utils'
 
 function Accordion({ className, ...props }: AccordionPrimitive.Root.Props) {
@@ -38,11 +40,11 @@ function AccordionTrigger({
 				{...props}
 			>
 				{children}
-				<ChevronDownIcon
+				<IcArrowDown02
 					data-slot='accordion-trigger-icon'
 					className='pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden'
 				/>
-				<ChevronUpIcon
+				<IcArrowUp02
 					data-slot='accordion-trigger-icon'
 					className='pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline'
 				/>

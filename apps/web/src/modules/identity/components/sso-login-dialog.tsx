@@ -1,7 +1,8 @@
-import { ArrowRight, KeyRound } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import TextField from '@/shared/components/forms/text-field'
+import { IcArrowRight01 } from '@/shared/components/icons/ic-arrow-right-01'
+import { IcKey } from '@/shared/components/icons/ic-key'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Dialog,
@@ -83,7 +84,7 @@ export function SSOLoginDialog() {
 				className='w-full'
 				onClick={() => changeOpen(true)}
 			>
-				<KeyRound /> Ingresar con SSO
+				<IcKey /> Ingresar con SSO
 			</Button>
 			<Dialog open={open} onOpenChange={changeOpen}>
 				<DialogContent
@@ -109,7 +110,7 @@ export function SSOLoginDialog() {
 							label='Dominio empresarial'
 							placeholder='devailab.com'
 							autoComplete='off'
-							prefix={<KeyRound className='size-4' />}
+							prefix={<IcKey className='size-4' />}
 							disabled={pending}
 							validate={(value) =>
 								!value?.trim()
@@ -141,7 +142,7 @@ export function SSOLoginDialog() {
 							</Button>
 							<Button type='submit' disabled={pending}>
 								{pending ? 'Buscando...' : 'Continuar'}{' '}
-								<ArrowRight />
+								<IcArrowRight01 />
 							</Button>
 						</DialogFooter>
 					</form>

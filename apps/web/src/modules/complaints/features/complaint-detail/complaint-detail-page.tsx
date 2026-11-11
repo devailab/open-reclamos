@@ -1,6 +1,6 @@
-import { ArrowLeft } from 'lucide-react'
 import { type FC, useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import { IcArrowLeft01 } from '@/shared/components/icons/ic-arrow-left-01'
 import type { ComplaintCategorySummary } from '../../types'
 import { ComplaintAuditCard } from './complaint-audit-card'
 import { ComplaintConsumerCard } from './complaint-consumer-card'
@@ -78,7 +78,7 @@ export const ComplaintDetailPage: FC<ComplaintDetailPageProps> = ({
 					to='/dashboard/complaints'
 					className='inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors'
 				>
-					<ArrowLeft className='size-4' />
+					<IcArrowLeft01 className='size-4' />
 					Volver a reclamos
 				</Link>
 			</div>

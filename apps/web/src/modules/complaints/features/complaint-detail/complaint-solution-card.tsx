@@ -1,5 +1,5 @@
-import { Lightbulb } from 'lucide-react'
 import type { FC } from 'react'
+import { IcLampOn } from '@/shared/components/icons/ic-lamp-on'
 import { formatDateTimeDisplay } from '@/shared/lib/formatters'
 import type {
 	ComplaintCategoryRow,
@@ -43,7 +43,7 @@ export const ComplaintSolutionCard: FC<ComplaintSolutionCardProps> = ({
 	onResponseSuccess,
 }) => {
 	return (
-		<Section icon={<Lightbulb className='size-4' />} title='Solución'>
+		<Section icon={<IcLampOn className='size-4' />} title='Solución'>
 			{resolvedResponse ? (
 				<div className='space-y-3'>
 					{canRespond && (

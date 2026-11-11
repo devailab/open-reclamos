@@ -1,8 +1,10 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Check, CheckCircle2, Copy } from 'lucide-react'
+
 import { type FC, useState } from 'react'
 import { sileo } from 'sileo'
+import { IcCopy } from '@/shared/components/icons/ic-copy'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Dialog,
@@ -41,9 +43,9 @@ const CopyButton = ({ text }: { text: string }) => {
 			aria-label='Copiar'
 		>
 			{copied ? (
-				<Check className='h-3.5 w-3.5 text-green-500' />
+				<IcTickCircle className='h-3.5 w-3.5 text-green-500' />
 			) : (
-				<Copy className='h-3.5 w-3.5 text-muted-foreground hover:text-foreground' />
+				<IcCopy className='h-3.5 w-3.5 text-muted-foreground hover:text-foreground' />
 			)}
 		</button>
 	)
@@ -69,7 +71,7 @@ export const ComplaintSuccess: FC<ComplaintSuccessProps> = ({
 				<DialogHeader>
 					<div className='flex flex-col items-center gap-3 py-2 text-center'>
 						<div className='flex h-14 w-14 items-center justify-center rounded-full bg-green-100'>
-							<CheckCircle2 className='h-8 w-8 text-green-600' />
+							<IcTickCircle className='h-8 w-8 text-green-600' />
 						</div>
 						<DialogTitle className='text-lg'>
 							¡Reclamo registrado con éxito!

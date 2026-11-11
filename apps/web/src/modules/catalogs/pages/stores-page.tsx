@@ -1,5 +1,5 @@
 import { PermissionAdmin } from '@open-reclamos/rpc-client'
-import { ExternalLink, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import { useSession } from '@/shared/auth/session'
@@ -9,6 +9,9 @@ import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcAdd } from '@/shared/components/icons/ic-add'
+import { IcEdit2 } from '@/shared/components/icons/ic-edit-2'
+import { IcTrash } from '@/shared/components/icons/ic-trash'
 import TableFiltersBar from '@/shared/components/table-filters-bar'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -391,7 +394,7 @@ function StoresPageContent() {
 							setEditingStore(row)
 						}}
 					>
-						<Pencil />
+						<IcEdit2 />
 						<span className='sr-only'>Editar tienda</span>
 					</Button>
 					<Button
@@ -409,7 +412,7 @@ function StoresPageContent() {
 							handleDeactivate(row)
 						}}
 					>
-						<Trash2 />
+						<IcTrash />
 						<span className='sr-only'>Desactivar tienda</span>
 					</Button>
 				</div>
@@ -446,7 +449,7 @@ function StoresPageContent() {
 					disabled={!canManage}
 					onClick={() => setCreateDialogOpen(true)}
 				>
-					<Plus />
+					<IcAdd />
 					Nueva tienda
 				</Button>
 			</div>

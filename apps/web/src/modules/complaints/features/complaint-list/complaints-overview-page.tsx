@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronLeft, ChevronRight, SearchX } from 'lucide-react'
+import { SearchX } from 'lucide-react'
 import type { FC } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { sileo } from 'sileo'
@@ -6,6 +6,9 @@ import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcArrowLeft02 } from '@/shared/components/icons/ic-arrow-left-02'
+import { IcArrowRight02 } from '@/shared/components/icons/ic-arrow-right-02'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import TableFiltersBar from '@/shared/components/table-filters-bar'
 import { Button } from '@/shared/components/ui/button'
 import { Spinner } from '@/shared/components/ui/spinner'
@@ -281,7 +284,7 @@ export const ComplaintsOverviewPage: FC<ComplaintsOverviewPageProps> = ({
 					) : (
 						<div className='flex min-h-72 flex-col items-center justify-center px-4 text-center'>
 							<div className='mb-4 flex size-16 items-center justify-center rounded-full bg-emerald-500/10'>
-								<CheckCircle2 className='size-8 text-emerald-600' />
+								<IcTickCircle className='size-8 text-emerald-600' />
 							</div>
 							<h2 className='text-lg font-semibold'>
 								¡Todo está al día!
@@ -309,7 +312,7 @@ export const ComplaintsOverviewPage: FC<ComplaintsOverviewPageProps> = ({
 								}
 								onClick={controller.setPreviousPage}
 							>
-								<ChevronLeft />
+								<IcArrowLeft02 />
 								Anterior
 							</Button>
 							<Button
@@ -320,7 +323,7 @@ export const ComplaintsOverviewPage: FC<ComplaintsOverviewPageProps> = ({
 								onClick={controller.setNextPage}
 							>
 								Siguiente
-								<ChevronRight />
+								<IcArrowRight02 />
 							</Button>
 						</div>
 					</div>

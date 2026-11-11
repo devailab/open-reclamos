@@ -1,16 +1,3 @@
-import {
-	Building2,
-	CalendarClock,
-	Check,
-	Copy,
-	FileText,
-	Globe,
-	Hash,
-	Link,
-	MapPin,
-	Phone,
-	Zap,
-} from 'lucide-react'
 import { useRef, useState, useTransition } from 'react'
 import { Link as RouterLink } from 'react-router'
 import { sileo } from 'sileo'
@@ -27,6 +14,17 @@ import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcBuildings } from '@/shared/components/icons/ic-buildings'
+import { IcCalendar } from '@/shared/components/icons/ic-calendar'
+import { IcCall } from '@/shared/components/icons/ic-call'
+import { IcCopy } from '@/shared/components/icons/ic-copy'
+import { IcDocumentText } from '@/shared/components/icons/ic-document-text'
+import { IcFlash } from '@/shared/components/icons/ic-flash'
+import { IcGlobal } from '@/shared/components/icons/ic-global'
+import { IcHashtag } from '@/shared/components/icons/ic-hashtag'
+import { IcLink } from '@/shared/components/icons/ic-link'
+import { IcLocation } from '@/shared/components/icons/ic-location'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Card,
@@ -354,7 +352,7 @@ export function OrganizationSettingsForm({
 				<Card>
 					<CardHeader>
 						<CardTitle className='flex items-center gap-2 text-base'>
-							<Building2 className='size-4' />
+							<IcBuildings className='size-4' />
 							Identidad visual
 						</CardTitle>
 						<CardDescription>
@@ -446,7 +444,7 @@ export function OrganizationSettingsForm({
 				<Card>
 					<CardHeader>
 						<CardTitle className='flex items-center gap-2 text-base'>
-							<Building2 className='size-4' />
+							<IcBuildings className='size-4' />
 							Información general
 						</CardTitle>
 						<CardDescription>
@@ -461,7 +459,7 @@ export function OrganizationSettingsForm({
 									RUC
 								</p>
 								<div className='flex h-9 items-center gap-2 rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground'>
-									<Hash className='size-3.5 shrink-0' />
+									<IcHashtag className='size-3.5 shrink-0' />
 									{org.taxId}
 								</div>
 							</div>
@@ -484,7 +482,7 @@ export function OrganizationSettingsForm({
 								label='Nombre comercial'
 								placeholder='Ej. Mi Empresa S.A.C.'
 								validate={required}
-								prefix={<Building2 className='size-3.5' />}
+								prefix={<IcBuildings className='size-3.5' />}
 								disabled={disabled}
 							/>
 							<TextField
@@ -492,7 +490,7 @@ export function OrganizationSettingsForm({
 								label='Razón social'
 								placeholder='Ej. MI EMPRESA SOCIEDAD ANONIMA CERRADA'
 								validate={required}
-								prefix={<FileText className='size-3.5' />}
+								prefix={<IcDocumentText className='size-3.5' />}
 								disabled={disabled}
 							/>
 						</div>
@@ -501,7 +499,7 @@ export function OrganizationSettingsForm({
 								{...register('businessDomain')}
 								label='Dominio empresarial (opcional)'
 								placeholder='devailab.com'
-								prefix={<Globe className='size-3.5' />}
+								prefix={<IcGlobal className='size-3.5' />}
 								validate={validateBusinessDomain}
 								autoComplete='off'
 								emptyAsNull
@@ -522,7 +520,7 @@ export function OrganizationSettingsForm({
 				<Card>
 					<CardHeader>
 						<CardTitle className='flex items-center gap-2 text-base'>
-							<MapPin className='size-4' />
+							<IcLocation className='size-4' />
 							Dirección
 						</CardTitle>
 						<CardDescription>
@@ -567,7 +565,7 @@ export function OrganizationSettingsForm({
 				<Card>
 					<CardHeader>
 						<CardTitle className='flex items-center gap-2 text-base'>
-							<Phone className='size-4' />
+							<IcCall className='size-4' />
 							Contacto
 						</CardTitle>
 						<CardDescription>
@@ -589,7 +587,7 @@ export function OrganizationSettingsForm({
 									label='Teléfono'
 									placeholder='987 654 321'
 									type='tel'
-									prefix={<Phone className='size-3.5' />}
+									prefix={<IcCall className='size-3.5' />}
 									emptyAsNull
 									disabled={disabled}
 								/>
@@ -601,7 +599,7 @@ export function OrganizationSettingsForm({
 							label='Sitio web'
 							placeholder='https://www.miempresa.com'
 							type='url'
-							prefix={<Globe className='size-3.5' />}
+							prefix={<IcGlobal className='size-3.5' />}
 							emptyAsNull
 							disabled={disabled}
 						/>
@@ -614,7 +612,7 @@ export function OrganizationSettingsForm({
 				<Card>
 					<CardHeader>
 						<CardTitle className='flex items-center gap-2 text-base'>
-							<Link className='size-4' />
+							<IcLink className='size-4' />
 							Formulario de reclamos
 						</CardTitle>
 						<CardDescription>
@@ -634,7 +632,7 @@ export function OrganizationSettingsForm({
 							{...register('responseDeadlineDays')}
 							label='Plazo máximo de respuesta'
 							placeholder='15'
-							prefix={<CalendarClock className='size-3.5' />}
+							prefix={<IcCalendar className='size-3.5' />}
 							validate={validateResponseDeadlineDays}
 							min={MIN_RESPONSE_DEADLINE_DAYS}
 							max={MAX_RESPONSE_DEADLINE_DAYS}
@@ -726,7 +724,7 @@ function McpSettingsCard({
 		<Card>
 			<CardHeader>
 				<CardTitle className='flex items-center gap-2 text-base'>
-					<Zap className='size-4' />
+					<IcFlash className='size-4' />
 					MCP (Model Context Protocol)
 				</CardTitle>
 				<CardDescription>
@@ -798,9 +796,9 @@ function McpSettingsCard({
 							onClick={onCopy}
 						>
 							{copied ? (
-								<Check className='size-3.5' />
+								<IcTickCircle className='size-3.5' />
 							) : (
-								<Copy className='size-3.5' />
+								<IcCopy className='size-3.5' />
 							)}
 						</Button>
 					</div>

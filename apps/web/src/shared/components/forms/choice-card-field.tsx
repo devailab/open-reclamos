@@ -1,7 +1,7 @@
 'use client'
 
-import { CheckIcon } from 'lucide-react'
 import { useId, useImperativeHandle, useRef, useState } from 'react'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Label } from '@/shared/components/ui/label'
 import type { FormFieldProps } from '@/shared/hooks/use-form'
 import { cn } from '@/shared/lib/utils'
@@ -117,7 +117,7 @@ function ChoiceCardField<
 											: 'border-muted-foreground/40 bg-background text-transparent group-hover:border-primary/40',
 									)}
 								>
-									<CheckIcon className='size-3.5' />
+									<IcTickCircle className='size-3.5' />
 								</span>
 								<span className='min-w-0 space-y-1'>
 									<span className='block text-sm font-medium text-foreground'>

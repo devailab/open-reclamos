@@ -1,8 +1,10 @@
 'use client'
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
-import { CheckIcon, ChevronDownIcon, XIcon } from 'lucide-react'
+import { XIcon } from 'lucide-react'
 import * as React from 'react'
+import { IcArrowDown02 } from '@/shared/components/icons/ic-arrow-down-02'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import {
 	InputGroup,
@@ -30,7 +32,7 @@ function ComboboxTrigger({
 			{...props}
 		>
 			{children}
-			<ChevronDownIcon className='pointer-events-none size-4 text-muted-foreground' />
+			<IcArrowDown02 className='pointer-events-none size-4 text-muted-foreground' />
 		</ComboboxPrimitive.Trigger>
 	)
 }
@@ -153,7 +155,7 @@ function ComboboxItem({
 					<span className='pointer-events-none absolute right-2 flex size-4 items-center justify-center' />
 				}
 			>
-				<CheckIcon className='pointer-events-none' />
+				<IcTickCircle className='pointer-events-none' />
 			</ComboboxPrimitive.ItemIndicator>
 		</ComboboxPrimitive.Item>
 	)

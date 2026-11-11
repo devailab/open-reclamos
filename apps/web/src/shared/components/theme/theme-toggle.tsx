@@ -1,7 +1,9 @@
 'use client'
 
 import { useTheme } from '@wrksz/themes/client'
-import { Laptop, Moon, Sun, SunMoon } from 'lucide-react'
+import { IcMonitor } from '@/shared/components/icons/ic-monitor'
+import { IcMoon } from '@/shared/components/icons/ic-moon'
+import { IcSun } from '@/shared/components/icons/ic-sun'
 import { Button } from '@/shared/components/ui/button'
 import {
 	DropdownMenu,
@@ -13,21 +15,25 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
+import type { IconComponent } from '@/shared/lib/render-icon'
 
 type ThemeOption = 'light' | 'dark' | 'system'
 
 const THEME_OPTIONS: Array<{
 	value: ThemeOption
 	label: string
-	icon: typeof Sun
+	icon: IconComponent
 }> = [
-	{ value: 'light', label: 'Claro', icon: Sun },
-	{ value: 'dark', label: 'Oscuro', icon: Moon },
-	{ value: 'system', label: 'Sistema', icon: Laptop },
+	{ value: 'light', label: 'Claro', icon: IcSun },
+	{ value: 'dark', label: 'Oscuro', icon: IcMoon },
+	{ value: 'system', label: 'Sistema', icon: IcMonitor },
 ]
 
 export function ThemeToggle() {
 	const { setTheme, theme } = useTheme()
+
+	const ThemeIcon =
+		theme === 'dark' ? IcMoon : theme === 'light' ? IcSun : IcMonitor
 
 	return (
 		<DropdownMenu>
@@ -35,7 +41,7 @@ export function ThemeToggle() {
 				render={<Button variant='outline' size='icon' />}
 				aria-label='Cambiar tema'
 			>
-				<SunMoon />
+				<ThemeIcon />
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align='end' className='w-40'>
 				<DropdownMenuGroup>

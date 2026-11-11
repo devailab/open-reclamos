@@ -1,5 +1,4 @@
 import { PermissionAdmin } from '@open-reclamos/rpc-client'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import {
 	useFetcher,
@@ -11,6 +10,9 @@ import { sileo } from 'sileo'
 import { useSession } from '@/shared/auth/session'
 import DataTable from '@/shared/components/data-table'
 import TextField from '@/shared/components/forms/text-field'
+import { IcAdd } from '@/shared/components/icons/ic-add'
+import { IcEdit2 } from '@/shared/components/icons/ic-edit-2'
+import { IcTrash } from '@/shared/components/icons/ic-trash'
 import TableFiltersBar from '@/shared/components/table-filters-bar'
 import { Button } from '@/shared/components/ui/button'
 import {
@@ -171,7 +173,7 @@ function CategoriesPageContent() {
 						disabled={!canManage}
 						onClick={() => setEditingCategory(row)}
 					>
-						<Pencil className='size-4' />
+						<IcEdit2 className='size-4' />
 						Editar
 					</Button>
 					<Button
@@ -180,7 +182,7 @@ function CategoriesPageContent() {
 						disabled={!canManage || isDeleting}
 						onClick={() => handleDelete(row)}
 					>
-						<Trash2 className='size-4' />
+						<IcTrash className='size-4' />
 						Eliminar
 					</Button>
 				</div>
@@ -204,7 +206,7 @@ function CategoriesPageContent() {
 					disabled={!canManage}
 					onClick={() => setCreateDialogOpen(true)}
 				>
-					<Plus className='size-4' />
+					<IcAdd className='size-4' />
 					Nueva categoría
 				</Button>
 			</div>

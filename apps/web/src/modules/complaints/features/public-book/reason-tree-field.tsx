@@ -8,7 +8,7 @@ import {
 	useInteractions,
 	useRole,
 } from '@floating-ui/react'
-import { Check, ChevronDown, Search, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import {
 	type FC,
 	useId,
@@ -18,6 +18,9 @@ import {
 	useState,
 } from 'react'
 import type { SelectOption } from '@/shared/components/forms/select-field'
+import { IcArrowDown02 } from '@/shared/components/icons/ic-arrow-down-02'
+import { IcSearchNormal } from '@/shared/components/icons/ic-search-normal'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { InputGroup } from '@/shared/components/ui/input-group'
 import { Label } from '@/shared/components/ui/label'
 import type { FormFieldProps } from '@/shared/hooks/use-form'
@@ -257,7 +260,7 @@ const ReasonTreeField: FC<ReasonTreeFieldProps> = ({
 								<X className='h-3.5 w-3.5' />
 							</button>
 						)}
-						<ChevronDown
+						<IcArrowDown02
 							className={cn(
 								'h-4 w-4 text-muted-foreground transition-transform duration-200',
 								isOpen && 'rotate-180',
@@ -281,7 +284,7 @@ const ReasonTreeField: FC<ReasonTreeFieldProps> = ({
 					{/* Búsqueda */}
 					<div className='border-b border-border/80 p-2'>
 						<div className='flex items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5'>
-							<Search className='h-4 w-4 shrink-0 text-muted-foreground' />
+							<IcSearchNormal className='h-4 w-4 shrink-0 text-muted-foreground' />
 							<input
 								ref={searchRef}
 								type='text'
@@ -328,7 +331,7 @@ const ReasonTreeField: FC<ReasonTreeFieldProps> = ({
 													{child.reason}
 												</span>
 												{isSelected && (
-													<Check className='h-4 w-4 shrink-0' />
+													<IcTickCircle className='h-4 w-4 shrink-0' />
 												)}
 											</button>
 										)

@@ -1,7 +1,9 @@
 'use client'
 
-import { CheckCircle2, CircleAlert, CircleX, Info } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
+import { IcCloseCircle } from '@/shared/components/icons/ic-close-circle'
+import { IcInfoCircle } from '@/shared/components/icons/ic-info-circle'
+import { IcTickCircle } from '@/shared/components/icons/ic-tick-circle'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Dialog,
@@ -15,10 +17,10 @@ import { cn } from '@/shared/lib/utils'
 import { useFeedbackDialogStore } from '@/shared/stores/feedback-dialog-store'
 
 const ALERT_ICON_BY_VARIANT = {
-	success: CheckCircle2,
-	info: Info,
-	warning: CircleAlert,
-	error: CircleX,
+	success: IcTickCircle,
+	info: IcInfoCircle,
+	warning: IcInfoCircle,
+	error: IcCloseCircle,
 } as const
 
 const ALERT_ICON_CLASS_BY_VARIANT = {

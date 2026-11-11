@@ -1,7 +1,9 @@
-import { FileText, Mail, Send } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import TextField from '@/shared/components/forms/text-field'
+import { IcDocumentText } from '@/shared/components/icons/ic-document-text'
+import { IcSend } from '@/shared/components/icons/ic-send'
+import { IcSms } from '@/shared/components/icons/ic-sms'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Card,
@@ -86,7 +88,7 @@ export function EmailTestCard({
 			<Card className='border-dashed'>
 				<CardHeader>
 					<CardTitle className='flex items-center gap-2 text-base'>
-						<Mail className='size-4' />
+						<IcSms className='size-4' />
 						Prueba de correo
 					</CardTitle>
 					<CardDescription>
@@ -114,7 +116,7 @@ export function EmailTestCard({
 						placeholder='destinatario@empresa.com'
 						type='email'
 						validate={combine(required, email)}
-						prefix={<Mail className='size-3.5' />}
+						prefix={<IcSms className='size-3.5' />}
 						disabled={disabled}
 					/>
 
@@ -122,7 +124,7 @@ export function EmailTestCard({
 
 					<div className='rounded-lg border bg-muted/20 p-4'>
 						<div className='mb-2 flex items-center gap-2 text-sm font-medium'>
-							<FileText className='size-4' />
+							<IcDocumentText className='size-4' />
 							Qué valida esta prueba
 						</div>
 						<p className='text-sm text-muted-foreground'>
@@ -132,7 +134,7 @@ export function EmailTestCard({
 
 					<div className='flex justify-end'>
 						<Button onClick={handleSubmit} disabled={disabled}>
-							<Send className='size-4' />
+							<IcSend className='size-4' />
 							{isPending ? 'Enviando prueba...' : 'Enviar prueba'}
 						</Button>
 					</div>

@@ -1,8 +1,9 @@
 import { PermissionAdmin } from '@open-reclamos/rpc-client'
-import { BookOpen, Plus } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import { useSession } from '@/shared/auth/session'
+import { IcAdd } from '@/shared/components/icons/ic-add'
+import { IcBookOpen } from '@/shared/components/icons/ic-book-open'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Empty,
@@ -159,7 +160,7 @@ function ReasonsPageContent() {
 					onClick={handleAddRoot}
 					disabled={!canManage || isDeleting}
 				>
-					<Plus />
+					<IcAdd />
 					Nuevo motivo
 				</Button>
 			</div>
@@ -178,7 +179,7 @@ function ReasonsPageContent() {
 				<Empty className='border py-16'>
 					<EmptyHeader>
 						<EmptyMedia variant='icon'>
-							<BookOpen />
+							<IcBookOpen />
 						</EmptyMedia>
 						<EmptyContent>
 							<EmptyTitle>Sin motivos registrados</EmptyTitle>

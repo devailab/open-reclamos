@@ -1,9 +1,9 @@
-import { Lock } from 'lucide-react'
 import type { FC } from 'react'
 import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import { validateLoginPassword } from '@/modules/identity/validation'
 import TextField from '@/shared/components/forms/text-field'
+import { IcLock } from '@/shared/components/icons/ic-lock'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Dialog,
@@ -100,7 +100,7 @@ export const PlatformPasswordDialog: FC<PlatformPasswordDialogProps> = ({
 					label='Contraseña'
 					placeholder='Tu contraseña'
 					type='password'
-					prefix={<Lock className='size-3.5' />}
+					prefix={<IcLock className='size-3.5' />}
 					validate={validateLoginPassword}
 					disabled={isPending}
 				/>

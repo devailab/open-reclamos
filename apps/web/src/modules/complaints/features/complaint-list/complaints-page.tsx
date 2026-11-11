@@ -1,5 +1,4 @@
 import { differenceInCalendarDays } from 'date-fns'
-import { AlertCircle, Clock, Eye, MessageSquare } from 'lucide-react'
 import type { FC } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
@@ -9,6 +8,10 @@ import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcClock } from '@/shared/components/icons/ic-clock'
+import { IcEye } from '@/shared/components/icons/ic-eye'
+import { IcInfoCircle } from '@/shared/components/icons/ic-info-circle'
+import { IcMessageSquare } from '@/shared/components/icons/ic-message-square'
 import TableFiltersBar from '@/shared/components/table-filters-bar'
 import { Badge } from '@/shared/components/ui/badge'
 import { buttonVariants } from '@/shared/components/ui/button'
@@ -306,9 +309,9 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({
 								)}
 							>
 								{deadline.isOverdue ? (
-									<AlertCircle className='size-2.5 shrink-0' />
+									<IcInfoCircle className='size-2.5 shrink-0' />
 								) : (
-									<Clock className='size-2.5 shrink-0' />
+									<IcClock className='size-2.5 shrink-0' />
 								)}
 								{deadline.label}
 							</span>
@@ -377,7 +380,7 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({
 									size: 'icon',
 								})}
 							>
-								<MessageSquare className='size-4' />
+								<IcMessageSquare className='size-4' />
 							</Link>
 						)}
 						<Link
@@ -388,7 +391,7 @@ export const ComplaintsPage: FC<ComplaintsPageProps> = ({
 								size: 'icon',
 							})}
 						>
-							<Eye className='size-4' />
+							<IcEye className='size-4' />
 						</Link>
 					</div>
 				)

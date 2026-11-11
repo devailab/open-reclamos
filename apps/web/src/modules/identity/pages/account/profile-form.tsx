@@ -1,8 +1,9 @@
-import { Mail, User } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import { useSession } from '@/shared/auth/session'
 import TextField from '@/shared/components/forms/text-field'
+import { IcSms } from '@/shared/components/icons/ic-sms'
+import { IcUser } from '@/shared/components/icons/ic-user'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Card,
@@ -77,7 +78,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 		<Card>
 			<CardHeader>
 				<CardTitle className='flex items-center gap-2 text-base'>
-					<User className='size-4' />
+					<IcUser className='size-4' />
 					Información personal
 				</CardTitle>
 				<CardDescription>
@@ -91,7 +92,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 						label='Nombres'
 						placeholder='Tu nombre'
 						validate={validateName}
-						prefix={<User className='size-3.5' />}
+						prefix={<IcUser className='size-3.5' />}
 						disabled={isPending}
 					/>
 					<TextField
@@ -105,7 +106,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 						label='Email'
 						placeholder='Tu nombre'
 						value={user.email}
-						prefix={<Mail className='size-3.5' />}
+						prefix={<IcSms className='size-3.5' />}
 						disabled
 					/>
 				</div>

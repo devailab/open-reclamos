@@ -1,10 +1,12 @@
-import { Copy, Link2, Mail } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 import SelectField, {
 	type SelectOption,
 } from '@/shared/components/forms/select-field'
 import TextField from '@/shared/components/forms/text-field'
+import { IcCopy } from '@/shared/components/icons/ic-copy'
+import { IcLink2 } from '@/shared/components/icons/ic-link-2'
+import { IcSms } from '@/shared/components/icons/ic-sms'
 import { Button } from '@/shared/components/ui/button'
 import {
 	Dialog,
@@ -215,7 +217,7 @@ export function CreateInvitationDialog({
 											)
 									}}
 								>
-									<Copy />
+									<IcCopy />
 									Copiar
 								</Button>
 								<Button
@@ -240,7 +242,7 @@ export function CreateInvitationDialog({
 										})
 									}
 								>
-									<Mail />
+									<IcSms />
 									Enviar correo
 								</Button>
 							</div>
@@ -260,7 +262,7 @@ export function CreateInvitationDialog({
 							disabled={pending || loading || Boolean(loadError)}
 							onClick={submit}
 						>
-							<Link2 />
+							<IcLink2 />
 							{pending ? 'Generando...' : 'Generar invitación'}
 						</Button>
 					)}

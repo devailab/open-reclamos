@@ -1,4 +1,5 @@
-import { FileX2 } from 'lucide-react'
+import { IcClipboardClose } from '@/shared/components/icons/ic-clipboard-close'
+
 import {
 	Card,
 	CardContent,
@@ -19,7 +20,7 @@ export function FormUnavailableCard({
 		<Card>
 			<CardHeader className='pb-3'>
 				<CardTitle className='flex items-center gap-2 text-base'>
-					<FileX2 className='size-4' />
+					<IcClipboardClose className='size-4' />
 					{title}
 				</CardTitle>
 			</CardHeader>

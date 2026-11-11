@@ -1,8 +1,9 @@
 import { OpGetAttachmentDownloadURL } from '@open-reclamos/rpc-client'
-import { Download, FileText } from 'lucide-react'
 import type { FC } from 'react'
 import { sileo } from 'sileo'
 import { downloadAuthenticatedFile, rpc } from '@/shared/api/rpc'
+import { IcDocumentText } from '@/shared/components/icons/ic-document-text'
+import { IcImportArrow01 } from '@/shared/components/icons/ic-import-arrow-01'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { Separator } from '@/shared/components/ui/separator'
@@ -54,7 +55,7 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 
 	return (
 		<Section
-			icon={<FileText className='size-4' />}
+			icon={<IcDocumentText className='size-4' />}
 			title='Detalle del reclamo'
 		>
 			<div className='space-y-3'>
@@ -170,7 +171,7 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 									className='flex items-center justify-between gap-2 rounded-lg border px-3 py-2'
 								>
 									<div className='flex items-center gap-2 min-w-0'>
-										<FileText className='size-4 shrink-0 text-muted-foreground' />
+										<IcDocumentText className='size-4 shrink-0 text-muted-foreground' />
 										<span className='text-sm truncate'>
 											{attachment.fileName}
 										</span>
@@ -183,7 +184,7 @@ export const ComplaintDetailsCard: FC<ComplaintDetailsCardProps> = ({
 											handleDownload(attachment)
 										}
 									>
-										<Download className='size-4' />
+										<IcImportArrow01 className='size-4' />
 										<span className='sr-only'>
 											Descargar
 										</span>
