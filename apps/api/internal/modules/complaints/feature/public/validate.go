@@ -35,7 +35,15 @@ var (
 )
 
 func validDocument(kind, number string) bool {
-	return slices.Contains(constants.DocumentTypes, kind) && len(number) >= 6 && len(number) <= 20
+	if !slices.Contains(constants.DocumentTypes, kind) {
+		return false
+	}
+
+	if kind == "DNI" {
+		return utils.Digits(number, 8)
+	}
+
+	return len(number) >= 6 && len(number) <= 20
 }
 
 // validate revisa el formulario público del consumidor.
