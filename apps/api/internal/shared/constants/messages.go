@@ -121,6 +121,7 @@ const (
 	MsgGuardianRequired         = "Datos del tutor requeridos."
 	MsgGuardianOnlyMinors       = "El tutor solo aplica a menores."
 	MsgFieldTooLong             = "Un campo supera el tamaño permitido."
+	MsgDescriptionRequired      = "El detalle del reclamo o queja es obligatorio."
 	MsgInvalidDetailValue       = "Valor de detalle inválido."
 	MsgInvalidAmount            = "El monto debe ser una cadena decimal válida."
 	MsgInvalidDialCode          = "Código telefónico inválido."

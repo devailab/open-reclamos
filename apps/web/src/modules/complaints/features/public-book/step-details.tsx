@@ -22,6 +22,7 @@ import {
 	validateAmount,
 	validateComplaintType,
 	validateConfirmation,
+	validateDescription,
 	validateItemDescription,
 } from '../../validation'
 import { FileUploadArea, type UploadedFile } from './file-upload-area'
@@ -219,7 +220,7 @@ export const StepDetails: FC<StepDetailsProps> = ({
 			{/* Descripción */}
 			<TextAreaField
 				{...register('description')}
-				validate={maxText(5000)}
+				validate={validateDescription}
 				label='Detalle del reclamo o queja'
 				placeholder='Describe con detalle lo ocurrido...'
 				rows={4}
