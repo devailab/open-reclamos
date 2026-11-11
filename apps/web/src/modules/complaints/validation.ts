@@ -38,6 +38,7 @@ export const validateConsumerName = combine(requiredText, maxText(120))
 export const validateLegalName = combine(requiredText, maxText(200))
 export const validateItemDescription = combine(requiredText, maxText(1000))
 export const validateDescription = combine(requiredText, maxText(5000))
+export const validateRequest = combine(requiredText, maxText(5000))
 export const validateOfficialResponse = combine(requiredText, maxText(10000))
 
 export const validateAmount = (value: number | null): string | null => {

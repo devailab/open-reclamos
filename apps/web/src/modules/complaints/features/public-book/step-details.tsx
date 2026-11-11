@@ -24,6 +24,7 @@ import {
 	validateConfirmation,
 	validateDescription,
 	validateItemDescription,
+	validateRequest,
 } from '../../validation'
 import { FileUploadArea, type UploadedFile } from './file-upload-area'
 import ReasonTreeField, { type FlatReason } from './reason-tree-field'
@@ -230,7 +231,7 @@ export const StepDetails: FC<StepDetailsProps> = ({
 			{/* Pedido */}
 			<TextAreaField
 				{...register('request')}
-				validate={maxText(5000)}
+				validate={validateRequest}
 				label='¿Qué solución solicitas?'
 				placeholder='Indica qué esperas que la empresa haga para resolver tu reclamo...'
 				rows={3}

@@ -75,6 +75,10 @@ func validate(d map[string]any) error {
 		return apperrors.Invalid(constants.MsgDescriptionRequired)
 	}
 
+	if !utils.Required(utils.Text(d, "request"), maxFieldLengths["request"]) {
+		return apperrors.Invalid(constants.MsgRequestRequired)
+	}
+
 	for key, max := range maxFieldLengths {
 		if len([]rune(utils.Text(d, key))) > max {
 			return apperrors.Invalid(constants.MsgFieldTooLong)
